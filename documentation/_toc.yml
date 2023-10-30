@@ -1,0 +1,38 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: Introduction.md
+
+options:  # The options key will be applied to all chapters, but not sub-sections
+  numbered: True
+  
+  
+
+parts:
+- caption: Basic Articles
+  maxdepth: 3
+  chapters:
+  - file: ethos_penalps_articles/main_operations_in_production_planning.md
+  - file: ethos_penalps_articles/material_flow_model.md
+  - file: ethos_penalps_articles/define_a_process_step.md
+  # - file: itcs_documentation_articles/class_diagrams.md    
+  # - file: ethos_penalps_articles/path_1_to_3.md
+  # - file: ethos_penalps_articles/path_4_to_5.md
+  # - file: ethos_penalps_articles/path_6_to_7.md
+- caption: API 
+  chapters:
+  - file: autoapi/ethos_penalps/index.rst
+- caption: Examples
+  chapters:
+  - file: examples/b_pillar_example.md
+  - file: examples/electric_arc_furnace_example.md
+  - file: examples/toffee_example.md
+
+
+
+
+
+
+
+

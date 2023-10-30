@@ -1,0 +1,24 @@
+# directories
+
+
+**/__pycache__/
+tests/__pycache__/
+.ipynb_checkpoints/
+
+*.eggs/
+*.testing/
+*.examples/
+
+*.dist/
+*.documentation/_build/
+.mypy_cache
+.pytest_cache
+
+# file types to ignore
+*.pyc
+*.egg-info
+*.log
+*.lp
+*.glp
+*.mps
+.coverage

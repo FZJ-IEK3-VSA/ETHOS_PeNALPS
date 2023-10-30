@@ -1,0 +1,34 @@
+name: ethos_penalps
+
+dependencies:
+- python >=3.7
+- pandas
+- jupyter-book
+- sphinx-autoapi
+- matplotlib
+- graphviz
+- python-graphviz
+- numpy < 1.24.0
+- sqlalchemy < 2.0
+- plotly
+- networkx
+- openpyxl
+- xlsxwriter
+- prospector
+- matplotlib
+- pytest
+- pip
+- black
+- pint
+- proplot
+- datapane
+- svglib
+- cloudpickle
+- seaborn
+- workalendar
+- datetimerange
+- tectonic
+- typeguard
+- dataclasses-json
+- pdftopng
+- jsonpickle
