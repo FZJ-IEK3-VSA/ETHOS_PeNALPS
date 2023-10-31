@@ -1,8 +1,8 @@
-PWD c:/Progamming/itcs_lpg/documentation/visualizations/process_state_visualizations
+PWD c:/Programming/Neuer Ordner/ethos_penalps/documentation/visualizations/process_state_visualizations
 INPUT c:/texlive/2023/texmf.cnf
 INPUT c:/texlive/2023/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2023/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT c:/Progamming/itcs_lpg/documentation/visualizations/process_state_visualizations/process_state_network_combined_input_and_output.tex
+INPUT c:/Programming/Neuer Ordner/ethos_penalps/documentation/visualizations/process_state_visualizations/process_state_network_combined_input_and_output.tex
 OUTPUT process_state_network_combined_input_and_output.log
 INPUT c:/texlive/2023/texmf-dist/tex/latex/standalone/standalone.cls
 INPUT c:/texlive/2023/texmf-dist/tex/latex/standalone/standalone.cls

@@ -9,7 +9,7 @@ This examples how the load profile of a toffee production process can be modelle
 Description of the toffee production process {cite}`.2006` S.~32 .
 :::
 
-# The Model
+# ETHOS.PeNALPS Model
 
 :::{figure-md} process_network_model_toffee_production
 <img src="../visualizations/examples/toffee_production/enterprise_text_file.png" width="200"/>
@@ -17,7 +17,7 @@ Description of the toffee production process {cite}`.2006` S.~32 .
 Model of batch toffee production based on the process description in 
 :::
 
-# Capacity related parameters
+# Capacity Parameters
 
 A demonstrative correlation for capacities and and throughput of toffee machines is provided manufacturer CHOCOTECH. {cite}`.ChocoTecCarastar` 
 For their Machine Carastar they provide
@@ -49,7 +49,7 @@ For the toffee machine the energy data was not available for each state.
 ## Heat Demand Toffee Machine
 Thus it is estimated based on a cumulated value of 1.25 GJ/ton= {cite}`Wojdalski.2015` S.~185.
 
-## Electricity Demand Toffee machine
+## Electricity Demand Toffee Machine
 42 kWh/ton = 151.2 MJ/ton
 - Input of materials / 5 % / 7.56 MJ/ton
 - Dissolving of sugars, Form Emulsions (Mixing) /60 % /90.72 MJ/ton
@@ -60,7 +60,7 @@ Thus it is estimated based on a cumulated value of 1.25 GJ/ton= {cite}`Wojdalski
 2.2kW peak {cite}`Wojdalski.2015` S.~187 Batch confectioner
 
 
-# Packaging and Cutting machine
+# Packaging and Cutting Machine
 3 kW peak {cite}`Wojdalski.2015` S.~187
 The cutting wrapping and packaging line is modelled as two sequential machines and stream conveyor belt. 
 It is assumed that the packaging lines constantly works at peak power. This leads to a total specific energy demand of 13.846 MJ/ton. This is disaggregation onto the modeling objects as follow.
@@ -69,5 +69,3 @@ It is assumed that the packaging lines constantly works at peak power. This lead
 - Packaging Machine / 45% / 6.2307 MJ/ton
 - Conveyor bel / 10% / 1.3846 MJ/ton
 
-```{bibliography}
-```

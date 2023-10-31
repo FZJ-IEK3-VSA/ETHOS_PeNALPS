@@ -40,7 +40,7 @@ class PeNALPSLogger:
         table_logger: logging.Logger = PeNALPSLogger.logger
         table_logger.propagate = False
         table_logger.addFilter(ContextFilter())
-        table_logger.setLevel(logging.DEBUG)
+        table_logger.setLevel(logging.INFO)
         # table_logger.addHandler(logging.NullHandler())
         return table_logger
 
@@ -54,7 +54,7 @@ class PeNALPSLogger:
         table_logger: logging.Logger = PeNALPSLogger.logger
         return table_logger
 
-    def get_human_readable_logger(logging_level=logging.DEBUG) -> logging.Logger:
+    def get_human_readable_logger(logging_level=logging.INFO) -> logging.Logger:
         # create logger
         logger: logging.Logger = PeNALPSLogger.logger
 
@@ -122,7 +122,7 @@ class PeNALPSLogger:
 
         # https://docs.python.org/3/howto/logging-cookbook.html#context-info
         # add formatter to ch
-        file_handler.setLevel(logging.DEBUG)
+        file_handler.setLevel(logging.INFO)
         logger.addHandler(file_handler)
         return logger
 
