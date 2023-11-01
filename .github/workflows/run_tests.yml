@@ -11,8 +11,11 @@ on:
 jobs:
   run_test_on_micromamba:
       name: Run test on micromamba image
-      runs-on: mambaorg/micromamba:latest
+      runs-on: ubuntu-latest
+        container:
+        image: dockerhub-username:docker-image-tag
       steps:
+        - uses: mambaorg/micromamba:latest
         - name: Create new environment
           run: micromamba create -c conda-forge -f environment.yml    
         - name: Initiate shell
