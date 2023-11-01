@@ -1,0 +1,25 @@
+name: Run ETHOS.PeNALPS Tests
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+      name: Run test on micromamba image
+      runs-on: mambaorg/micromamba:latest
+      steps:
+        - name: Create new environment
+          run: micromamba create -c conda-forge -f environment.yml    
+        - name: Initiate shell
+          run: eval "$(micromamba shell hook --shell=bash)"
+        - name: activate new environment
+          run: micromamba activate ethos_penalps
+        - name: install ETHOS.PeNALPS itself with pip
+          run: pip install -e .
+        - name: Start tests
+          run: pytest
+        - name: Echo that workflow terminated
+          run: echo "Unit tests are terminated"
