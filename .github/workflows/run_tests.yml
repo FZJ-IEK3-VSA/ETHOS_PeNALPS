@@ -24,7 +24,7 @@ jobs:
             cache-environment: true
             post-cleanup: 'all'
         - name: install ETHOS.PeNALPS itself with pip
-          run: pip install -e .
+          run: pip install .
         - name: Start tests
           run: pytest
         - name: Echo that workflow terminated
