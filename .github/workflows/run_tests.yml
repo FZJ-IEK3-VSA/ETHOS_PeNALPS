@@ -13,6 +13,9 @@ jobs:
   run_test_on_micromamba:
       name: Run test on micromamba image
       runs-on: ubuntu-latest
+      defaults:
+        run:
+          shell: bash -l {0}
       steps:
         - name: Check out the repository to the runner
           uses: actions/checkout@v4  
