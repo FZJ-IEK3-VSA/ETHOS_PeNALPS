@@ -5,9 +5,11 @@ on:
     branches: [ $default-branch ]
   pull_request:
     branches: [ $default-branch ]
+  workflow_dispatch:
+    branches: [ $default-branch ]
 
 jobs:
-  build:
+  run_test_on_micromamba:
       name: Run test on micromamba image
       runs-on: mambaorg/micromamba:latest
       steps:
