@@ -12,8 +12,8 @@ jobs:
   run_test_on_micromamba:
       name: Run test on micromamba image
       runs-on: ubuntu-latest
-        container:
-          image: mambaorg/micromamba:latest
+      container:
+        image: mambaorg/micromamba:latest
       steps:
         - name: Create new environment
           run: micromamba create -c conda-forge -f environment.yml    
