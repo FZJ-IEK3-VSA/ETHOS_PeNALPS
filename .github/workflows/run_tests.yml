@@ -2,11 +2,11 @@ name: Run ETHOS.PeNALPS Tests
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: main
   pull_request:
-    branches: [ $default-branch ]
+    branches: main
   workflow_dispatch:
-    branches: [ $default-branch ]
+    branches: main
 
 
 jobs:
@@ -14,8 +14,8 @@ jobs:
       name: Run test on micromamba image
       runs-on: ubuntu-latest
       steps:
-        - name: echo current working directory
-          run: echo ${GITHUB_WORKSPACE} 
+        - name: Check out the repository to the runner
+          uses: actions/checkout@v4  
         - uses: mamba-org/setup-micromamba@v1
           with:
             micromamba-version: '1.5.1-1'
@@ -23,8 +23,6 @@ jobs:
             init-shell: bash
             cache-environment: true
             post-cleanup: 'all'
-        - name: activate new environment
-          run: micromamba activate ethos_penalps
         - name: install ETHOS.PeNALPS itself with pip
           run: pip install -e .
         - name: Start tests
