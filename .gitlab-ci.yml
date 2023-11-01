@@ -20,7 +20,7 @@ unit-test-job:
     - micromamba create -c conda-forge -f environment.yml
     - eval "$(micromamba shell hook --shell=bash)"
     - micromamba activate ethos_penalps
-    - pip install -e .
+    - pip install .
   script:
     - echo "Running unit tests..."
     - pytest
