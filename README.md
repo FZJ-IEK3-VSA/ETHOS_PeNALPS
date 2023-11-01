@@ -14,11 +14,9 @@ The figure below shows the main conceptual objects of ETHOS.PeNALPS which are:
 The model of the material flow simulation is created by users based on generic simulation
 objects. After the material flow simulation is completed, a set of production orders is passed to the model to start the simulation. The simulation generates a production plan that tracks the activity of each node to fulfill the requested set of orders. Based on the activity in the production plan, the load profiles are created for each node in therein. 
 
-:::{figure-md} main-component-overview
-<img src="../paper/main_component_overview.png" >
 
-Depiction of the main components and workflow of ETHOS.PeNALPS
-:::
+![Main Component Overview](paper/main_component_overview.png)
+*Depiction of the main components and workflow of ETHOS.PeNALPS*
 
 A further description of the model definition can be found [here](ethos_penalps_articles/model_description.md). 
 Also two examples for a [toffee production process](examples/toffee_example.md) and a [b-pillar production process](examples/b_pillar_example.md) are available.
