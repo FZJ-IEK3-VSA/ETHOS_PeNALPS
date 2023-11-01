@@ -4,7 +4,7 @@ ETHOS.PeNALPS (Petri Net Agent based Load Profile Simulator) is a Python library
 
 # Working Principle
 
-{numref}`main-component-overview` shows the main conceptual objects of ETHOS.PeNALPS which are:
+The figure below shows the main conceptual objects of ETHOS.PeNALPS which are:
 
 - Generic model objects
 - Material flow simulations
