@@ -8,17 +8,19 @@ on:
   workflow_dispatch:
     branches: [ $default-branch ]
 
+
 jobs:
   run_test_on_micromamba:
       name: Run test on micromamba image
       runs-on: ubuntu-latest
-      container:
-        image: mambaorg/micromamba:latest
       steps:
-        - name: Create new environment
-          run: micromamba create -c conda-forge -f environment.yml    
-        - name: Initiate shell
-          run: eval "$(micromamba shell hook --shell=bash)"
+        - uses: mamba-org/setup-micromamba@v1
+          with:
+            micromamba-version: '1.3.1-0'
+            environment-file: environment.yml
+            init-shell: bash
+            cache-environment: true
+            post-cleanup: 'all'
         - name: activate new environment
           run: micromamba activate ethos_penalps
         - name: install ETHOS.PeNALPS itself with pip
