@@ -65,21 +65,9 @@ class Enterprise:
                     )
                 except:
                     process_chain.create_failed_report()
-            # self.pickle_sink(
-            #     network_level=network_level,
-            #     subdirectory_name="Sink",
-            #     add_time_stamp_to_filename=False,
-            # )
+
             network_level.main_sink.create_storage_entries()
             network_level.main_source.create_storage_entries()
-
-            # except:
-            #     process_chain.create_failed_run_simulation_report()
-            #     raise Exception(
-            #         "Process chain: "
-            #         + str(process_chain.process_chain_identifier)
-            #         + "Failed"
-            #     )
 
     def pickle_sink(
         self,

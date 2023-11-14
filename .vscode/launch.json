@@ -22,7 +22,7 @@
             "console": "integratedTerminal",
             "args": [
                 "-vv",
-                "--typeguard-packages=ethos_penalps,dataclass"
+                "--typeguard-packages=ethos_penalps,dataclass",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}",

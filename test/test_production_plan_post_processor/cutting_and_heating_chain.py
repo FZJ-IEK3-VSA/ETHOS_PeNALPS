@@ -1,7 +1,7 @@
 import datetime
 
 from ethos_penalps.data_classes import Commodity, LoadProfileEntry, LoadType
-from ethos_penalps.debugging_information import NodeOperationViewer
+from ethos_penalps.utilities.debugging_information import NodeOperationViewer
 from ethos_penalps.enterprise import Enterprise
 
 from ethos_penalps.process_chain import ProcessChain

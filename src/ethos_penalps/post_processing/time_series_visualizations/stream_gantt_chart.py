@@ -17,6 +17,7 @@ from ethos_penalps.data_classes import (
     ProcessStepDataFrameMetaInformation,
     StorageDataFrameMetaInformation,
     EmptyMetaDataInformation,
+    ProductionOrderMetadata,
 )
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import (
@@ -39,6 +40,7 @@ def slice_data_frames(
         | LoadProfileDataFrameMetaInformation
         | StorageDataFrameMetaInformation
         | EmptyMetaDataInformation
+        | ProductionOrderMetadata
     ],
     start_date: datetime.datetime,
     end_date: datetime.datetime,
@@ -48,6 +50,7 @@ def slice_data_frames(
     | LoadProfileDataFrameMetaInformation
     | StorageDataFrameMetaInformation
     | EmptyMetaDataInformation
+    | ProductionOrderMetadata
 ]:
     new_list_of_meta_data_frames = []
     for meta_information in list_of_meta_data_objects:
@@ -80,6 +83,9 @@ def slice_data_frames(
             meta_information.data_frame = sliced_data_frame
             meta_information.first_start_time = sliced_data_frame["start_time"].min()
             meta_information.last_end_time = sliced_data_frame["end_time"].max()
+            new_list_of_meta_data_frames.append(meta_information)
+        elif isinstance(meta_information, ProductionOrderMetadata):
+            # TODO: Slice Order
             new_list_of_meta_data_frames.append(meta_information)
         elif isinstance(meta_information, EmptyMetaDataInformation):
             pass

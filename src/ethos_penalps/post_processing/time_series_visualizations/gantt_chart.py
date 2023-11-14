@@ -5,10 +5,8 @@ import os
 from pickletools import read_uint1
 
 import matplotlib
-
 import matplotlib.pyplot
 import matplotlib.pyplot as plt
-
 import plotly.express as px
 import proplot
 from matplotlib import cm
@@ -16,6 +14,7 @@ from matplotlib import cm
 from ethos_penalps.data_classes import (
     LoadProfileDataFrameMetaInformation,
     ProcessStepDataFrameMetaInformation,
+    ProductionOrderMetadata,
     StorageDataFrameMetaInformation,
     StorageProductionPlanEntry,
 )
@@ -51,6 +50,9 @@ from ethos_penalps.utilities.data_base_interactions import DataBaseInteractions
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.general_functions import ResultPathGenerator, denormalize
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.post_processing.time_series_visualizations.order_plot import (
+    create_order_gantt_plot,
+)
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -261,6 +263,7 @@ class GanttChartGenerator:
             | LoadProfileDataFrameMetaInformation
             | ProcessStepDataFrameMetaInformation
             | StreamDataFrameMetaInformation
+            | ProductionOrderMetadata
         ],
         start_date: datetime.datetime,
         end_date: datetime.datetime,
@@ -289,6 +292,7 @@ class GanttChartGenerator:
             | LoadProfileDataFrameMetaInformation
             | ProcessStepDataFrameMetaInformation
             | StreamDataFrameMetaInformation
+            | ProductionOrderMetadata
         ],
         start_date: datetime.datetime,
         end_date: datetime.datetime,
@@ -297,6 +301,7 @@ class GanttChartGenerator:
         | LoadProfileDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
         | StreamDataFrameMetaInformation
+        | ProductionOrderMetadata
     ]:
         sliced_list_of_meta_data = slice_data_frames(
             list_of_meta_data_objects=list_of_meta_data,
@@ -322,12 +327,13 @@ def create_gantt_chart(
         | StreamDataFrameMetaInformation
         | LoadProfileDataFrameMetaInformation
         | StorageDataFrameMetaInformation
+        | ProductionOrderMetadata
     ],
     start_date: datetime.datetime,
     end_date: datetime.datetime,
     reverse_y_graph_order=False,
     output_file_path: str | None = None,
-    show_graph: bool = True,
+    show_graph: bool = False,
     gantt_chart_title: str = "Process Gantt Chart",
 ) -> matplotlib.pyplot.Figure | None:
     logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
@@ -395,6 +401,13 @@ def create_gantt_chart(
                 storage_meta_data_information=data_frame_meta_information,
                 subplot_number=subplot_number,
             )
+        elif isinstance(data_frame_meta_information, ProductionOrderMetadata):
+            create_order_gantt_plot(
+                fig=fig,
+                current_axs=axs,
+                order_meta_data=data_frame_meta_information,
+                subplot_number=subplot_number,
+            )
         else:
             raise Exception("Unexpected datatype")
 
@@ -403,7 +416,9 @@ def create_gantt_chart(
         warnings.warn("All data frames were empty. There is nothing to plot")
         fig = None
     else:
-        axs.format(xlim=(start_date, end_date))
+        if start_date != end_date:
+            axs.format(xlim=(start_date, end_date))
+
         axs.format(suptitle=gantt_chart_title)
         axs.format(xrotation=45)
 
@@ -423,6 +438,7 @@ def create_color_column(
         | LoadProfileDataFrameMetaInformation
         | StorageDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
+        | ProductionOrderMetadata
     ],
     current_value_column_name: str = "current_operation_rate_value",
 ) -> list[
@@ -430,6 +446,7 @@ def create_color_column(
     | LoadProfileDataFrameMetaInformation
     | StorageDataFrameMetaInformation
     | ProcessStepDataFrameMetaInformation
+    | ProductionOrderMetadata
 ]:
     meta_data_list = convert_unbound_operation_rate_to_maximum_operation_rate(
         list_of_meta_data=meta_data_list
@@ -457,7 +474,9 @@ def create_color_column(
             )
         elif isinstance(meta_data, ProcessStepDataFrameMetaInformation):
             pass
-        elif isinstance(meta_data, StorageDataFrameMetaInformation):
+        elif isinstance(
+            meta_data, StorageDataFrameMetaInformation | ProductionOrderMetadata
+        ):
             pass
         elif isinstance(
             meta_data,
@@ -487,12 +506,14 @@ def convert_unbound_operation_rate_to_maximum_operation_rate(
         | LoadProfileDataFrameMetaInformation
         | StorageDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
+        | ProductionOrderMetadata
     ],
 ) -> list[
     StreamDataFrameMetaInformation
     | LoadProfileDataFrameMetaInformation
     | StorageDataFrameMetaInformation
     | ProcessStepDataFrameMetaInformation
+    | ProductionOrderMetadata
 ]:
     for meta_information in list_of_meta_data:
         if isinstance(meta_information, ProcessStepDataFrameMetaInformation):
@@ -519,7 +540,9 @@ def convert_unbound_operation_rate_to_maximum_operation_rate(
                     data_frame["Maximum limit has been set"] = 1
         elif isinstance(meta_information, LoadProfileDataFrameMetaInformation):
             pass
-        elif isinstance(meta_information, StorageDataFrameMetaInformation):
+        elif isinstance(
+            meta_information, StorageDataFrameMetaInformation | ProductionOrderMetadata
+        ):
             pass
         else:
             raise UnexpectedDataType(

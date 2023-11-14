@@ -146,7 +146,7 @@ class ProcessOverviewPage:
                 ):
                     list_of_order_tables.append(
                         datapane.DataTable(
-                            df=splitted_order.order_collection_data_frame,
+                            df=splitted_order.order_data_frame,
                             caption="Orders for chain: "
                             + str(splitted_order.process_chain_identifier.chain_name),
                             # name="Orders for chain: "
@@ -154,9 +154,7 @@ class ProcessOverviewPage:
                         )
                     )
                     splitted_order_mass = (
-                        splitted_order.order_collection_data_frame.loc[
-                            :, "production_target"
-                        ]
+                        splitted_order.order_data_frame.loc[:, "production_target"]
                     ).sum()
                     list_of_order_tables.append(
                         datapane.HTML(

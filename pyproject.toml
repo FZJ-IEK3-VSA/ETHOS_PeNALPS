@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ethos_penalps"
-version = "1.0.0"
+version = "1.0.1"
 description = "A package to create energy load curves for industry locations in Germany"
 readme = "README.md"
 authors = [
@@ -26,9 +26,6 @@ requires-python = ">=3.10"
 # https://docs.pytest.org/en/7.1.x/reference/reference.html#configuration-options
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-testpaths = ["test"]
-console_output_style = "count"
 filterwarnings = [
     # "ignore::DeprecationWarning:matplotlib",
     # "ignore::DeprecationWarning:pkg_resources",
@@ -36,6 +33,7 @@ filterwarnings = [
     # "ignore::DeprecationWarning:requests_toolbelt",
     # "ignore::DeprecationWarning:jupyter_client",
     # "ignore::DeprecationWarning:importlib",
+    "ignore:invalid value encountered in cast:RuntimeWarning:numpy",
     "ignore::marshmallow.warnings.RemovedInMarshmallow4Warning",
     "ignore:The distutils package is deprecated and slated for removal in Python 3.12.:DeprecationWarning",
     "ignore: Deprecated API features detected!",
@@ -44,7 +42,9 @@ filterwarnings = [
     "ignore:the 'timedelta' type is not supported,",
     "ignore:the imp module is deprecated in favour",
 
-] # How to configure Filterwarning:
+] # How to configure Filterwarning:minversion = "6.0"
+testpaths = ["test"]
+console_output_style = "count"
 # https://docs.python.org/3/library/warnings.html#warning-filter
 # action:message:category:module:line
 # Ommit a field by add ing ":" for each ommited field

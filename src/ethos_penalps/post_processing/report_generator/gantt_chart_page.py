@@ -65,8 +65,8 @@ class GanttChartPageGenerator:
                     current_network_level_counter
                     == structured_network_results.upstream_network_level_position
                 ):
-                    source_meta_data_frame_list = (
-                        structured_network_level_results.main_source_results.get_streams_and_storage_meta_data()
+                    source_meta_data_frame_list = structured_network_level_results.main_source_results.get_streams_and_storage_meta_data(
+                        include_order_meta_data=report_generator_options.full_process_gantt_chart.include_order_visualization
                     )
                     source_figure = gantt_chart_generator.create_gantt_chart_from_list_of_meta_data(
                         list_of_meta_data=source_meta_data_frame_list,
@@ -103,8 +103,8 @@ class GanttChartPageGenerator:
                                 caption=process_chain_meta_data_results.process_chain_name,
                             )
                         )
-                sink_meta_data_frame_list = (
-                    structured_network_level_results.main_sink_results.get_streams_and_storage_meta_data()
+                sink_meta_data_frame_list = structured_network_level_results.main_sink_results.get_streams_and_storage_meta_data(
+                    include_order_meta_data=report_generator_options.full_process_gantt_chart.include_order_visualization
                 )
                 sink_figure = gantt_chart_generator.create_gantt_chart_from_list_of_meta_data(
                     list_of_meta_data=sink_meta_data_frame_list,

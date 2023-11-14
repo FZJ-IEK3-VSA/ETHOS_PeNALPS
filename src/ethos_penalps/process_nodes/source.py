@@ -33,10 +33,6 @@ from ethos_penalps.process_node_communicator import EmptyProductionBranch
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.load_profile_calculator import LoadProfileHandler
-from ethos_penalps.stream_node_distributor import (
-    OrderDistributor,
-    SplittedOrderCollection,
-)
 from ethos_penalps.simulation_data.simulation_data_branch import (
     IncompleteOutputBranchData,
     CompleteOutputBranchData,
