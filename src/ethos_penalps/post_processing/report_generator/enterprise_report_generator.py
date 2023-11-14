@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from ethos_penalps.data_classes import CurrentProcessNode, LoopCounter
-from ethos_penalps.debugging_information import (
+from ethos_penalps.utilities.debugging_information import (
     DebuggingInformationLogger,
     NodeOperationViewer,
 )

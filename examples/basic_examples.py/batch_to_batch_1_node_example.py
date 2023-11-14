@@ -1,5 +1,8 @@
 import datetime
 import logging
+from typeguard import install_import_hook
+
+install_import_hook("ethos_penalps")
 
 from ethos_penalps.data_classes import Commodity, LoadType
 from ethos_penalps.enterprise import Enterprise

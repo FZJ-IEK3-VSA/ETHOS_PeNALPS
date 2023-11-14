@@ -1,15 +1,19 @@
 from dataclasses import dataclass
 
 from ethos_penalps.data_classes import (
+    EmptyMetaDataInformation,
     LoadProfileDataFrameMetaInformation,
     ProcessChainIdentifier,
     ProcessStepDataFrameMetaInformation,
+    ProductionOrderMetadata,
     StorageDataFrameMetaInformation,
-    EmptyMetaDataInformation,
 )
 from ethos_penalps.load_profile_calculator import LoadProfileHandler
 from ethos_penalps.network_level import NetworkLevel
 from ethos_penalps.order_generator import OrderCollection
+from ethos_penalps.post_processing.time_series_visualizations.order_plot import (
+    post_process_order_collection,
+)
 from ethos_penalps.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_step import ProcessStep
@@ -183,20 +187,41 @@ class SinkResults:
     storage_meta_data_frame: StorageDataFrameMetaInformation
     list_of_input_stream_results: list[StreamResults]
     order_collection: OrderCollection
-    dict_of_splitted_order_collection: dict[
-        ProcessChainIdentifier, SplittedOrderCollection
-    ]
+    dict_of_splitted_order_collection: dict[str, SplittedOrderCollection]
+    total_order_collection_metadata: ProductionOrderMetadata
+    dict_of_splitted_order_meta_data_frame: dict[str, ProductionOrderMetadata]
 
     def get_streams_and_storage_meta_data(
-        self,
-    ) -> list[StorageDataFrameMetaInformation | StreamDataFrameMetaInformation]:
+        self, include_order_meta_data: bool = True
+    ) -> list[
+        StorageDataFrameMetaInformation
+        | StreamDataFrameMetaInformation
+        | ProductionOrderMetadata
+    ]:
         output_meta_data_list = []
         for input_stream_result in self.list_of_input_stream_results:
+            if include_order_meta_data is True:
+                splitted_order_meta_data = self._get_splitted_order_meta_data(
+                    stream_name=input_stream_result.stream_meta_data_frame.stream_name
+                )
+                output_meta_data_list.append(splitted_order_meta_data)
             output_meta_data_list.extend(
                 input_stream_result.get_stream_meta_data_list()
             )
+
+        if include_order_meta_data is True:
+            output_meta_data_list.append(self.total_order_collection_metadata)
         output_meta_data_list.append(self.storage_meta_data_frame)
+
         return output_meta_data_list
+
+    def _get_splitted_order_meta_data(
+        self, stream_name: str
+    ) -> ProductionOrderMetadata:
+        splitted_order_meta_data = self.dict_of_splitted_order_meta_data_frame[
+            stream_name
+        ]
+        return splitted_order_meta_data
 
 
 @dataclass
@@ -209,21 +234,43 @@ class ProcessChainStorageResults:
     dict_of_splitted_order_collection: dict[
         ProcessChainIdentifier, SplittedOrderCollection
     ]
+    total_order_collection_metadata: ProductionOrderMetadata
+    dict_of_splitted_order_meta_data_frame: dict[str, ProductionOrderMetadata]
 
     def get_streams_and_storage_meta_data(
-        self,
-    ) -> list[StorageDataFrameMetaInformation | StreamDataFrameMetaInformation]:
+        self, include_order_meta_data: bool = True
+    ) -> list[
+        StorageDataFrameMetaInformation
+        | StreamDataFrameMetaInformation
+        | ProductionOrderMetadata
+    ]:
         output_meta_data_list = []
         for input_stream_result in self.list_of_input_stream_results:
+            if include_order_meta_data is True:
+                output_meta_data_list.append(
+                    self._get_splitted_order_meta_data(
+                        stream_name=input_stream_result.stream_meta_data_frame.stream_name
+                    )
+                )
             output_meta_data_list.extend(
                 input_stream_result.get_stream_meta_data_list()
             )
+        if include_order_meta_data is True:
+            output_meta_data_list.append(self.total_order_collection_metadata)
         output_meta_data_list.append(self.storage_meta_data_frame)
         for output_stream_result in self.list_of_output_stream_results:
             output_meta_data_list.extend(
                 output_stream_result.get_stream_meta_data_list()
             )
         return output_meta_data_list
+
+    def _get_splitted_order_meta_data(
+        self, stream_name: str
+    ) -> ProductionOrderMetadata:
+        splitted_order_meta_data = self.dict_of_splitted_order_meta_data_frame[
+            stream_name
+        ]
+        return splitted_order_meta_data
 
 
 @dataclass
@@ -233,7 +280,7 @@ class SourceResults:
     list_of_output_stream_results: list[StreamResults]
 
     def get_streams_and_storage_meta_data(
-        self,
+        self, include_order_meta_data: bool = True
     ) -> list[StorageDataFrameMetaInformation | StreamDataFrameMetaInformation]:
         output_meta_data_list = []
         output_meta_data_list.append(self.storage_meta_data_frame)
@@ -464,12 +511,31 @@ class ResultSelector:
             )
             list_of_input_stream_results.append(input_stream_results)
 
+        complete_order_collection_meta_data = post_process_order_collection(
+            order_collection=sink.order_distributor.order_collection
+        )
+        dict_of_splitted_order_meta_data_by_stream_name = {}
+        for (
+            process_chain_identifier,
+            stream_name,
+        ) in sink.order_distributor.dict_of_stream_names.items():
+            splitted_order = sink.order_distributor.dict_of_splitted_order[
+                process_chain_identifier
+            ]
+            splitted_order_meta_data = post_process_order_collection(
+                order_collection=splitted_order
+            )
+            dict_of_splitted_order_meta_data_by_stream_name[
+                stream_name
+            ] = splitted_order_meta_data
         sink_results = SinkResults(
             name=sink.name,
             storage_meta_data_frame=storage_meta_data_frame,
             list_of_input_stream_results=list_of_input_stream_results,
             dict_of_splitted_order_collection=sink.order_distributor.dict_of_splitted_order,
             order_collection=sink.order_distributor.order_collection,
+            total_order_collection_metadata=complete_order_collection_meta_data,
+            dict_of_splitted_order_meta_data_frame=dict_of_splitted_order_meta_data_by_stream_name,
         )
         return sink_results
 
@@ -500,6 +566,26 @@ class ResultSelector:
             )
             list_of_output_stream_results.append(output_stream_results)
 
+        complete_order_collection_meta_data = post_process_order_collection(
+            order_collection=process_chain_storage.sink.order_distributor.order_collection
+        )
+        dict_of_splitted_order_meta_data_by_stream_name = {}
+        for (
+            process_chain_identifier,
+            stream_name,
+        ) in process_chain_storage.sink.order_distributor.dict_of_stream_names.items():
+            splitted_order = (
+                process_chain_storage.sink.order_distributor.dict_of_splitted_order[
+                    process_chain_identifier
+                ]
+            )
+            splitted_order_meta_data = post_process_order_collection(
+                order_collection=splitted_order
+            )
+            dict_of_splitted_order_meta_data_by_stream_name[
+                stream_name
+            ] = splitted_order_meta_data
+
         process_chain_storage_results = ProcessChainStorageResults(
             name=process_chain_storage.name,
             storage_meta_data_frame=storage_meta_data_frame,
@@ -507,6 +593,8 @@ class ResultSelector:
             list_of_output_stream_results=list_of_output_stream_results,
             dict_of_splitted_order_collection=process_chain_storage.sink.order_distributor.dict_of_splitted_order,
             order_collection=process_chain_storage.sink.order_distributor.order_collection,
+            total_order_collection_metadata=complete_order_collection_meta_data,
+            dict_of_splitted_order_meta_data_frame=dict_of_splitted_order_meta_data_by_stream_name,
         )
         return process_chain_storage_results
 

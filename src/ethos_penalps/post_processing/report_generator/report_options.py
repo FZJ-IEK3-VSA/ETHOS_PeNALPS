@@ -13,6 +13,7 @@ class FullProcessGanttChartOptions:
     include_load_profiles: bool = False
     maximum_number_of_vertical_plots: int = 10
     include_storage_gantt_charts: bool = True
+    include_order_visualization: bool = False
 
     def add_plot_start_and_end_time(
         self, start_time: datetime.datetime | None, end_time: datetime.datetime | None

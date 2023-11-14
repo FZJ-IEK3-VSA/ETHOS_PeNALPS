@@ -16,6 +16,7 @@ from ethos_penalps.data_classes import (
     LoadType,
     ProcessStepProductionPlanEntry,
     StreamLoadEnergyData,
+    ProcessChainIdentifier,
 )
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.general_functions import (

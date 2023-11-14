@@ -229,9 +229,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="example-toffee-production">
   <title>Example: Toffee Production</title>
   <p>The ETHOS.PeNALPS workflow is demonstrated based on the example of
-  a simplified toffee production process, which is described in Tomazi
-  et al.
-  (<xref alt="2006, pp. 31–32" rid="ref-Tomazi.2006" ref-type="bibr">2006,
+  a simplified toffee production process, which is described by
+  Korovessi and Linninger
+  (<xref alt="2005, pp. 31–32" rid="ref-Korovessi.2005" ref-type="bibr">2005,
   pp. 31–32</xref>). During the process, the raw toffee materials are
   mixed, cooked, and cooled in a toffee machine. The cooled toffee is
   then cut and packaged in two-subsequential machines. The corresponding
@@ -437,6 +437,19 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage>522</lpage>
     </element-citation>
   </ref>
+  <ref id="ref-Korovessi.2005">
+    <element-citation publication-type="book">
+      <person-group person-group-type="author">
+        <name><surname>Korovessi</surname><given-names>Ekaterini</given-names></name>
+        <name><surname>Linninger</surname><given-names>Andreas A.</given-names></name>
+      </person-group>
+      <source>Batch processes</source>
+      <publisher-name>CRC Press</publisher-name>
+      <year iso-8601-date="2005">2005</year>
+      <isbn>9780429135545</isbn>
+      <pub-id pub-id-type="doi">10.1201/9781420028164</pub-id>
+    </element-citation>
+  </ref>
   <ref id="ref-Li.2022">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
@@ -488,27 +501,6 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <pub-id pub-id-type="doi">10.3390/en15103683</pub-id>
       <fpage>1</fpage>
       <lpage>29</lpage>
-    </element-citation>
-  </ref>
-  <ref id="ref-Tomazi.2006">
-    <element-citation publication-type="chapter">
-      <person-group person-group-type="author">
-        <name><surname>Tomazi</surname><given-names>G. Keith</given-names></name>
-        <name><surname>Linninger</surname><given-names>Andreas A.</given-names></name>
-        <name><surname>Daniel</surname><given-names>R. James</given-names></name>
-      </person-group>
-      <article-title>Batch processsing industries</article-title>
-      <source>Batch processes</source>
-      <person-group person-group-type="editor">
-        <name><surname>Korovessi</surname><given-names>Ekaterini</given-names></name>
-        <name><surname>Linninger</surname><given-names>Andreas A.</given-names></name>
-      </person-group>
-      <publisher-name>CRC/Taylor &amp; Francis</publisher-name>
-      <publisher-loc>Boca Raton, Fla.</publisher-loc>
-      <year iso-8601-date="2006">2006</year>
-      <isbn>978-0-8247-2522-8</isbn>
-      <fpage>7</fpage>
-      <lpage>39</lpage>
     </element-citation>
   </ref>
   <ref id="ref-Wojdalski.2015">

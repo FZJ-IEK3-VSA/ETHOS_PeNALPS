@@ -1,4 +1,6 @@
 import datetime
+import numbers
+import warnings
 import uuid
 from dataclasses import dataclass, field, fields
 from typing import Optional
@@ -6,8 +8,10 @@ from typing import Optional
 import pandas
 import pint
 from dataclasses_json import DataClassJsonMixin, config, dataclass_json
-from ethos_penalps.utilities.units import Units
+
 from ethos_penalps.utilities.general_functions import get_new_uuid
+from ethos_penalps.utilities.units import Units
+from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedBehaviorWarning
 
 
 @dataclass(
@@ -231,7 +235,7 @@ class OrderCollection:
 
     def append_order_collection(self, order_collection):
         if self.commodity != order_collection.commodity:
-            raise Exception("Misconfiguration")
+            warnings.warn("Tried to append order collection with different commodity.")
         self.order_data_frame = pandas.concat(
             [self.order_data_frame, order_collection.order_data_frame]
         )
@@ -252,6 +256,17 @@ class ProcessStateEnergyLoadData(DataClassJsonMixin):
 @dataclass(kw_only=True)
 class ProcessStateEnergyLoadDataBasedOnStreamMass(ProcessStateEnergyLoadData):
     stream_name: str
+
+
+@dataclass
+class ProductionOrderMetadata(DataClassJsonMixin):
+    data_frame: pandas.DataFrame
+    list_of_aggregated_production_order: list[list[numbers.Number]]
+    list_of_unique_deadlines: list[datetime.datetime]
+    commodity: Commodity
+    total_order_mass: numbers.Number
+    earliest_deadline: datetime.datetime
+    latest_deadline: datetime.datetime
 
 
 @dataclass

@@ -1,15 +1,18 @@
 import numbers
 import math
 import datetime
+import warnings
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
+import numpy
 import pandas
 
 from ethos_penalps.data_classes import (
     OrderCollection,
     ProcessChainIdentifier,
     ProductionOrder,
+    Commodity,
 )
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
@@ -24,12 +27,14 @@ from ethos_penalps.utilities.general_functions import (
 @dataclass
 class SplittedOrderCollection:
     stream_name: str
+    commodity: Commodity
     process_chain_identifier: ProcessChainIdentifier
-    order_collection_data_frame: pandas.DataFrame
+    order_data_frame: pandas.DataFrame
+    target_mass: numbers.Number
     current_order_number: int = 0
 
     def check_if_order_are_empty(self):
-        if self.order_collection_data_frame.empty:
+        if self.order_data_frame.empty:
             raise Misconfiguration(
                 "A splitted order of chain: "
                 + self.process_chain_identifier.chain_name
@@ -37,7 +42,7 @@ class SplittedOrderCollection:
             )
 
     def get_order_by_order_number(self, order_number: int) -> ProductionOrder:
-        order_data_frame_row = self.order_collection_data_frame.iloc[order_number]
+        order_data_frame_row = self.order_data_frame.iloc[order_number]
         production_order = ProductionOrder(
             production_target=order_data_frame_row.loc["production_target"],
             production_deadline=order_data_frame_row.loc["production_deadline"],
@@ -51,12 +56,8 @@ class SplittedOrderCollection:
         return production_order
 
     def update_order(self, produced_mass: numbers.Number):
-        self.order_collection_data_frame.at[
-            self.current_order_number, "produced_mass"
-        ] = (
-            self.order_collection_data_frame.at[
-                self.current_order_number, "produced_mass"
-            ]
+        self.order_data_frame.at[self.current_order_number, "produced_mass"] = (
+            self.order_data_frame.at[self.current_order_number, "produced_mass"]
             + produced_mass
         )
 
@@ -102,42 +103,17 @@ class OrderDistributor:
                 "There are too few orders to distribute in the node " + self.node_name
             )
 
-    # def split_production_order_dict(self):
-    #     self.check_if_there_are_sufficient_order_for_distribution()
-
-    #     number_of_total_orders = self.order_collection.order_data_frame.shape[0]
-    #     number_of_streams = len(self.dict_of_stream_names)
-    #     current_stream_number = 0
-    #     for process_chain_identifier, stream_name in self.dict_of_stream_names.items():
-    #         list_index = list(
-    #             range(current_stream_number, number_of_total_orders, number_of_streams)
-    #         )
-    #         splitted_data_frame = self.order_collection.order_data_frame.iloc[
-    #             list_index
-    #         ].copy()
-    #         splitted_data_frame.sort_values(
-    #             by="production_deadline", ascending=False, inplace=True
-    #         )
-    #         splitted_data_frame.reset_index(inplace=True, drop=True)
-    #         splitted_order = SplittedOrderCollection(
-    #             stream_name=stream_name,
-    #             process_chain_identifier=process_chain_identifier,
-    #             order_collection_data_frame=splitted_data_frame,
-    #         )
-    #         splitted_order.check_if_order_are_empty()
-    #         self.dict_of_splitted_order[process_chain_identifier] = splitted_order
-    #         current_stream_number = current_stream_number + 1
-    #         print("Order splitted")
     def split_production_order_dict(self):
         number_of_streams = len(self.dict_of_stream_names)
-
         list_of_all_streams = []
+
         for stream_name in self.dict_of_stream_names.values():
             stream = self.stream_handler.get_stream(stream_name=stream_name)
             list_of_all_streams.append(stream)
 
         all_streams_are_continuous = False
         all_streams_are_batch = False
+        # Aggregate orders
         if not self.order_collection.order_data_frame.empty:
             if all(
                 isinstance(current_stream, ContinuousStream)
@@ -168,12 +144,14 @@ class OrderDistributor:
                     input_order_data_frame=self.order_collection.order_data_frame,
                     order_target_mass=aggregation_target_mass,
                 )
-            if all_streams_are_continuous is False and all_streams_are_batch is False:
+            else:
                 raise Exception(
                     "Mixed Batch and Continuous stream is not implemented in storage:"
                     + self.node_name
                 )
             current_stream_number = 0
+
+            # Distribute orders to streams
             for (
                 process_chain_identifier,
                 stream_name,
@@ -183,10 +161,16 @@ class OrderDistributor:
                     # aggregate all order into a single stream
                     splitted_data_frame = aggregated_data_frame.copy()
                     splitted_data_frame.loc[:, "production_target"] / number_of_streams
+
+                    splitted_target_mass = splitted_data_frame.loc[
+                        :, "production_target"
+                    ].sum()
                     splitted_order = SplittedOrderCollection(
                         stream_name=stream_name,
                         process_chain_identifier=process_chain_identifier,
-                        order_collection_data_frame=splitted_data_frame,
+                        order_data_frame=splitted_data_frame,
+                        commodity=self.order_collection.commodity,
+                        target_mass=splitted_target_mass,
                     )
                 elif all_streams_are_batch is True:
                     number_of_total_aggregated_orders = aggregated_data_frame.shape[0]
@@ -199,15 +183,24 @@ class OrderDistributor:
                     )
                     splitted_data_frame = aggregated_data_frame.iloc[list_index].copy()
                     splitted_data_frame.reset_index(inplace=True)
+                    splitted_target_mass = splitted_data_frame.loc[
+                        :, "production_target"
+                    ].sum()
                     splitted_order = SplittedOrderCollection(
                         stream_name=stream_name,
                         process_chain_identifier=process_chain_identifier,
-                        order_collection_data_frame=splitted_data_frame,
+                        order_data_frame=splitted_data_frame,
+                        commodity=self.order_collection.commodity,
+                        target_mass=splitted_target_mass,
                     )
 
                 splitted_order.check_if_order_are_empty()
                 self.dict_of_splitted_order[process_chain_identifier] = splitted_order
                 current_stream_number = current_stream_number + 1
+        else:
+            warnings.warn(
+                "Attempted to split an empty order dictionary in " + str(self.node_name)
+            )
 
     def aggregate_order_continuos_streams(
         self,
@@ -328,58 +321,55 @@ class OrderDistributor:
         order_target_mass: numbers.Number,
     ) -> pandas.DataFrame:
         input_order_data_frame = input_order_data_frame.copy()
-        # It is expected that the data frame is ordered from the latest order at index[0]
-        # to the newest at index [-1]
         input_order_data_frame.sort_values(
             by="production_deadline", ascending=False, inplace=True
         )
         input_order_data_frame.reset_index(inplace=True, drop=True)
+        # It is expected that the data frame is ordered from the latest order at index[0]
+        # to the newest at index [-1]
+
         total_sum = input_order_data_frame.loc[:, "production_target"].sum()
         number_of_output_order = math.ceil(total_sum / order_target_mass)
         input_order_data_frame.loc[
             :, "Cumulative Target Upper Bound"
         ] = input_order_data_frame.loc[:, "production_target"].cumsum()
-        input_order_data_frame.loc[:, "Cumulative Target Lower Bound"] = (
-            input_order_data_frame.loc[:, "Cumulative Target Upper Bound"]
-            - input_order_data_frame.loc[:, "production_target"]
-        )
 
-        maximum_number_of_input_order = len(input_order_data_frame.index) - 1
+        # input_order_data_frame.loc[:, "Cumulative Target Lower Bound"] = (
+        #     input_order_data_frame.loc[:, "Cumulative Target Upper Bound"]
+        #     - input_order_data_frame.loc[:, "production_target"]
+        # )
+
         list_of_aggregated_production_order = []
         for current_output_order_number in range(1, number_of_output_order + 1):
             # Determine the upper and lower bound for the cumulative mass cumulative mass for the
-            lower_bound_required_cumulative_mass = order_target_mass * (
-                current_output_order_number - 1
+            lower_bound_required_cumulative_mass = numpy.float64(order_target_mass) * (
+                numpy.float64(current_output_order_number) - numpy.float64(1)
             )
-            upper_bound_required_cumulative_mass = (
-                order_target_mass * current_output_order_number
-            )
+            upper_bound_required_cumulative_mass = numpy.float64(
+                order_target_mass
+            ) * numpy.float64(current_output_order_number)
 
             # Determine the index of the
-            selection_lower_index = input_order_data_frame.loc[
-                input_order_data_frame.loc[:, "Cumulative Target Lower Bound"]
-                >= lower_bound_required_cumulative_mass
-            ]
+            # selection_lower_index = input_order_data_frame.loc[
+            #     input_order_data_frame.loc[:, "Cumulative Target Lower Bound"]
+            #     >= lower_bound_required_cumulative_mass
+            # ]
             # Determine indices of relevant input orders
             # Determine lower index
-            # if selection_lower_index.empty is True:
-            #     lower_index = input_order_data_frame.index[0]
-            # else:
-            #     lower_index = selection_lower_index.index[0]
 
             # Decrease
 
-            if selection_lower_index.empty is True:
-                lower_index = input_order_data_frame.index[-1]
-            else:
-                lower_index = selection_lower_index.index[0]
-                if (
-                    selection_lower_index.loc[
-                        lower_index, "Cumulative Target Lower Bound"
-                    ]
-                    != lower_bound_required_cumulative_mass
-                ):
-                    lower_index = lower_index - 1
+            # if selection_lower_index.empty is True:
+            #     lower_index = input_order_data_frame.index[-1]
+            # else:
+            #     lower_index = selection_lower_index.index[0]
+            #     if (
+            #         selection_lower_index.loc[
+            #             lower_index, "Cumulative Target Lower Bound"
+            #         ]
+            #         != lower_bound_required_cumulative_mass
+            #     ):
+            #         lower_index = lower_index - 1
 
             # Determine Upper index
             selection_upper_index = input_order_data_frame.loc[
@@ -397,9 +387,16 @@ class OrderDistributor:
             cumulative_mass_at_upper_index = input_order_data_frame.at[
                 upper_index, "Cumulative Target Upper Bound"
             ]
-            if cumulative_mass_at_upper_index < upper_bound_required_cumulative_mass:
+
+            if (
+                cumulative_mass_at_upper_index < upper_bound_required_cumulative_mass
+                and not math.isclose(
+                    cumulative_mass_at_upper_index, upper_bound_required_cumulative_mass
+                )
+            ):
                 if upper_index < input_order_data_frame.shape[0] - 1:
                     upper_index = upper_index + 1
+
             updated_cumulative_mass_at_upper_index = input_order_data_frame.at[
                 upper_index, "Cumulative Target Upper Bound"
             ]
@@ -409,7 +406,9 @@ class OrderDistributor:
                 - lower_bound_required_cumulative_mass
             )
 
-            if available_mass_in_order_range < order_target_mass:
+            if available_mass_in_order_range < order_target_mass and not math.isclose(
+                available_mass_in_order_range, order_target_mass
+            ):
                 production_target = available_mass_in_order_range
             else:
                 production_target = order_target_mass
@@ -428,6 +427,7 @@ class OrderDistributor:
             list_of_aggregated_production_order.append(production_order)
 
         output_data_frame = pandas.DataFrame(data=list_of_aggregated_production_order)
+
         # print("input_order_data_frame", input_order_data_frame)
         # print(input_order_data_frame.loc[:, "production_target"].sum())
         # print("output_data_frame", output_data_frame)
@@ -478,7 +478,7 @@ class OrderDistributor:
     def check_if_process_chain_orders_are_satisfied(self) -> bool:
         process_chain_orders_are_satisfied = (
             self.current_splitted_order.current_order_number
-            >= self.current_splitted_order.order_collection_data_frame.shape[0]
+            >= self.current_splitted_order.order_data_frame.shape[0]
         )
         return process_chain_orders_are_satisfied
 

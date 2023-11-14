@@ -9,7 +9,7 @@ from ethos_penalps.data_classes import (
     LoopCounter,
     ProcessChainIdentifier,
 )
-from ethos_penalps.debugging_information import DebuggingInformationLogger
+from ethos_penalps.utilities.debugging_information import DebuggingInformationLogger
 from ethos_penalps.load_profile_calculator import LoadProfileHandler
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
@@ -40,7 +40,7 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.post_processing.report_generator.failed_simulation_report_generator import (
     FailedRunReportGenerator,
 )
-from ethos_penalps.debugging_information import (
+from ethos_penalps.utilities.debugging_information import (
     DebuggingInformationLogger,
     NodeOperationViewer,
 )

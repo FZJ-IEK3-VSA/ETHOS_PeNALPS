@@ -2,7 +2,7 @@ import datetime
 import pathlib
 
 from cutting_and_heating_chain import fill_cutting_and_heating_chain
-from forming_quenching_and_triming_chain import (
+from forming_quenching_and_trimming_chain import (
     fill_forming_quenching_and_trimming_chain,
 )
 
@@ -102,3 +102,7 @@ def test_write_production_plan():
     )
     pathlib.Path(list_of_output_file_paths[0]).unlink()
     pathlib.Path(list_of_output_file_paths[1]).unlink()
+
+
+if __name__ == "__main__":
+    test_write_production_plan()
