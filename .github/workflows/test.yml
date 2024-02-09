@@ -1,0 +1,81 @@
+name: Run ETHOS.PeNALPS Tests
+on:
+    push:
+      branches: main
+    pull_request:
+      branches: main
+    # Allows to trigger the workflow manually
+    workflow_dispatch:
+      branches: main
+    schedule:
+      # * is a special character in YAML so you have to quote this string
+      # Some Examples for cron syntax https://crontab.guru/examples.html
+      # Schedules job at any point after 12 pm
+      - cron:  '0 0 * * *'
+      # Weekly after sunday
+      # - cron: 0 0 * * 0
+  
+jobs:
+    TestGeokitCondaForge:
+      name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
+      runs-on: ${{ matrix.os }}
+      strategy:
+        fail-fast: false
+        matrix:
+          os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
+            path: './ETHOS_PENALPS'
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            miniforge-version: latest
+            channels: conda-forge
+            activate-environment: test_env
+        - name: Run tests
+          shell: pwsh
+          run: |
+            ls
+            echo "LS Done"
+            mamba install -n test_env ethos_penalps pytest
+            echo "Installation done"
+            conda list -n test_env
+            echo "libaries printed"
+            echo "start pytest"
+            conda run -n test_env pytest
+            echo "Pytest done"
+        
+    TestGeokitDevLocal:
+      name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
+      runs-on: ${{ matrix.os }}
+      strategy:
+        fail-fast: false
+        matrix:
+          os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
+            path: './ETHOS_PENALPS'
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            miniforge-version: latest
+            channels: conda-forge
+            activate-environment: test_env
+        - name: Run tests
+          shell: pwsh
+          run: |
+            ls
+            echo "LS Done"
+            cd ETHOS_PENALPS
+            mamba env create --name penalps_env --yes --file environment.yml
+            conda run --name penalps_env pip install . --no-deps
+            echo "Installation done"
+            conda list --name penalps_env
+            echo "libaries printed"
+            echo "start pytest"
+            conda run --name penalps_env pytest
+            echo "Pytest done"
