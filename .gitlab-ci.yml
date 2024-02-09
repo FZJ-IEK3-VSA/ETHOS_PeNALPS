@@ -1,14 +1,14 @@
 variables:
   BRANCH_NAME: "prepare-deployment"
 
-stages:       # List of stages for jobs, and their order of execution
+stages: # List of stages for jobs, and their order of execution
   - test
 
 # .deployment_rules: # Trigger job on push to master from other branch or Web UI
 #   rules:
 #     - if: $CI_COMMIT_BRANCH == $BRANCH_FOR_DEPLOYMENT && $CI_PIPELINE_SOURCE == "push"
 #     - if: $CI_PIPELINE_SOURCE == "web"
-    
+
 unit-test-job:
   # rules:
   #   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -17,10 +17,10 @@ unit-test-job:
   image: mambaorg/micromamba:latest
   before_script:
     # - micromamba shell init --shell=bash --prefix=~/micromamba
-    - micromamba create -c conda-forge -f environment.yml
+    - micromamba create -f environment.yml
     - eval "$(micromamba shell hook --shell=bash)"
     - micromamba activate ethos_penalps
-    - pip install .
+    - pip install . --no-deps
   script:
     - echo "Running unit tests..."
     - pytest

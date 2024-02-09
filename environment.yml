@@ -1,34 +1,33 @@
 name: ethos_penalps
 
 dependencies:
-- python >=3.7
-- pandas
-- jupyter-book
-- sphinx-autoapi
-- matplotlib
-- graphviz
-- python-graphviz
-- numpy < 1.24.0
-- sqlalchemy < 2.0
-- plotly
-- networkx
-- openpyxl
-- xlsxwriter
-- prospector
-- matplotlib
-- pytest
-- pip >=21.3
-- black
-- pint
-- proplot
-- datapane
-- svglib
-- cloudpickle
-- seaborn
-- workalendar
-- datetimerange
-- tectonic
-- typeguard
-- dataclasses-json
-- pdftopng
-- jsonpickle
+  - conda-forge::python >=3.10
+  - conda-forge::pandas
+  - conda-forge::jupyter-book
+  - conda-forge::sphinx-autoapi
+  - conda-forge::matplotlib
+  - conda-forge::graphviz
+  - conda-forge::python-graphviz
+  - conda-forge::numpy >1.23.5
+  - conda-forge::sqlalchemy < 2.0
+  - conda-forge::plotly
+  - conda-forge::networkx
+  - conda-forge::openpyxl
+  - conda-forge::xlsxwriter
+  - conda-forge::prospector
+  - conda-forge::pytest
+  - conda-forge::pip >=21.3
+  - conda-forge::black
+  - conda-forge::pint
+  - conda-forge::proplot
+  - conda-forge::datapane
+  - conda-forge::svglib
+  - conda-forge::cloudpickle
+  - conda-forge::seaborn
+  - conda-forge::workalendar
+  - conda-forge::datetimerange
+  - conda-forge::tectonic
+  - conda-forge::typeguard
+  - conda-forge::dataclasses-json
+  - conda-forge::pdftopng
+  - conda-forge::jsonpickle
