@@ -8,7 +8,7 @@ dependencies:
   - conda-forge::matplotlib
   - conda-forge::graphviz
   - conda-forge::python-graphviz
-  - conda-forge::numpy >23.5
+  - conda-forge::numpy >1.23.5
   - conda-forge::sqlalchemy < 2.0
   - conda-forge::plotly
   - conda-forge::networkx
