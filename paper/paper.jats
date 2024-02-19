@@ -105,9 +105,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="summary">
   <title>Summary</title>
   <p>ETHOS.PeNALPS (Petri Net Agent-based Load Profile Simulator) is a
-  Python library for simulating the of load profiles of industrial
+  Python library for simulating the load profiles of industrial
   manufacturing processes for arbitrary energy carriers. It is part of
-  ETHOS (Energy Transformation Pathway Optimization Suite). Load
+  <ext-link ext-link-type="uri" xlink:href="https://go.fzj.de/ethos_suite">ETHOS
+  (Energy Transformation Pathway Optimization Suite)</ext-link>. Load
   profiles are energy demand time series. Processes that can be
   simulated using ETHOS.PeNALPS include, for example, steel, paper, and
   industrial food production.</p>

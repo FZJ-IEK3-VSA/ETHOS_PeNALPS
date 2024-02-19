@@ -1,6 +1,6 @@
 # ETHOS.PeNALPS
 
-ETHOS.PeNALPS (Petri Net Agent based Load Profile Simulator) is a Python library for the simulation of load profiles of industrial manufacturing processes. It is part of [ETHOS (Energy Transformation Pathway Optimization Suite)](https://www.fz-juelich.de/de/iek/iek-3/leistungen/model-services). Load profiles are energy demand time series. Processes that can be simulated using ETHOS.PeNALPS include, for example, steel, paper, and industrial food production. One or multiple product orders are passed to the model which starts the simulation and eventually creates the desired load profiles.
+ETHOS.PeNALPS (Petri Net Agent based Load Profile Simulator) is a Python library for the simulation of load profiles of industrial manufacturing processes. It is part of [ETHOS (Energy Transformation Pathway Optimization Suite)](https://go.fzj.de/ethos_suite). Load profiles are energy demand time series. Processes that can be simulated using ETHOS.PeNALPS include, for example, steel, paper, and industrial food production. One or multiple product orders are passed to the model which starts the simulation and eventually creates the desired load profiles.
 
 # Working Principle
 
@@ -25,7 +25,7 @@ Also two examples for a [toffee production process](examples/toffee_example.md) 
 # Installation
 
 ## Requirements
-The installation process uses a Conda-based Python package manager. We highly recommend using (Micro-)Mamba instead of Anaconda. The recommended way to use Mamba on your system is to install the Miniforge distribution. They offer installers for Windows, Linux and OS X. Have a look at the [Mamba installation guide](https://mamba.readthedocs.io/en/latest/mamba-installation.html#mamba-install) for further details. In the following commands mamba and conda are exchangeable if you prefer to use conda or mamba. 
+The installation process uses a Conda-based Python package manager. We highly recommend using (Micro-)Mamba instead of Anaconda. The recommended way to use Mamba on your system is to install the Miniforge distribution. They offer installers for Windows, Linux and OS X. Have a look at the [Mamba installation guide](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) for further details. In the following commands mamba and conda are exchangeable if you prefer to use conda or mamba. 
 
 
 ## Installation via conda-forge
