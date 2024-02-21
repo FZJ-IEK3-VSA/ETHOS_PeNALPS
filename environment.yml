@@ -29,5 +29,5 @@ dependencies:
   - conda-forge::tectonic
   - conda-forge::typeguard
   - conda-forge::dataclasses-json
-  - conda-forge::pdftopng
   - conda-forge::jsonpickle
+  - conda-forge::pdf2image
