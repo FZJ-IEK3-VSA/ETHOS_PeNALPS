@@ -1,11 +1,18 @@
 import os
 import subprocess
+import tempfile
 import uuid
 import webbrowser
 from dataclasses import dataclass, field
 
 import numpy
 import pandas
+from pdf2image import convert_from_path
+from pdf2image.exceptions import (
+    PDFInfoNotInstalledError,
+    PDFPageCountError,
+    PDFSyntaxError,
+)
 
 from ethos_penalps.network_level import NetworkLevel
 from ethos_penalps.post_processing.tikz_visualizations.tikz_wrapper import (
@@ -195,12 +202,12 @@ class SortedProcessChainLevel:
         self.list_of_optional_sinks = []
         self.list_of_optional_sources = []
         self.dictionary_of_tikz_process_node_names: dict[str, str] = {}
-        self.dictionary_of_tikz_process_node_names[
-            self.main_sink.name
-        ] = self.unique_sink_name
-        self.dictionary_of_tikz_process_node_names[
-            self.main_source.name
-        ] = self.unique_source_name
+        self.dictionary_of_tikz_process_node_names[self.main_sink.name] = (
+            self.unique_sink_name
+        )
+        self.dictionary_of_tikz_process_node_names[self.main_source.name] = (
+            self.unique_source_name
+        )
         for process_node in self.process_chain.process_node_dict.values():
             if type(process_node) is ProcessStep:
                 self.sorted_process_step_list.append(process_node)
@@ -217,9 +224,9 @@ class SortedProcessChainLevel:
                         node_options="ProcessStepNode",
                     )
                 )
-                self.dictionary_of_tikz_process_node_names[
-                    process_node.name
-                ] = unique_process_node_name
+                self.dictionary_of_tikz_process_node_names[process_node.name] = (
+                    unique_process_node_name
+                )
         self.process_step_chain_length = len(self.sorted_process_step_list)
 
 
@@ -528,14 +535,11 @@ class EnterpriseGraphBuilderTikz:
 
     def convert_pdf_to_png(self, path_to_pdf: str) -> str:
         path_to_png = path_to_pdf[:-4] + ".png"
-        subprocess.run(
-            [
-                "pdftopng",
-                path_to_pdf,
-                path_to_png,
-            ],
-            check=True,
-        )
+        with tempfile.TemporaryDirectory() as path:
+            list_of_pillow_images = convert_from_path(path_to_pdf)
+            for image in list_of_pillow_images:
+                converted_image = image.convert("RGBA")
+                converted_image.save(path_to_png)
         return path_to_png
 
     def create_enterprise_graph(

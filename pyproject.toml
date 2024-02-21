@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ethos_penalps"
-version = "1.0.1"
+version = "1.0.2"
 description = "A package to create energy load curves for industry locations in Germany"
 readme = "README.md"
 authors = [
