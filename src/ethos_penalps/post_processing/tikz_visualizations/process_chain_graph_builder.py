@@ -1,10 +1,12 @@
 import os
 import subprocess
+import tempfile
 import uuid
 import webbrowser
 from dataclasses import dataclass, field
 
 import pandas
+from pdf2image import convert_from_path
 
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.process_step import ProcessStep
@@ -212,9 +214,9 @@ class PathPortPair:
 
 @dataclass
 class EdgePath:
-    list_of_edge_node_pairs: list[
-        ForwardEdge | BackwardEdge | IntermediateEdge
-    ] = field(default_factory=list)
+    list_of_edge_node_pairs: list[ForwardEdge | BackwardEdge | IntermediateEdge] = (
+        field(default_factory=list)
+    )
 
 
 @dataclass
@@ -480,9 +482,9 @@ class StatePathHandler:
             self.list_of_initial_junction_state_connectors.append(
                 path_junction.state_connector
             )
-            self.dict_of_all_juctions[
-                path_junction.state_path_connector
-            ] = path_junction
+            self.dict_of_all_juctions[path_junction.state_path_connector] = (
+                path_junction
+            )
             self.list_of_remaining_junctions.append(path_junction)
 
     def pop_path_junction(self) -> PathJunction:
@@ -517,9 +519,9 @@ class ProcessStateMatrixBuilder:
         display_names_dict,
     ) -> None:
         self.state_path_handler: StatePathHandler = StatePathHandler()
-        self.unique_process_state_names: dict[
-            str, dict[str, str] | str
-        ] = unique_process_state_names
+        self.unique_process_state_names: dict[str, dict[str, str] | str] = (
+            unique_process_state_names
+        )
         self.display_names_dict: dict[str, dict[str, str] | str] = display_names_dict
         self.process_state_handler: ProcessStateHandler = process_state_handler
         self.output_stream_state_name = (
@@ -1089,9 +1091,9 @@ class GraphBuilder:
             if isinstance(process_node, ProcessStep):
                 unique_process_node_name = process_node_name.replace(" ", "-")
                 unique_process_node_name = unique_process_node_name.replace("_", "-")
-                self.unique_process_node_name_dict[
-                    process_node_name
-                ] = unique_process_node_name
+                self.unique_process_node_name_dict[process_node_name] = (
+                    unique_process_node_name
+                )
                 self.unique_process_state_names[process_node_name] = {}
                 for (
                     process_state_name
@@ -1106,9 +1108,9 @@ class GraphBuilder:
             elif isinstance(process_node, (Source, Sink)):
                 unique_process_node_name = process_node_name.replace(" ", "")
                 unique_process_node_name = unique_process_node_name.replace("_", "-")
-                self.unique_process_node_name_dict[
-                    process_node_name
-                ] = unique_process_node_name
+                self.unique_process_node_name_dict[process_node_name] = (
+                    unique_process_node_name
+                )
 
     def create_display_names(self):
         """Remove whitespaces from node names"""
@@ -1261,14 +1263,12 @@ class GraphBuilder:
 
     def convert_pdf_to_png(self, path_to_pdf: str) -> str:
         path_to_png = path_to_pdf[:-4] + ".png"
-        subprocess.run(
-            [
-                "pdftopng",
-                path_to_pdf,
-                path_to_png,
-            ],
-            check=True,
-        )
+        with tempfile.TemporaryDirectory() as path:
+            list_of_pillow_images = convert_from_path(path_to_pdf)
+
+            for image in list_of_pillow_images:
+                converted_image = image.convert("RGBA")
+                converted_image.save(path_to_png)
         return path_to_png
 
     def create_enterprise_graph(
