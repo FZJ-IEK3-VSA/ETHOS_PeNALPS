@@ -1,22 +1,28 @@
 name: Run ETHOS.PeNALPS Tests
-on:
-    push:
-      branches: main
-      branches: dev
-    pull_request:
-      branches: main
-      branches: dev
-    # Allows to trigger the workflow manually
-    workflow_dispatch:
-      branches: main
-    schedule:
-      # * is a special character in YAML so you have to quote this string
-      # Some Examples for cron syntax https://crontab.guru/examples.html
-      # Schedules job at any point after 12 pm
-      - cron:  '0 0 * * *'
-      # Weekly after sunday
-      # - cron: 0 0 * * 0
-  
+on: 
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Manual run' 
+  push:
+    branches: 
+      - main
+      - dev
+  pull_request:
+    branches: 
+      - main
+      - dev
+  # Allows to trigger the workflow manually
+    
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # Some Examples for cron syntax https://crontab.guru/examples.html
+    # Schedules job at any point after 12 pm
+    - cron:  '0 0 * * *'
+    # Weekly after sunday
+    # - cron: 0 0 * * 0
+
+
 jobs:
     TestPeNALPSCondaForge:
       name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
