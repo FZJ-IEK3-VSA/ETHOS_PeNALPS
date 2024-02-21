@@ -2,8 +2,10 @@ name: Run ETHOS.PeNALPS Tests
 on:
     push:
       branches: main
+      branches: dev
     pull_request:
       branches: main
+      branches: dev
     # Allows to trigger the workflow manually
     workflow_dispatch:
       branches: main
@@ -16,7 +18,7 @@ on:
       # - cron: 0 0 * * 0
   
 jobs:
-    TestGeokitCondaForge:
+    TestPeNALPSCondaForge:
       name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
       runs-on: ${{ matrix.os }}
       strategy:
@@ -47,7 +49,7 @@ jobs:
             conda run -n test_env pytest
             echo "Pytest done"
         
-    TestGeokitDevLocal:
+    TestPeNALPSDevLocal:
       name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
       runs-on: ${{ matrix.os }}
       strategy:
