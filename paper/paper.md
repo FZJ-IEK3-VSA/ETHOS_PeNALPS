@@ -115,5 +115,8 @@ To overcome the lack of industrial load profiles, simulation tools and methods h
 
 The software eLOAD employs an approach similar to that from Sandhaas. Instead of applying it to individual industries, @Bomann.2015 applies it at a national level. They also assume demand response flexibility for some appliances. The source code and appliance load profiles used have also not been published. 
 
+# Authors Contribution 
+
+**Julian Belina**:**Noah Pflugradt**:conceptualisation, methododlogy, Supervision, Writing - Review & Editing
 
 # References
