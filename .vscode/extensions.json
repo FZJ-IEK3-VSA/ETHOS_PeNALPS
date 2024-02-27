@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "ms-python.flake8",
+        "matangover.mypy",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "njpwerner.autodocstring",
+        "ms-python.pylint",
+        "ms-python.mypy-type-checker"
+    ]
+}
