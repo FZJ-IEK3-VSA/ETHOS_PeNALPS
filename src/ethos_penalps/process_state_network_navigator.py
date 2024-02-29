@@ -73,7 +73,11 @@ class ProcessStateNetworkNavigator:
 
         self.production_plan: ProductionPlan = production_plan
         self.time_data_at_start: TimeData
-        self.simulation_state_data_at_start: PreProductionStateData | PostProductionStateData | ValidatedPostProductionStateData
+        self.simulation_state_data_at_start: (
+            PreProductionStateData
+            | PostProductionStateData
+            | ValidatedPostProductionStateData
+        )
         self.branch_data_at_start: OutputBranchData
 
     def determine_if_output_stream_requires_adaption(
@@ -600,7 +604,7 @@ class ProcessStateNetworkNavigator:
                     temporary_production_plan.stream_state_dict[input_stream_name][-1]
                 )
                 process_state_entry = (
-                    process_state.create_process_step_production_plan_entry(
+                    process_state._create_process_step_production_plan_entry(
                         process_state_state=process_state_state,
                         input_stream_state=input_stream_production_plan_entry,
                     )
@@ -608,7 +612,7 @@ class ProcessStateNetworkNavigator:
 
             else:
                 process_state_entry = (
-                    process_state.create_process_step_production_plan_entry(
+                    process_state._create_process_step_production_plan_entry(
                         process_state_state=process_state_state
                     )
                 )
@@ -618,9 +622,9 @@ class ProcessStateNetworkNavigator:
                 process_step_name
             ].extend(process_state_entry_list)
         else:
-            temporary_production_plan.process_step_states_dict[
-                process_step_name
-            ] = process_state_entry_list
+            temporary_production_plan.process_step_states_dict[process_step_name] = (
+                process_state_entry_list
+            )
 
         self.process_state_handler.process_step_data.state_data_container.update_temporary_production_plan(
             updated_temporary_production_plan=temporary_production_plan

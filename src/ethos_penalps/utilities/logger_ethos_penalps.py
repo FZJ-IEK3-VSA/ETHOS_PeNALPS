@@ -28,9 +28,9 @@ class ContextFilter(logging.Filter):
 
 
 class PeNALPSLogger:
-    logger_name = "ethos_elpsi"
+    logger_name = "ethos_penalps"
     table_delimiter = "DELIMITER"
-    preprend_loop_counter = True
+    prepend_loop_counter = True
     has_been_called: bool = False
     logger = logging.getLogger(logger_name)
 
@@ -54,7 +54,7 @@ class PeNALPSLogger:
         table_logger: logging.Logger = PeNALPSLogger.logger
         return table_logger
 
-    def get_human_readable_logger(logging_level=logging.INFO) -> logging.Logger:
+    def get_human_readable_logger(logging_level: int = logging.INFO) -> logging.Logger:
         # create logger
         logger: logging.Logger = PeNALPSLogger.logger
 
@@ -133,7 +133,7 @@ class PeNALPSLogger:
                 delimiter=PeNALPSLogger.table_delimiter,
                 engine="python",
             )
-        if PeNALPSLogger.preprend_loop_counter:
+        if PeNALPSLogger.prepend_loop_counter:
             data_frame.columns = [
                 "Current node name",
                 "Main Loop Iteration",
@@ -142,7 +142,7 @@ class PeNALPSLogger:
                 "Module line",
                 "Log Message",
             ]
-        elif PeNALPSLogger.preprend_loop_counter is False:
+        elif PeNALPSLogger.prepend_loop_counter is False:
             data_frame.columns = [
                 "Module",
                 "Method",

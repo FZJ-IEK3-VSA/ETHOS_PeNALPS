@@ -67,7 +67,7 @@ class ProcessState(ABC):
             process_state_name=self.process_state_name,
         )
 
-    def create_process_step_production_plan_entry(
+    def _create_process_step_production_plan_entry(
         self, process_state_state: ProcessStateData
     ) -> ProcessStepProductionPlanEntry:
         entry = ProcessStepProductionPlanEntry(
@@ -300,8 +300,10 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
                 + self.process_step_name
             )
         if isinstance(input_stream, BatchStream):
-            input_stream: BatchStream = self.process_step_data.stream_handler.get_stream(
-                stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
+            input_stream: BatchStream = (
+                self.process_step_data.stream_handler.get_stream(
+                    stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
+                )
             )
             next_stream_end_time = (
                 self.process_step_data.time_data.get_next_stream_end_time()
@@ -344,8 +346,10 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
             self.process_step_data.time_data.set_next_stream_end_time(
                 next_stream_end_time=next_stream_end_time
             )
-            input_stream: BatchStream = self.process_step_data.stream_handler.get_stream(
-                stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
+            input_stream: BatchStream = (
+                self.process_step_data.stream_handler.get_stream(
+                    stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
+                )
             )
             next_stream_end_time = (
                 self.process_step_data.time_data.get_next_stream_end_time()
@@ -407,11 +411,12 @@ class IntermediateState(ProcessState, ABC):
 
 
 class IntermediateStateBasedOnEnergy(IntermediateState):
-    def create_process_step_production_plan_entry(
+    def _create_process_step_production_plan_entry(
         self,
         process_state_state: ProcessStateData,
-        input_stream_state: BatchStreamProductionPlanEntry
-        | ContinuousStreamProductionPlanEntry,
+        input_stream_state: (
+            BatchStreamProductionPlanEntry | ContinuousStreamProductionPlanEntry
+        ),
     ) -> ProcessStepProductionPlanEntry:
         if isinstance(input_stream_state, BatchStreamProductionPlanEntry):
             total_stream_mass = input_stream_state.batch_mass_value
@@ -703,7 +708,7 @@ class BatchInputStreamRequestingStateWithStorage(InputStreamProvidingState):
 class BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
     BatchInputStreamRequestingStateWithStorage
 ):
-    def create_process_step_production_plan_entry(
+    def _create_process_step_production_plan_entry(
         self,
         process_state_state: ProcessStateData,
         input_stream_state: ContinuousStreamState | BatchStreamState,
@@ -757,9 +762,9 @@ class ProcessStateSwitchHandler:
                 + " is already in process state switch dictionary of :"
                 + str(self.process_step_data.process_step_name)
             )
-        self.process_state_switch_dictionary[
-            process_state_switch.state_connector
-        ] = process_state_switch
+        self.process_state_switch_dictionary[process_state_switch.state_connector] = (
+            process_state_switch
+        )
 
     def create_process_state_switch_at_next_discrete_event(
         self, start_process_state: ProcessState, end_process_state: ProcessState

@@ -1,7 +1,7 @@
 # Book settings
 # Learn more at https://jupyterbook.org/customize/config.html
 
-title: ETHOS.PeNALPS 
+title: ETHOS.PeNALPS
 author: Julian Belina
 logo: ./visualizations/logos/fzj_logo.svg
 
@@ -19,12 +19,11 @@ latex:
 # bibtex_bibfiles:
 #   - references.bib
 
-
 # Information about where the book exists on the web
 repository:
-  url: https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS  # Online location of your book
-  path_to_book: documentation  # Optional path to your book, relative to the repository root
-  branch: main  # Which branch of the repository should be used when creating links (optional)
+  url: https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS # Online location of your book
+  path_to_book: documentation # Optional path to your book, relative to the repository root
+  branch: main # Which branch of the repository should be used when creating links (optional)
 
 # Add GitHub buttons to your book
 # See https://jupyterbook.org/customize/config.html#add-a-link-to-your-repository
@@ -39,22 +38,18 @@ sphinx:
     - sphinx.ext.autosummary
     - sphinx.ext.inheritance_diagram
 
-
-
   config:
-    autoapi_dirs : ['../src/ethos_penalps']
+    autoapi_dirs: ["../src/ethos_penalps"]
     autoapi_add_toctree_entry: false
-    autoapi_file_patterns : ['*.py']
+    autoapi_file_patterns: ["*.py"]
     autosummary_generate: false
     autoapi_keep_files: true
     autoapi_generate_api_docs: true
     suppress_warnings: ["etoc.toctree"]
-    
-    # exclude_patterns : ['_build', '_templates','ethos_elpsi_articles','autoapi','visualizations','knowledge_articles','documentation']
 
-  autoapi_options: 
+    # exclude_patterns : ['_build', '_templates','autoapi','visualizations','knowledge_articles','documentation']
+
+  autoapi_options:
     show-module-summary: true
 bibtex_bibfiles:
   - references.bib
-
-

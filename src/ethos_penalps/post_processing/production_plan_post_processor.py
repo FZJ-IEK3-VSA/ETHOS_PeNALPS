@@ -175,9 +175,9 @@ class ProcessStepPostProcessor:
         input_stream_post_processor: StreamPostProcessor,
         output_stream_post_processor: StreamPostProcessor,
     ) -> None:
-        self.list_of_process_step_entries: list[
-            ProcessStepProductionPlanEntry
-        ] = list_of_process_step_entries[::-1]
+        self.list_of_process_step_entries: list[ProcessStepProductionPlanEntry] = (
+            list_of_process_step_entries[::-1]
+        )
         self.process_step: ProcessStep = process_step
         self.input_stream_post_processor: StreamPostProcessor = (
             input_stream_post_processor
@@ -198,7 +198,7 @@ class ProcessStepPostProcessor:
         ):
             idle_state = self.process_step.process_state_handler.get_idle_state()
             new_first_process_step_entry = (
-                idle_state.create_process_step_production_plan_entry(
+                idle_state._create_process_step_production_plan_entry(
                     process_state_state=ProcessStateData(
                         process_state_name=idle_state.process_state_name,
                         start_time=start_date,
@@ -222,7 +222,7 @@ class ProcessStepPostProcessor:
         ):
             idle_state = self.process_step.process_state_handler.get_idle_state()
             new_last_process_step_entry = (
-                idle_state.create_process_step_production_plan_entry(
+                idle_state._create_process_step_production_plan_entry(
                     process_state_state=ProcessStateData(
                         process_state_name=idle_state.process_state_name,
                         start_time=last_entry.end_time,
@@ -314,9 +314,9 @@ class ProductionPlanPostProcessor:
     def create_all_process_step_processors(self) -> dict[str, ProcessStepPostProcessor]:
         dict_of_process_step_processors = {}
         for process_step_name in self.production_plan.process_step_states_dict:
-            dict_of_process_step_processors[
-                process_step_name
-            ] = self.create_process_step_processor(process_step_name=process_step_name)
+            dict_of_process_step_processors[process_step_name] = (
+                self.create_process_step_processor(process_step_name=process_step_name)
+            )
 
         return dict_of_process_step_processors
 
