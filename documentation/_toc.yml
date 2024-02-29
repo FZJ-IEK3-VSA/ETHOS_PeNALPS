@@ -13,13 +13,15 @@ parts:
     chapters:
       - file: ethos_penalps_tutorial/overview.md
       - file: ethos_penalps_tutorial/single_cooker_process_chain.md
-      - file: ethos_penalps_tutorial/add_network_level_and_process_chains.md
+      - file: ethos_penalps_tutorial/add_more_states.md
+      - file: ethos_penalps_tutorial/add_more_chains.md
+      - file: ethos_penalps_tutorial/connect_two_process_steps_exclusively.md
+      - file: ethos_penalps_tutorial/connect_three_or_more_process_steps.md
   - caption: Basic Articles
     maxdepth: 3
     chapters:
       - file: ethos_penalps_articles/simulation_workflow.md
       - file: ethos_penalps_articles/model_description.md
-      - file: ethos_penalps_articles/bibliography.md
   - caption: API
     chapters:
       - file: autoapi/ethos_penalps/index.rst
@@ -27,3 +29,6 @@ parts:
     chapters:
       - file: examples/b_pillar_example.md
       - file: examples/toffee_example.md
+  - caption: Bibliography
+    chapters:
+      - file: ethos_penalps_articles/bibliography.md

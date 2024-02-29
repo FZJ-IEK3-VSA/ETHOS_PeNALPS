@@ -3,10 +3,19 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "cSpell.words": [
+        "autoapi",
+        "autodoc",
+        "autosummary",
+        "bibtex",
         "figwidth",
+        "Ginter",
         "jsonpickle",
+        "Korzeniowska",
+        "maxdepth",
         "penalps",
-        "pydantic"
+        "pydantic",
+        "targetname",
+        "timedelta"
     ],
     "python.testing.pytestArgs": [
         "."

@@ -1,16 +1,10 @@
 import datetime
 import logging
-from typeguard import install_import_hook
-
-install_import_hook("ethos_penalps")
 
 from ethos_penalps.data_classes import Commodity, LoadType
 from ethos_penalps.enterprise import Enterprise
 from ethos_penalps.order_generator import NOrderGenerator
-from ethos_penalps.stream import (
-    BatchStreamStaticData,
-    ContinuousStreamStaticData,
-)
+from ethos_penalps.stream import BatchStreamStaticData, ContinuousStreamStaticData
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
@@ -102,12 +96,12 @@ sink.add_input_stream(
 
 """ Create petri net for process step
 Each process state must have at least the following:
-- Either 
+- Either
     - one combined production state
     your_combined_state=process_step.process_state_handler.create_continuous_production_process_state_with_storage(
     process_state_name="your process state name"
     )
-    or 
+    or
         - an input stream requesting state
         your_input_stream_requesting_state=process_step.process_state_handler.create_continuous_input_stream_requesting_state(process_state_name="your input stream providing state")
         - and input stream requesting state
@@ -127,8 +121,12 @@ fill_raw_materials_state = (
     )
 )
 
-cooking_state = process_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
-    process_state_name="Cooking"
+heating_state = process_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
+    process_state_name="Heating"
+)
+
+hold_temperature_state = process_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
+    process_state_name="Hold Temperature"
 )
 
 discharge_goods_state = (
@@ -137,11 +135,14 @@ discharge_goods_state = (
     )
 )
 
+cleaning_state = process_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
+    process_state_name="Cleaning"
+)
+
 
 # Petri net transitions
-
 activate_not_cooking = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
-    start_process_state=discharge_goods_state,
+    start_process_state=cleaning_state,
     end_process_state=idle_state,
 )
 process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
@@ -157,33 +158,54 @@ process_step.process_state_handler.process_state_switch_selector_handler.create_
     process_state_switch=activate_filling
 )
 
-activate_cooking = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_delay(
+activate_heating = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_delay(
     start_process_state=fill_raw_materials_state,
-    end_process_state=cooking_state,
-    delay=datetime.timedelta(minutes=30),
+    end_process_state=heating_state,
+    delay=datetime.timedelta(minutes=1.82),
 )
 
 process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
-    process_state_switch=activate_cooking
+    process_state_switch=activate_heating
+)
+activate_hold_temperature = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_delay(
+    start_process_state=heating_state,
+    end_process_state=hold_temperature_state,
+    delay=datetime.timedelta(minutes=22.18),
+)
+
+process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+    process_state_switch=activate_hold_temperature
 )
 
 
 activate_discharging = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_output_stream(
-    start_process_state=cooking_state,
+    start_process_state=hold_temperature_state,
     end_process_state=discharge_goods_state,
 )
 process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
     process_state_switch=activate_discharging
 )
+activate_hold_temperature = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_delay(
+    start_process_state=discharge_goods_state,
+    end_process_state=cleaning_state,
+    delay=datetime.timedelta(minutes=3),
+)
 
+process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+    process_state_switch=activate_hold_temperature
+)
 
 electricity_load = LoadType(name="Electricity")
-cooking_state.create_process_state_energy_data_based_on_stream_mass(
-    specific_energy_demand=1.8,
+heating_state.create_process_state_energy_data_based_on_stream_mass(
+    specific_energy_demand=332.31,
     load_type=electricity_load,
     stream=raw_materials_to_cooking_stream,
 )
-
+hold_temperature_state.create_process_state_energy_data_based_on_stream_mass(
+    specific_energy_demand=498.46,
+    load_type=electricity_load,
+    stream=raw_materials_to_cooking_stream,
+)
 
 # Mass balances
 process_step.create_main_mass_balance(
@@ -207,7 +229,7 @@ enterprise.create_post_simulation_report(
     start_date=start_date,
     end_date=end_date,
     x_axis_time_delta=datetime.timedelta(hours=1),
-    resample_frequency="5min",
+    resample_frequency="1min",
     gantt_chart_end_date=end_date,
     gantt_chart_start_date=start_date,
 )

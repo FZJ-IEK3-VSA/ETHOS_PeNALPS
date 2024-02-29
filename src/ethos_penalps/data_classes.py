@@ -70,8 +70,8 @@ class ProductEnergyData(DataClassJsonMixin):
     product_commodity: Commodity
     specific_energy_demand: float
     load_type: LoadType
-    mass_unit: str = Units.energy_unit.__str__()
-    energy_unit: str = Units.energy_unit.__str__()
+    mass_unit: str = str(Units.energy_unit)
+    energy_unit: str = str(Units.energy_unit)
 
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
@@ -79,8 +79,8 @@ class StreamLoadEnergyData(DataClassJsonMixin):
     stream_name: str
     specific_energy_demand: float
     load_type: LoadType
-    mass_unit: str = Units.mass_unit.__str__()
-    energy_unit: str = Units.energy_unit.__str__()
+    mass_unit: str = str(Units.mass_unit)
+    energy_unit: str = str(Units.energy_unit)
 
 
 @dataclass(slots=True, frozen=True)
@@ -149,26 +149,22 @@ class CurrentProcessNode:
     node_name: str = "Node not set yet"
 
 
-def get_new_uuid() -> str:
-    return str(uuid.uuid4())
-
-
 @dataclass(frozen=True, eq=True, slots=True)
 class OutputBranchIdentifier:
     branch_number: float
-    global_unique_identifier: Optional[uuid.UUID] = field(default_factory=get_new_uuid)
+    global_unique_identifier: Optional[str] = field(default_factory=get_new_uuid)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class TemporalBranchIdentifier:
     branch_number: float
-    global_unique_identifier: Optional[uuid.UUID] = field(default_factory=get_new_uuid)
+    global_unique_identifier: Optional[str] = field(default_factory=get_new_uuid)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class StreamBranchIdentifier:
     stream_name: str
-    global_unique_identifier: Optional[uuid.UUID] = field(default_factory=get_new_uuid)
+    global_unique_identifier: Optional[str] = field(default_factory=get_new_uuid)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
@@ -191,7 +187,7 @@ class StaticTimePeriod:
 class ProcessChainIdentifier:
     chain_number: int
     chain_name: str
-    unique_identifier: uuid.UUID = get_new_uuid()
+    unique_identifier: str = get_new_uuid()
 
 
 @dataclass
@@ -200,7 +196,7 @@ class ProductionOrder:
     production_deadline: datetime.datetime
     order_number: float
     commodity: Commodity
-    global_unique_identifier: Optional[uuid.UUID] = field(default_factory=get_new_uuid)
+    global_unique_identifier: str = field(default_factory=get_new_uuid)
     produced_mass: float = 0
 
 
@@ -233,7 +229,7 @@ class OrderCollection:
         )
         self.order_data_frame.reset_index(inplace=True, drop=True)
 
-    def append_order_collection(self, order_collection):
+    def append_order_collection(self, order_collection: "OrderCollection"):
         if self.commodity != order_collection.commodity:
             warnings.warn("Tried to append order collection with different commodity.")
         self.order_data_frame = pandas.concat(
@@ -249,8 +245,8 @@ class ProcessStateEnergyLoadData(DataClassJsonMixin):
     process_step_name: str
     specific_energy_demand: float
     load_type: LoadType
-    mass_unit: str = Units.mass_unit.__str__()
-    energy_unit: str = Units.energy_unit.__str__()
+    mass_unit: str = str(Units.mass_unit)
+    energy_unit: str = str(Units.energy_unit)
 
 
 @dataclass(kw_only=True)
@@ -281,12 +277,12 @@ class ProcessStateEnergyData:
     def add_process_state_energy_load_data(
         self, process_state_energy_load_data: ProcessStateEnergyLoadData
     ):
-        self.dict_of_loads[
-            process_state_energy_load_data.load_type.uuid
-        ] = process_state_energy_load_data.load_type
-        self.dict_of_load_energy_data[
-            process_state_energy_load_data.load_type.uuid
-        ] = process_state_energy_load_data
+        self.dict_of_loads[process_state_energy_load_data.load_type.uuid] = (
+            process_state_energy_load_data.load_type
+        )
+        self.dict_of_load_energy_data[process_state_energy_load_data.load_type.uuid] = (
+            process_state_energy_load_data
+        )
 
     def get_dict_of_loads(self) -> dict[str, LoadType]:
         return self.dict_of_loads
