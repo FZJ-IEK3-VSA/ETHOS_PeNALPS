@@ -117,6 +117,6 @@ The software eLOAD employs an approach similar to that from Sandhaas. Instead of
 
 # Authors Contribution 
 
-**Julian Belina**:Software, Writing, Visualization, Methodology.**Noah Pflugradt**:Conceptualization, Methodology, Supervision, Writing - Review & Editing.**Detlef Stolten**:Conceptualization, Phd Supervision, Resources, Funding acquisition. 
+**Julian Belina**: Software, Writing, Visualization, Methodology.**Noah Pflugradt**: Conceptualization, Methodology, Supervision, Writing - Review & Editing.**Detlef Stolten**: Conceptualization, Phd Supervision, Resources, Funding acquisition. 
 
 # References
