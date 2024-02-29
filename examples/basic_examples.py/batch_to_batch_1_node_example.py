@@ -34,17 +34,15 @@ enterprise = Enterprise(
 # Create network level
 network_level = enterprise.create_network_level()
 
-input_batch_delay = datetime.timedelta(minutes=20)
-output_batch_delay = datetime.timedelta(minutes=40)
 
 # Determine all relevant commodities
-batch_product = Commodity(name="Continuous product")
-batch_raw_material = Commodity(name="Batch educt")
+output_commodity = Commodity(name="Product")
+input_commodity = Commodity(name="Educt")
 
 
 # Create all order for the simulation
 order_generator = NOrderGenerator(
-    commodity=batch_product,
+    commodity=output_commodity,
     mass_per_order=300,
     production_deadline=end_date,
     number_of_orders=1,
@@ -53,28 +51,26 @@ order_generator = NOrderGenerator(
 order_collection = order_generator.create_n_order_collection()
 
 # Create all sources, sinks and network level storages
-continuous_sink = network_level.create_main_sink(
-    name="Batch sink",
-    commodity=batch_product,
+sink = network_level.create_main_sink(
+    name="Sink",
+    commodity=output_commodity,
     order_collection=order_collection,
 )
-batch_source = network_level.create_main_source(
-    name="Batch source",
-    commodity=batch_raw_material,
+source = network_level.create_main_source(
+    name="Source",
+    commodity=input_commodity,
 )
 
 # Create first process chain
 
-process_chain = network_level.create_process_chain(
-    process_chain_name="Test process chain"
-)
+process_chain = network_level.create_process_chain(process_chain_name="Process Chain")
 
 # Add sources and sinks to process chain
-process_chain.add_sink(sink=continuous_sink)
-process_chain.add_source(source=batch_source)
+process_chain.add_sink(sink=sink)
+process_chain.add_source(source=source)
 
 # Create Process nodes
-batch_to_batch_step = process_chain.create_process_step(name="Batch to batch step")
+process_step = process_chain.create_process_step(name="Batch to batch process step")
 
 
 """ Create petri net for process step
@@ -95,60 +91,64 @@ Each process state must have at least the following:
     )
 """
 
-batch_idle_state = batch_to_batch_step.process_state_handler.create_idle_process_state(
+batch_idle_state = process_step.process_state_handler.create_idle_process_state(
     process_state_name="Waiting process step"
 )
-batch_input_state = batch_to_batch_step.process_state_handler.create_batch_input_stream_requesting_state(
-    process_state_name="Batch input state"
+batch_input_state = (
+    process_step.process_state_handler.create_batch_input_stream_requesting_state(
+        process_state_name="Batch input state"
+    )
 )
-batch_output_state = batch_to_batch_step.process_state_handler.create_batch_output_stream_providing_state(
-    process_state_name="Batch output state"
+batch_output_state = (
+    process_step.process_state_handler.create_batch_output_stream_providing_state(
+        process_state_name="Batch output state"
+    )
 )
 
 
 # Petri net transitions
 
-idle_state_activation = batch_to_batch_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
+idle_state_activation = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
     start_process_state=batch_output_state,
     end_process_state=batch_idle_state,
 )
-batch_to_batch_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
     process_state_switch=idle_state_activation
 )
-batch_input_request_state = batch_to_batch_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
+batch_input_request_state = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
     start_process_state=batch_idle_state,
     end_process_state=batch_input_state,
 )
 
-batch_to_batch_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
     process_state_switch=batch_input_request_state
 )
 
 
-output_providing_activation = batch_to_batch_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_output_stream(
+output_providing_activation = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_output_stream(
     start_process_state=batch_input_state,
     end_process_state=batch_output_state,
 )
-batch_to_batch_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+process_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
     process_state_switch=output_providing_activation
 )
 
 # Streams
 source_to_process_step = process_chain.stream_handler.create_batch_stream(
     batch_stream_static_data=BatchStreamStaticData(
-        start_process_step_name=batch_source.name,
-        end_process_step_name=batch_to_batch_step.name,
-        delay=input_batch_delay,
-        commodity=batch_raw_material,
+        start_process_step_name=source.name,
+        end_process_step_name=process_step.name,
+        delay=datetime.timedelta(minutes=20),
+        commodity=input_commodity,
         maximum_batch_mass_value=300,
     )
 )
 process_step_to_sink = process_chain.stream_handler.create_batch_stream(
     batch_stream_static_data=BatchStreamStaticData(
-        start_process_step_name=batch_to_batch_step.name,
-        end_process_step_name=continuous_sink.name,
-        delay=output_batch_delay,
-        commodity=batch_product,
+        start_process_step_name=process_step.name,
+        end_process_step_name=sink.name,
+        delay=datetime.timedelta(minutes=40),
+        commodity=output_commodity,
         maximum_batch_mass_value=300,
     )
 )
@@ -165,24 +165,24 @@ source_to_process_step.create_stream_energy_data(
 
 
 # Mass balances
-batch_to_batch_step.create_main_mass_balance(
-    commodity=batch_product,
+process_step.create_main_mass_balance(
+    commodity=output_commodity,
     input_to_output_conversion_factor=1,
     main_input_stream=source_to_process_step,
     main_output_stream=process_step_to_sink,
 )
 
 # Add internal storages (required)
-batch_to_batch_step.process_state_handler.process_step_data.main_mass_balance.create_storage(
+process_step.process_state_handler.process_step_data.main_mass_balance.create_storage(
     current_storage_level=0
 )
 
 # Add streams to sinks and sources
-batch_source.add_output_stream(
+source.add_output_stream(
     output_stream=source_to_process_step,
     process_chain_identifier=process_chain.process_chain_identifier,
 )
-continuous_sink.add_input_stream(
+sink.add_input_stream(
     input_stream=process_step_to_sink,
     process_chain_identifier=process_chain.process_chain_identifier,
 )

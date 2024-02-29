@@ -383,7 +383,11 @@ class ProcessStateHandler:
     ):
         logger.debug("Process state: %s has been added:", process_state)
         if process_state.process_state_name in self.process_state_dictionary:
-            raise Exception("Process state is already in process state dictionary")
+            raise Exception(
+                "Process state: "
+                + process_state.process_state_name
+                + " is already in process state dictionary"
+            )
         self.process_state_dictionary[process_state.process_state_name] = process_state
 
         if isinstance(process_state, OutputStreamProvidingState):
@@ -416,7 +420,7 @@ class ProcessStateHandler:
         )
 
         production_plan_entry = (
-            process_state.create_process_step_production_plan_entry()
+            process_state._create_process_step_production_plan_entry()
         )
 
         # self.list_of_production_plan_entries.append(production_plan_entry)

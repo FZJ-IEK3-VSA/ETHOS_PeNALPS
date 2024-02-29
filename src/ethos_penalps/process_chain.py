@@ -119,9 +119,9 @@ class ProcessChain:
                 if process_node_name in self.production_plan.process_step_states_dict:
                     pass
                 else:
-                    self.production_plan.process_step_states_dict[
-                        process_node_name
-                    ] = []
+                    self.production_plan.process_step_states_dict[process_node_name] = (
+                        []
+                    )
         for stream_name in self.stream_handler.stream_dict:
             if stream_name in self.production_plan.stream_state_dict:
                 pass
@@ -247,7 +247,13 @@ class ProcessChain:
             self.debugging_information_logger.add_node_operation(
                 node_operation=current_node_operation
             )
-            current_node_operation: UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder | TerminateProduction = current_node.process_input_order(
+            current_node_operation: (
+                UpstreamNewProductionOrder
+                | DownstreamValidationOrder
+                | DownstreamAdaptionOrder
+                | UpstreamAdaptionOrder
+                | TerminateProduction
+            ) = current_node.process_input_order(
                 input_node_operation=current_node_operation,
             )
 
