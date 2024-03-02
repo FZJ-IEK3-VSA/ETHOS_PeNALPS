@@ -77,7 +77,7 @@ def fill_blending_process_chain(
     """
     # Process Step 1
 
-    idle_state_mixer = blender_step.process_state_handler.create_idle_process_state(
+    idle_state = blender_step.process_state_handler.create_idle_process_state(
         process_state_name="Idle"
     )
     fill_raw_materials_state = (
@@ -86,11 +86,11 @@ def fill_blending_process_chain(
         )
     )
 
-    mixing_state = blender_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
-        process_state_name="Mix"
+    blender_state = blender_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
+        process_state_name="Blend"
     )
 
-    discharge_goods_state_mixer = (
+    discharge_goods_state_blender = (
         blender_step.process_state_handler.create_batch_output_stream_providing_state(
             process_state_name="Discharge"
         )
@@ -98,43 +98,43 @@ def fill_blending_process_chain(
 
     # Petri net transitions
 
-    activate_not_mixing = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
-        start_process_state=discharge_goods_state_mixer,
-        end_process_state=idle_state_mixer,
+    activate_not_blending = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
+        start_process_state=discharge_goods_state_blender,
+        end_process_state=idle_state,
     )
     blender_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
-        process_state_switch=activate_not_mixing
+        process_state_switch=activate_not_blending
     )
 
-    activate_filling_mixer = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
-        start_process_state=idle_state_mixer,
+    activate_filling_blender = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
+        start_process_state=idle_state,
         end_process_state=fill_raw_materials_state,
     )
 
     blender_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
-        process_state_switch=activate_filling_mixer
+        process_state_switch=activate_filling_blender
     )
 
-    activate_mixing = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_delay(
+    activate_blender = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_delay(
         start_process_state=fill_raw_materials_state,
-        end_process_state=mixing_state,
+        end_process_state=blender_state,
         delay=datetime.timedelta(minutes=5),
     )
 
     blender_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
-        process_state_switch=activate_mixing
+        process_state_switch=activate_blender
     )
 
-    activate_discharging_mixer = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_output_stream(
-        start_process_state=mixing_state,
-        end_process_state=discharge_goods_state_mixer,
+    activate_discharging_blender = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_output_stream(
+        start_process_state=blender_state,
+        end_process_state=discharge_goods_state_blender,
     )
     blender_step.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
-        process_state_switch=activate_discharging_mixer
+        process_state_switch=activate_discharging_blender
     )
 
     electricity_load = LoadType(name="Electricity")
-    mixing_state.create_process_state_energy_data_based_on_stream_mass(
+    blender_state.create_process_state_energy_data_based_on_stream_mass(
         specific_energy_demand=600,
         load_type=electricity_load,
         stream=raw_materials_to_cooking_stream,
