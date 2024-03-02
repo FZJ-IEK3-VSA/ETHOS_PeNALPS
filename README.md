@@ -82,7 +82,7 @@ pytest
 
 # Documentation 
 
-A ReadTheDocs Documentation can be found [here](ethospenalps.readthedocs.io/).
+A ReadTheDocs Documentation can be found [here](http://ethospenalps.readthedocs.io/).
 
 
 # Contributing
