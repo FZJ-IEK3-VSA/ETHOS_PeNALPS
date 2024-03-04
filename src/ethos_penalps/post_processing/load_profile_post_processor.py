@@ -331,53 +331,44 @@ class LoadProfilePostProcessor:
         figure, axes = matplotlib.pyplot.subplots(1, 1)
         axes.minorticks_off()
         converted_index = []
-        load_profile_matrix = carpet_plot_load_profile_matrix.data_frame
+        load_profile_matrix_data_frame = carpet_plot_load_profile_matrix.data_frame
         start_date = carpet_plot_load_profile_matrix.start_date_time_series
         end_date = carpet_plot_load_profile_matrix.end_date_time_series
         x_axis_whole_period = (
             carpet_plot_load_profile_matrix.x_axis_time_period_timedelta
         )
         resample_frequency = carpet_plot_load_profile_matrix.resample_frequency
-        for index_entry in load_profile_matrix.index:
+        for index_entry in load_profile_matrix_data_frame.index:
             if isinstance(index_entry, datetime.datetime):
                 a = index_entry.to_pydatetime()
-                # print(a, type(a))
                 py_date_time_entry = index_entry.to_pydatetime(a)
-                # cut_py_date_time_entry = py_date_time_entry.time()
-                # converted_index.append(py_date_time_entry.strftime(y_axis_time_format))
-                converted_index.append(py_date_time_entry)
+                converted_index.append(str(py_date_time_entry))
             else:
                 converted_index.append(index_entry)
-        load_profile_matrix.index = converted_index
+        load_profile_matrix_data_frame.index = converted_index
+        converted_row_index = []
+        for row_entry in load_profile_matrix_data_frame.columns:
+            if isinstance(row_entry, datetime.datetime):
+                a = index_entry.to_pydatetime()
+                py_date_time_entry = row_entry.to_pydatetime(a)
+                converted_row_index.append(
+                    str(py_date_time_entry).strftime(y_axis_time_format)
+                )
+            else:
+                converted_row_index.append(index_entry)
+        load_profile_matrix_data_frame.columns = converted_row_index
 
-        load_profile_matrix_numpy = load_profile_matrix.to_numpy()
+        load_profile_matrix_numpy = load_profile_matrix_data_frame.to_numpy()
 
         searborn_plot = seaborn.heatmap(
-            load_profile_matrix_numpy,
+            load_profile_matrix_data_frame,
             cmap="coolwarm",
             ax=axes,
-            # vmin=0,
             center=0,
-            # yticklabels=converted_index,
-            # yticklabels=False,
             cbar_kws={"label": "Average Power in MW"},
+            xticklabels="auto",
         )
-        timedelta_frequency = pandas.to_timedelta(resample_frequency)
-        total_energy_demand = self.get_energy_amount_from_energy_plotting_matrix(
-            load_profile_data_frame=load_profile_matrix,
-        )
-        total_energy_quantity = Units.compress_quantity(
-            unit=Units.energy_unit, quantity_value=total_energy_demand
-        )
-
-        matplotlib.pyplot.title(
-            label=str(round(total_energy_quantity.m, 2))
-            + " "
-            + create_subscript_string_matplotlib(
-                base=str(total_energy_quantity.u),
-                subscripted_text=str(load_type_name),
-            )
-        )
+        # timedelta_frequency = pandas.to_timedelta(resample_frequency)
 
         number_of_y_rows = len(converted_index)
         if x_axis_whole_period <= datetime.timedelta(hours=1):
@@ -408,16 +399,16 @@ class LoadProfilePostProcessor:
             lin_loactor = matplotlib.ticker.LinearLocator(
                 22,
             )
-        x_axis_time_format = "%Y.%d.%m"
-        list_index = 0
-        y_axis_ticks = []
-        for i in range(int(increment_index)):
-            list_index = list_index + increment_index
-            y_axis_ticks.append(list_index)
+        # x_axis_time_format = "%Y.%d.%m"
+        # list_index = 0
+        # y_axis_ticks = []
+        # for i in range(int(increment_index)):
+        #     list_index = list_index + increment_index
+        #     y_axis_ticks.append(list_index)
 
-        axes.yaxis.set_major_locator(lin_loactor)
+        # axes.yaxis.set_major_locator(lin_loactor)
 
-        axes.set_yticks = y_axis_ticks
+        # axes.set_yticks = y_axis_ticks
         y_label_list = []
         for y_tick_position in axes.get_yticks():
             table_index = y_tick_position - 0.5
@@ -429,45 +420,65 @@ class LoadProfilePostProcessor:
         def simple_label_formatter(y_coordinate, y_tick_label_counter):
             return y_label_list[y_tick_label_counter]
 
-        axes.yaxis.set_major_formatter(simple_label_formatter)
+        # axes.yaxis.set_major_formatter(simple_label_formatter)
 
-        start_date_matrix = load_profile_matrix.columns[0]
-        end_date_matrix = load_profile_matrix.columns[-1]
+        # start_date_matrix = load_profile_matrix_data_frame.columns[0]
+        # end_date_matrix = load_profile_matrix_data_frame.columns[-1]
 
-        index = pandas.date_range(
-            start=start_date_matrix,
-            end=end_date_matrix,
-            freq="1d",
-        )
-        start_index = index.get_indexer([start_date], method="nearest")[0]
-        end_index = index.get_indexer([end_date], method="nearest")[0]
+        # index = pandas.date_range(
+        #     start=start_date_matrix,
+        #     end=end_date_matrix,
+        #     freq="1d",
+        # )
+        # start_index = index.get_indexer([start_date], method="nearest")[0]
+        # end_index = index.get_indexer([end_date], method="nearest")[0]
         # if len(index) > 1:
         #     axes.set_xlim(xmin=start_index, xmax=end_index)
 
-        list_of_x_tick_labels = []
-        maximum_number_of_x_ticks = 10
-        current_number_of_ticks = end_index - start_index
-        if current_number_of_ticks < maximum_number_of_x_ticks:
-            number_of_x_ticks = current_number_of_ticks
-        else:
-            number_of_x_ticks = maximum_number_of_x_ticks
-        unrounded_ticks_list = numpy.linspace(
-            start=start_index, stop=end_index, num=number_of_x_ticks
-        )
-        rounded_ticks_list = numpy.floor(unrounded_ticks_list) + 0.5
+        # list_of_x_tick_labels = []
+        # maximum_number_of_x_ticks = 10
+        # current_number_of_ticks = end_index - start_index
+        # if current_number_of_ticks < maximum_number_of_x_ticks:
+        #     number_of_x_ticks = current_number_of_ticks
+        # else:
+        #     number_of_x_ticks = maximum_number_of_x_ticks
+        # unrounded_ticks_list = numpy.linspace(
+        #     start=start_index, stop=end_index, num=number_of_x_ticks
+        # )
+        # rounded_ticks_list = numpy.floor(unrounded_ticks_list) + 0.5
 
-        for x_tick in rounded_ticks_list:
-            list_of_x_tick_labels.append(
-                load_profile_matrix.columns[int(x_tick)].strftime(x_axis_time_format)
-            )
-            # index_x_axis = index_x_axis + increment_x_axis
+        # for x_tick in rounded_ticks_list:
+        #     list_of_x_tick_labels.append(
+        #         load_profile_matrix_data_frame.columns[int(x_tick)].strftime(
+        #             x_axis_time_format
+        #         )
+        #     )
+        # index_x_axis = index_x_axis + increment_x_axis
 
-        axes.set_xticks(ticks=rounded_ticks_list)
-        axes.set_xticklabels(list_of_x_tick_labels, rotation=45, ha="right")
+        # axes.set_xticks(ticks=rounded_ticks_list)
+        # axes.set_xticklabels(list_of_x_tick_labels, rotation=45, ha="right")
 
         matplotlib.pyplot.yticks(rotation=0)
+        matplotlib.pyplot.xticks(rotation=45, ha="right")
         matplotlib.pyplot.xlabel(x_axis_label_string)
         matplotlib.pyplot.ylabel(y_axis_label_string)
+
+        # # Set title
+        total_energy_demand = self.get_energy_amount_from_energy_plotting_matrix(
+            load_profile_data_frame=load_profile_matrix_data_frame,
+        )
+        total_energy_quantity = Units.compress_quantity(
+            unit=Units.energy_unit, quantity_value=total_energy_demand
+        )
+
+        matplotlib.pyplot.title(
+            label=str(round(total_energy_quantity.m, 2))
+            + " "
+            + create_subscript_string_matplotlib(
+                base=str(total_energy_quantity.u),
+                subscripted_text=str(load_type_name),
+            )
+        )
 
         return figure
 
