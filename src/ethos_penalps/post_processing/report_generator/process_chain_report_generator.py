@@ -178,7 +178,7 @@ class ReportGeneratorProcessChain:
         report = dp.save_report(
             blocks=view,
             path=path_to_main_file,
-            open=self.open_report_after_creation
+            open=self.open_report_after_creation,
             # layout=dp.PageLayout.SIDE,
         )
 
@@ -633,6 +633,7 @@ class ReportGeneratorProcessChain:
                             start_date_time_series=combined_load_profile_start_date,
                             x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
+                            object_name=stream_name,
                         )
                         fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
                             start_date=combined_load_profile_start_date,
@@ -697,6 +698,7 @@ class ReportGeneratorProcessChain:
                             start_date_time_series=combined_load_profile_start_date,
                             x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
+                            object_name=process_state_name,
                         )
                         fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
                             start_date=combined_load_profile_start_date,

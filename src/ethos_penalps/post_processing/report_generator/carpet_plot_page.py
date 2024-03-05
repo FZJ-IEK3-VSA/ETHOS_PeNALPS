@@ -95,6 +95,7 @@ class CarpetPlotPageGenerator:
                             start_date_time_series=combined_load_profile_start_date,
                             x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
+                            object_name=stream_name,
                         )
                         fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
                             carpet_plot_load_profile_matrix=load_profile_df_matrix,
@@ -161,6 +162,7 @@ class CarpetPlotPageGenerator:
                             start_date_time_series=combined_load_profile_start_date,
                             x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
+                            object_name=process_state_name,
                         )
                         fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
                             carpet_plot_load_profile_matrix=load_profile_df_matrix,

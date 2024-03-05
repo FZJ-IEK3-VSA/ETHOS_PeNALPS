@@ -1,6 +1,4 @@
 import datetime
-import math
-
 
 import matplotlib.dates
 import matplotlib.figure
@@ -10,35 +8,29 @@ import numpy
 import pandas
 import seaborn
 
-from dataclasses import dataclass
 from ethos_penalps.data_classes import (
+    CarpetPlotMatrix,
+    CarpetPlotMatrixEmpty,
     LoadProfileDataFrameMetaInformation,
     LoadProfileEntry,
     LoadType,
+    ListOfLoadProfileMetaData,
+    ListLoadProfileMetaDataEmpty,
 )
-from ethos_penalps.utilities.units import Units
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
+    ListOfLoadProfileEntryAnalyzer,
 )
-
-from ethos_penalps.utilities.units import Units
+from ethos_penalps.utilities.exceptions_and_warnings import Misconfiguration
 from ethos_penalps.utilities.general_functions import (
     check_if_date_1_is_before_date_2,
     check_if_date_1_is_before_or_at_date_2,
     create_subscript_string_matplotlib,
 )
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.units import Units
 
-itcs_logger = PeNALPSLogger.get_logger_without_handler()
-
-
-@dataclass
-class CarpetPlotMatrix:
-    data_frame: pandas.DataFrame
-    start_date_time_series: datetime.datetime
-    end_date_time_series: datetime.datetime
-    x_axis_time_period_timedelta: datetime.timedelta
-    resample_frequency: str = "1min"
+logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class LoadProfilePostProcessor:
@@ -57,20 +49,54 @@ class LoadProfilePostProcessor:
         list_of_load_profile_entries: list[LoadProfileEntry],
         start_date_time_series: datetime.datetime,
         end_date_time_series: datetime.datetime,
+        object_name: str,
         x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
         resample_frequency: str = "1min",
-    ) -> CarpetPlotMatrix:
+    ) -> CarpetPlotMatrix | CarpetPlotMatrixEmpty:
+        """Converts a list of load profiles into a CarpetPlotMatrix
+        which is used to create carpet plots.
+            1. The list of load profiles is homogenized
+            2. The list of load profiles is converted into a data frame
+            3. The data frame and meta information about the list
+                is passed to CarpetPlotMatrix instance.
+
+        Args:
+            list_of_load_profile_entries (list[LoadProfileEntry]): The list of load profiles
+            start_date_time_series (datetime.datetime): The new start time of the list of load profiles.
+                If the start time is later than the earliest time the start date is ignored.
+            end_date_time_series (datetime.datetime): The new end time of list of load profiles.
+                A zero demand entry is appended to series if the end date provided is later than
+                the last load profile entry in the list.
+            x_axis_time_period_timedelta (datetime.timedelta, optional): _description_. Defaults to datetime.timedelta(weeks=1).
+            resample_frequency (str, optional): _description_. Defaults to "1min".
+
+        Raises:
+            Exception: Raises an exception for ill defined start dates, end dates and x_axis_time_period_timedelta
+
+        Returns:
+            CarpetPlotMatrix: A dataclass that contains all information that is necessary to create
+            a load profile carpet plot.
+        """
         if not list_of_load_profile_entries:
-            print("Plot empty load profile")
-        number_of_periods = (
-            end_date_time_series - start_date_time_series
-        ) / x_axis_time_period_timedelta
-        if number_of_periods <= 0:
-            raise Exception(
-                "No positive number periods. Start time: "
+            logger.info(
+                "An empty list of load profiles has been passed to te load profile processor"
+            )
+
+        # Check if the start date, end date and x axis time delta are well defined.
+        total_time_period = end_date_time_series - start_date_time_series
+        if total_time_period <= datetime.timedelta(hours=0):
+            raise Misconfiguration(
+                """A negative time period has been defined for the processing of the load profile.
+                                   The start date: """
                 + str(start_date_time_series)
-                + " End time: "
+                + """should be earlier than the end date: """
                 + str(end_date_time_series)
+            )
+        number_of_periods = (total_time_period) / x_axis_time_period_timedelta
+        if number_of_periods <= 0:
+            raise Misconfiguration(
+                """No positive number periods. The x_axis_time_period_timedelta should 
+                be positive."""
             )
 
         load_profile_entry_post_processor = LoadProfileEntryPostProcessor()
@@ -82,25 +108,39 @@ class LoadProfilePostProcessor:
                 resample_frequency=resample_frequency,
             )
         )
-
-        resampled_load_profile_data_frame = (
-            self.convert_list_of_load_profile_entries_to_data_frame(
-                list_of_load_profile_entries=list_of_load_profile_entries
+        list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+        list_of_load_profile_meta_data = (
+            list_of_load_profile_entry_analyzer.create_list_of_load_profile_meta_data(
+                list_of_load_profiles=list_of_load_profile_entries,
+                object_name=object_name,
             )
         )
-        load_profile_matrix = (
-            self.convert_time_series_to_power_matrix_with_period_columns(
-                input_data_frame=resampled_load_profile_data_frame,
-                periodic_time_delta=x_axis_time_period_timedelta,
+        carpet_plot_matrix: CarpetPlotMatrix | CarpetPlotMatrixEmpty
+        if type(list_of_load_profile_meta_data) is ListOfLoadProfileMetaData:
+            resampled_load_profile_data_frame = (
+                self.convert_list_of_load_profile_entries_to_data_frame(
+                    list_of_load_profile_entries=list_of_load_profile_entries
+                )
             )
-        )
-        carpet_plot_matrix = CarpetPlotMatrix(
-            data_frame=load_profile_matrix,
-            start_date_time_series=start_date_time_series,
-            end_date_time_series=end_date_time_series,
-            x_axis_time_period_timedelta=x_axis_time_period_timedelta,
-            resample_frequency=resample_frequency,
-        )
+            load_profile_matrix = (
+                self.convert_time_series_to_power_matrix_with_period_columns(
+                    input_data_frame=resampled_load_profile_data_frame,
+                    x_axis_period_time_delta=x_axis_time_period_timedelta,
+                )
+            )
+            carpet_plot_matrix = CarpetPlotMatrix(
+                data_frame=load_profile_matrix,
+                start_date_time_series=start_date_time_series,
+                end_date_time_series=end_date_time_series,
+                x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+                resample_frequency=resample_frequency,
+                power_unit=list_of_load_profile_meta_data.power_unit,
+                energy_unit=list_of_load_profile_meta_data.energy_unit,
+                total_energy_demand=list_of_load_profile_meta_data.total_energy,
+                object_name=object_name,
+            )
+        elif type(list_of_load_profile_meta_data) is ListLoadProfileMetaDataEmpty:
+            carpet_plot_matrix = CarpetPlotMatrixEmpty(object_name=object_name)
 
         return carpet_plot_matrix
 
@@ -108,7 +148,7 @@ class LoadProfilePostProcessor:
         self, list_of_load_profile_entries: list[LoadProfileEntry]
     ) -> pandas.DataFrame:
         output_data_frame = pandas.DataFrame(data=list_of_load_profile_entries)
-        output_data_frame.index = output_data_frame.loc[:, "end_time"]
+        output_data_frame.index = output_data_frame.loc[:, "start_time"]
         return output_data_frame
 
     def convert_lpg_load_profile_to_carpet_plot(
@@ -116,6 +156,7 @@ class LoadProfilePostProcessor:
         list_of_load_profile_entries: list[LoadProfileEntry],
         start_date: datetime.datetime,
         end_date: datetime.datetime,
+        object_name: str,
         x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
         resample_frequency: str = "1min",
     ):
@@ -140,25 +181,26 @@ class LoadProfilePostProcessor:
     def convert_time_series_to_power_matrix_with_period_columns(
         self,
         input_data_frame: pandas.DataFrame,
-        periodic_time_delta: datetime.timedelta,
-        x_row_date_format: str = "%M",
-        period_name="Hour",
+        x_axis_period_time_delta: datetime.timedelta,
     ):
-        """_summary_
+        """Converts a data frame of load profile entries which are based
+        on the LoadProfile dataclass into a matrix representation of the
+        same load profile list. The output data frame
 
-        :param input_data_frame: _description_
-        :type input_data_frame: pandas.DataFrame
-        :param periodic_time_delta: _description_
-        :type periodic_time_delta: datetime.timedelta
-        :param x_row_date_format: _description_, defaults to "%M"
-        :type x_row_date_format: str, optional
-        :param period_name: _description_, defaults to "Hour"
-        :type period_name: str, optional
-        :raises Exception: _description_
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: _type_
+        Args:
+            input_data_frame (pandas.DataFrame): _description_
+            periodic_time_delta (datetime.timedelta): _description_
+            x_row_date_format (str, optional): _description_. Defaults to "%M".
+            period_name (str, optional): _description_. Defaults to "Hour".
+
+        Raises:
+            Exception: _description_
+            Exception: _description_
+
+        Returns:
+            _type_: _description_
         """
+
         # Check if separation into time periods is possible
         input_data_frame["start_time"] = pandas.to_datetime(
             input_data_frame["start_time"]
@@ -166,7 +208,7 @@ class LoadProfilePostProcessor:
         input_data_frame["end_time"] = pandas.to_datetime(input_data_frame["end_time"])
         start_time = input_data_frame["start_time"].min()
         end_time = input_data_frame["end_time"].max()
-        number_of_periods = (end_time - start_time) / periodic_time_delta
+        number_of_periods = (end_time - start_time) / x_axis_period_time_delta
         if number_of_periods <= 0:
             raise Exception(
                 "No positive number periods. Start time: "
@@ -182,16 +224,18 @@ class LoadProfilePostProcessor:
                 + " end time: "
                 + str(end_time)
                 + " periodic time delta: "
-                + str(periodic_time_delta)
+                + str(x_axis_period_time_delta)
             )
 
-        timedelta_of_x_axis_period = (
+        duration_of_a_single_load_profile_entry = (
             input_data_frame["end_time"].iloc[0]
             - input_data_frame["start_time"].iloc[0]
         )
-        start_time_of_period = start_time + timedelta_of_x_axis_period
+        start_time_of_period = start_time
         end_time_of_period = (
-            start_time_of_period + periodic_time_delta - timedelta_of_x_axis_period
+            start_time_of_period
+            + x_axis_period_time_delta
+            - duration_of_a_single_load_profile_entry
         )
         # Determine Index of new data_frame
         energy_quantity_data_frame = input_data_frame["average_power_consumption"]
@@ -217,9 +261,13 @@ class LoadProfilePostProcessor:
             row_name = end_time_of_period
             new_row = new_row.rename(row_name)
             list_of_pandas_series.append(new_row)
-            start_time_of_period = end_time_of_period + timedelta_of_x_axis_period
+            start_time_of_period = (
+                end_time_of_period + duration_of_a_single_load_profile_entry
+            )
             end_time_of_period = (
-                start_time_of_period + periodic_time_delta - timedelta_of_x_axis_period
+                start_time_of_period
+                + x_axis_period_time_delta
+                - duration_of_a_single_load_profile_entry
             )
         output_data_frame = pandas.concat(list_of_pandas_series, axis=1)
 
@@ -330,21 +378,53 @@ class LoadProfilePostProcessor:
     ) -> matplotlib.figure.Figure:
         figure, axes = matplotlib.pyplot.subplots(1, 1)
         axes.minorticks_off()
+
+        x_axis_whole_period = (
+            carpet_plot_load_profile_matrix.x_axis_time_period_timedelta
+        )
+        # The abbrevations for strftime string can be found here:
+        # https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+        if x_axis_whole_period <= datetime.timedelta(hours=1):
+            # Shows hours on the x axis
+            x_axis_time_format = "%m.%d:%H"  # Displays month.day:hour
+            y_axis_time_format = "%M:%S"  # Displays minute:seconds
+            y_axis_label_string = "Minutes of the hour"
+            x_axis_label_string = "Hours in day:hour"
+        elif x_axis_whole_period <= datetime.timedelta(
+            days=1
+        ) and x_axis_whole_period > datetime.timedelta(hours=1):
+            # Shows days on the x axis
+            x_axis_time_format = "%m.%d"  # Displays month.day
+            y_axis_time_format = "%H:%M"  # Displays hour:minute
+            y_axis_label_string = "Hours of the day"
+            x_axis_label_string = "Date M.D"
+
+        elif x_axis_whole_period <= datetime.timedelta(
+            weeks=1
+        ) and x_axis_whole_period > datetime.timedelta(days=1):
+            # Shows week numbers on the x axis
+            x_axis_time_format = "%V"  # Displays week numbers
+            y_axis_time_format = "%a:%H"  # Shows weekday as string:hour
+            y_axis_label_string = "Days of the week"
+            x_axis_label_string = "Weeks"
+        else:
+            pass
         converted_index = []
         load_profile_matrix_data_frame = carpet_plot_load_profile_matrix.data_frame
         start_date = carpet_plot_load_profile_matrix.start_date_time_series
         end_date = carpet_plot_load_profile_matrix.end_date_time_series
-        x_axis_whole_period = (
-            carpet_plot_load_profile_matrix.x_axis_time_period_timedelta
-        )
+
         resample_frequency = carpet_plot_load_profile_matrix.resample_frequency
         for index_entry in load_profile_matrix_data_frame.index:
             if isinstance(index_entry, datetime.datetime):
                 a = index_entry.to_pydatetime()
                 py_date_time_entry = index_entry.to_pydatetime(a)
-                converted_index.append(str(py_date_time_entry))
+                converted_index.append(
+                    str(py_date_time_entry.strftime(y_axis_time_format))
+                )
             else:
                 converted_index.append(index_entry)
+
         load_profile_matrix_data_frame.index = converted_index
         converted_row_index = []
         for row_entry in load_profile_matrix_data_frame.columns:
@@ -352,53 +432,26 @@ class LoadProfilePostProcessor:
                 a = index_entry.to_pydatetime()
                 py_date_time_entry = row_entry.to_pydatetime(a)
                 converted_row_index.append(
-                    str(py_date_time_entry).strftime(y_axis_time_format)
+                    py_date_time_entry.strftime(x_axis_time_format)
                 )
             else:
                 converted_row_index.append(index_entry)
+
         load_profile_matrix_data_frame.columns = converted_row_index
 
-        load_profile_matrix_numpy = load_profile_matrix_data_frame.to_numpy()
-
+        color_bar_label = (
+            "Average Power in " + carpet_plot_load_profile_matrix.power_unit
+        )
         searborn_plot = seaborn.heatmap(
             load_profile_matrix_data_frame,
             cmap="coolwarm",
             ax=axes,
             center=0,
-            cbar_kws={"label": "Average Power in MW"},
+            cbar_kws={"label": color_bar_label},
             xticklabels="auto",
         )
         # timedelta_frequency = pandas.to_timedelta(resample_frequency)
 
-        number_of_y_rows = len(converted_index)
-        if x_axis_whole_period <= datetime.timedelta(hours=1):
-            # Time delta 1 hour
-            y_axis_time_format = "%M:%S"
-            y_axis_label_string = "Minutes of the hour"
-            x_axis_label_string = "Hours"
-            increment_index = number_of_y_rows / 12
-            lin_loactor = matplotlib.ticker.LinearLocator(13)
-        elif x_axis_whole_period <= datetime.timedelta(
-            days=1
-        ) and x_axis_whole_period > datetime.timedelta(hours=1):
-            # Timedelta is 1 hour
-            y_axis_time_format = "%H:%M"
-            y_axis_label_string = "Hours of the day"
-            x_axis_label_string = "Days"
-
-            increment_index = number_of_y_rows / 24
-            lin_loactor = matplotlib.ticker.LinearLocator(25)
-        elif x_axis_whole_period <= datetime.timedelta(
-            weeks=1
-        ) and x_axis_whole_period > datetime.timedelta(days=1):
-            # Time delta 1 week
-            y_axis_time_format = "%a-%H:%M"
-            y_axis_label_string = "Days of the week"
-            x_axis_label_string = "Weeks"
-            increment_index = number_of_y_rows / 21
-            lin_loactor = matplotlib.ticker.LinearLocator(
-                22,
-            )
         # x_axis_time_format = "%Y.%d.%m"
         # list_index = 0
         # y_axis_ticks = []
@@ -409,16 +462,16 @@ class LoadProfilePostProcessor:
         # axes.yaxis.set_major_locator(lin_loactor)
 
         # axes.set_yticks = y_axis_ticks
-        y_label_list = []
-        for y_tick_position in axes.get_yticks():
-            table_index = y_tick_position - 0.5
-            y_label_list.append(
-                converted_index[int(table_index)].strftime(y_axis_time_format)
-            )
+        # y_label_list = []
+        # for y_tick_position in axes.get_yticks():
+        #     table_index = y_tick_position - 0.5
+        #     y_label_list.append(
+        #         converted_index[int(table_index)].strftime(y_axis_time_format)
+        #     )
 
-        @matplotlib.ticker.FuncFormatter
-        def simple_label_formatter(y_coordinate, y_tick_label_counter):
-            return y_label_list[y_tick_label_counter]
+        # @matplotlib.ticker.FuncFormatter
+        # def simple_label_formatter(y_coordinate, y_tick_label_counter):
+        #     return y_label_list[y_tick_label_counter]
 
         # axes.yaxis.set_major_formatter(simple_label_formatter)
 

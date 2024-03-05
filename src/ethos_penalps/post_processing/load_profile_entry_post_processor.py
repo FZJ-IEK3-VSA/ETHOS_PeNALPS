@@ -1,6 +1,7 @@
 import datetime
 import math
 
+import matplotlib
 import matplotlib.dates
 import matplotlib.figure
 import matplotlib.pyplot
@@ -8,12 +9,14 @@ import matplotlib.ticker
 import numpy
 import pandas
 import pint
-import seaborn
+
 
 from ethos_penalps.data_classes import (
     LoadProfileDataFrameMetaInformation,
     LoadProfileEntry,
     LoadType,
+    ListOfLoadProfileMetaData,
+    ListLoadProfileMetaDataEmpty,
 )
 from ethos_penalps.utilities.general_functions import (
     check_if_date_1_is_before_date_2,
@@ -23,7 +26,98 @@ from ethos_penalps.utilities.general_functions import (
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.utilities.units import Units
 
-itcs_logger = PeNALPSLogger.get_logger_without_handler()
+logger = PeNALPSLogger.get_logger_without_handler()
+
+
+class ListOfLoadProfileEntryAnalyzer:
+    def __init__(self) -> None:
+        pass
+
+    def create_list_of_load_profile_meta_data(
+        self, list_of_load_profiles: list[LoadProfileEntry], object_name: str
+    ) -> ListOfLoadProfileMetaData | ListLoadProfileMetaDataEmpty:
+        """Creates the ListOfLoadProfileMetaData object from a list of load profile entries.
+        The meta data object contains summarized information about the list of load profiles
+        which can be used for plotting or analysis.
+
+        Args:
+            list_of_load_profiles (list[LoadProfileEntry]): _description_
+            object_name (str): _description_
+
+        Returns:
+            ListOfLoadProfileMetaData | ListLoadProfileMetaDataEmpty: Is a meta data object contains summarized
+             information about the list of load profiles which can be used for plotting or analysis.
+        """
+        list_of_load_profile_meta_data: (
+            ListOfLoadProfileMetaData | ListLoadProfileMetaDataEmpty
+        )
+        if list_of_load_profiles:
+            analysis_data_frame = pandas.DataFrame(list_of_load_profiles)
+            power_unit = self.get_power_unit(
+                analysis_data_frame=analysis_data_frame, object_name=object_name
+            )
+            energy_unit = self.get_energy_unit(
+                analysis_data_frame=analysis_data_frame, object_name=object_name
+            )
+            total_energy_demand = self.get_total_energy(
+                analysis_data_frame=analysis_data_frame
+            )
+            maximum_power = self.get_maximum_power(
+                analysis_data_frame=analysis_data_frame
+            )
+            list_of_load_profile_meta_data = ListOfLoadProfileMetaData(
+                object_name=object_name,
+                list_of_load_profiles=list_of_load_profiles,
+                power_unit=power_unit,
+                energy_unit=energy_unit,
+                total_energy=total_energy_demand,
+                maximum_power=maximum_power,
+            )
+        else:
+            list_of_load_profile_meta_data = ListLoadProfileMetaDataEmpty(
+                object_name=object_name
+            )
+
+        return list_of_load_profile_meta_data
+
+    def get_power_unit(
+        self, analysis_data_frame: pandas.DataFrame, object_name: str
+    ) -> str:
+
+        power_unit_array = analysis_data_frame.loc[:, "power_unit"].unique()
+        if len(power_unit_array) > 1:
+            logger.info(
+                """The load profile of object: %s contains multiple power units.
+                        It should only contain one unique value.""",
+                object_name,
+            )
+        power_unit = power_unit_array[0]
+
+        return power_unit
+
+    def get_energy_unit(
+        self, analysis_data_frame: pandas.DataFrame, object_name: str
+    ) -> str:
+        energy_unit_array = analysis_data_frame.loc[:, "energy_unit"].unique()
+        if len(energy_unit_array) > 1:
+            logger.info(
+                """The load profile of object: %s contains multiple energy units.
+                        It should only contain one unique value.""",
+                object_name,
+            )
+        energy_unit = energy_unit_array[0]
+        return energy_unit
+
+    def get_total_energy(self, analysis_data_frame: pandas.DataFrame) -> float:
+        total_energy_demand = analysis_data_frame.loc[:, "energy_quantity"].sum()
+        return total_energy_demand
+
+    def get_maximum_power(self, analysis_data_frame: pandas.DataFrame) -> float:
+        maximum_power = analysis_data_frame.loc[:, "average_power_consumption"].sum()
+        return maximum_power
+
+    def check_if_power_and_energy_match(self):
+        pass
 
 
 class LoadProfileEntryPostProcessor:
@@ -47,6 +141,7 @@ class LoadProfileEntryPostProcessor:
         x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
         resample_frequency: str = "1min",
     ) -> LoadProfileDataFrameMetaInformation:
+
         if not list_of_load_profile_entries:
             print("Plot empty load profile")
 
@@ -97,9 +192,49 @@ class LoadProfileEntryPostProcessor:
         end_date_time_series: datetime.datetime,
         resample_frequency: str = "1min",
     ) -> list[LoadProfileEntry]:
+        """Homogenizes and adjusts the time step length of the load profile entry list.
+        It applies the following checks, conversions and additions:
+            - Checks if the load profiles are ordered in temporal occurrence.
+            - Adds 0 demand load profiles if there are gaps between load profiles.
+            - Adds an empty load profile entry form the start date to
+                the first start date of a load profile entry. If the start date
+                is earlier than the first load profile entry the start date is
+                ignored.
+            - Adds an empty load profile entry from the latest profile entry
+                to the end time provided. If the end time is earlier than the
+                latest load profile entry the end time is ignored.
+            - Resamples Load profiles to the resample frequency provided.
+
+        Args:
+            list_of_load_profile_entries (list[LoadProfileEntry]): A list of load profile entries
+                to be homogenized. The load profile entries must be sorted from future to past.
+            start_date_time_series (datetime.datetime): The new start time of the list of load profiles.
+                If the start time is later than the earliest time the start date is ignored.
+            end_date_time_series (datetime.datetime): The new end time of list of load profiles.
+                A zero demand entry is appended to series if the end date provided is later than
+                the last load profile entry in the list.
+            resample_frequency (str, optional): Is the target frequency of the output load profile list.
+                It is must be provided in the the pandas resample style:
+
+                - T, min minutely frequency
+                - S secondly frequency
+                - H hourly frequency
+                - D calendar day frequency
+                - W weekly frequency
+                - M month end frequency
+                - https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+                - defaults to "min"
+                Defaults to "1min".
+
+        Returns:
+            list[LoadProfileEntry]: Homogenized list of load profiles.
+        """
+
+        # Inverts the list
         inverted_list_of_load_profile_entries = self.invert_list(
             list_to_invert=list_of_load_profile_entries
         )
+        # Checks for the consistency of load profiles in the list
         self.check_load_profile_for_consistency_and_extract_information(
             list_of_load_profile_entries=inverted_list_of_load_profile_entries
         )
@@ -127,6 +262,7 @@ class LoadProfileEntryPostProcessor:
             start_time=start_date_time_series,
             end_time=end_date_time_series,
         )
+
         return list_of_load_profile_entries
 
     def fill_from_date_to_start(
@@ -136,6 +272,7 @@ class LoadProfileEntryPostProcessor:
         energy_quantity_at_start: float = 0,
         power_value_to_fill: float = 0,
     ) -> list[LoadProfileEntry]:
+
         first_entry = list_of_load_profile_entries[0]
         # if check_if_date_1_is_before_date_2(
         #     date_1=first_entry.start_time, date_2=start_date
@@ -146,6 +283,7 @@ class LoadProfileEntryPostProcessor:
         #         + " target start time: "
         #         + str(start_date)
         #     )
+
         if check_if_date_1_is_before_date_2(
             date_1=start_date, date_2=first_entry.start_time
         ):
@@ -227,7 +365,7 @@ class LoadProfileEntryPostProcessor:
         :return: _description_
         :rtype: pandas.DataFrame
         """
-        itcs_logger.debug("Resampling starts")
+        logger.debug("Resampling starts")
         timedelta_frequency = pandas.to_timedelta(frequency)
         end_time_date_range = pandas.date_range(
             start=timedelta_frequency + start_time, end=end_time, freq=frequency
@@ -278,7 +416,7 @@ class LoadProfileEntryPostProcessor:
                 ):
                     # Create new entries the current input stream entry starts before the end entry of the target
 
-                    ## Agglomerate all input entries which occur during the target start and end time
+                    # Agglomerate all input entries which occur during the target start and end time
                     target_energy_quantity = 0
                     for (
                         input_load_profile_entry
@@ -517,7 +655,7 @@ class LoadProfileEntryPostProcessor:
                         + " and previous load profile entry: "
                         + str(previous_load_profile_entry)
                     )
-        itcs_logger.debug("Check is successful")
+        logger.debug("Check is successful")
 
     def invert_list(self, list_to_invert: list):
         return list_to_invert[::-1]
