@@ -7,10 +7,10 @@ from ethos_penalps.order_generator import NOrderGenerator
 from ethos_penalps.stream import BatchStreamStaticData, ContinuousStreamStaticData
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-from examples.tutorial._4_connect_four_process_steps.blending_process_chain import (
+from blending_process_chain import (
     fill_blending_process_chain,
 )
-from examples.tutorial._4_connect_four_process_steps.cooking_process_chain import (
+from cooking_process_chain import (
     fill_cooking_process_chain,
 )
 

@@ -40,7 +40,7 @@ from ethos_penalps.stream import (
 from ethos_penalps.stream_handler import StreamHandler
 
 from ethos_penalps.time_data import TimeData
-from ethos_penalps.utilities.exceptions_and_warnings import Misconfiguration
+from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 

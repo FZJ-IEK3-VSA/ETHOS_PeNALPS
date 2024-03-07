@@ -49,7 +49,7 @@ from ethos_penalps.stream_node_distributor import (
     OrderDistributor,
 )
 from ethos_penalps.time_data import TimeData
-from ethos_penalps.utilities.exceptions_and_warnings import Misconfiguration
+from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 logger = PeNALPSLogger.get_logger_without_handler()
@@ -104,7 +104,7 @@ class Sink(ProcessNode):
 
     def check_if_sink_has_orders(self):
         if self.order_collection.order_data_frame.empty:
-            raise Misconfiguration(
+            raise MisconfigurationError(
                 "Sink: "
                 + self.name
                 + " has no orders in its dictionary. A sink required at least one order."
@@ -176,8 +176,9 @@ class Sink(ProcessNode):
 
     def create_storage_entries(
         self,
-        list_of_output_stream_states: list[ContinuousStreamState | BatchStreamState]
-        | None = None,
+        list_of_output_stream_states: (
+            list[ContinuousStreamState | BatchStreamState] | None
+        ) = None,
     ):
         if list_of_output_stream_states is None:
             list_of_output_stream_states = []

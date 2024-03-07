@@ -286,3 +286,40 @@ class ProcessStateEnergyData:
 
     def get_dict_of_loads(self) -> dict[str, LoadType]:
         return self.dict_of_loads
+
+
+@dataclass(kw_only=True)
+class ListLoadProfileMetaDataEmpty:
+    object_name: str
+
+
+@dataclass(kw_only=True)
+class ListOfLoadProfileMetaData(ListLoadProfileMetaDataEmpty):
+    list_of_load_profiles: list[LoadProfileEntry]
+    power_unit: str
+    energy_unit: str
+    total_energy: float
+    maximum_power: float
+    load_type: LoadType
+
+
+@dataclass(kw_only=True)
+class CarpetPlotMatrixEmpty:
+    object_name: str
+
+
+@dataclass(kw_only=True)
+class CarpetPlotMatrix(CarpetPlotMatrixEmpty):
+    """A dataclass that contains all information that is necessary to create
+    a load profile carpet plot.
+    """
+
+    data_frame: pandas.DataFrame
+    start_date_time_series: datetime.datetime
+    end_date_time_series: datetime.datetime
+    x_axis_time_period_timedelta: datetime.timedelta
+    power_unit: str
+    energy_unit: str
+    total_energy_demand: float
+    load_type: LoadType
+    resample_frequency: str = "1min"

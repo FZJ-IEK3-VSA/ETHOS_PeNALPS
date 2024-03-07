@@ -47,7 +47,13 @@ class Enterprise:
     def start_simulation(
         self, number_of_iterations_in_chain: numbers.Number | None = None
     ):
-        self.prepare_process_chains_for_simulation()
+        """Start the simulation after the enterprise model has been fully defined.
+
+        Args:
+            number_of_iterations_in_chain (numbers.Number | None, optional): Can set a maximum number of internal
+                simulation iterations. This can be useful to stop ill defined simulations. Defaults to None.
+        """
+        self._prepare_process_chains_for_simulation()
         for network_level in self.list_of_network_level:
             main_sink = network_level.get_main_sink()
             main_sink.initialize_sink()
@@ -97,7 +103,7 @@ class Enterprise:
         self.list_of_network_level.append(network_level)
         return network_level
 
-    def prepare_process_chains_for_simulation(self):
+    def _prepare_process_chains_for_simulation(self):
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()
             network_level.combine_node_dict()
@@ -111,7 +117,7 @@ class Enterprise:
                     output_dictionary[node_name] = process_node
         return output_dictionary
 
-    def get_combined_stream_handler(self) -> StreamHandler:
+    def _get_combined_stream_handler(self) -> StreamHandler:
         output_stream_handler = StreamHandler()
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()
@@ -131,6 +137,46 @@ class Enterprise:
         resample_frequency: str = "5min",
         number_of_columns: int = 2,
     ):
+        """Creates a HTML report from the simulation results. It contains
+        - A process overview page
+            - A depiction of the modelled process
+            - All orders in the sinks and storages of the process
+        - A page with the production plan which is downloadable as csv file for
+            - The process steps
+            - The streams
+        - A page with a with all load profiles for each:
+            - Process steps
+            - Streams
+        - A page with a gantt chart for each stream and process step for a selected period
+        - A page with a carpet plot for each energy carrier for each stream, process step
+            and the sum for each energy carrier.
+        Args:
+            gantt_chart_start_date (datetime.datetime): Determines the start for the displayed period
+                for the Gantt Chart.
+            gantt_chart_end_date (datetime.datetime): Determines the end of the displayed  period
+                for the Gantt Chart.
+            start_date (datetime.datetime): Determines the start for the displayed period
+                for the carpet plots.
+            end_date (datetime.datetime): Determines the end of the displayed  period
+                for the carpet Chart.
+            x_axis_time_delta (datetime.timedelta): Determines the duration repetitive period
+                on the x axis of the carpet plot.
+
+            resample_frequency (str, optional): The load profiles must have a uniform time step
+                to create the carpet plot from them. Thus they must be resampled. The frequency must
+                be provided as a string in the the pandas resample style:
+
+                - T, min minutely frequency
+                - S secondly frequency
+                - H hourly frequency
+                - D calendar day frequency
+                - W weekly frequency
+                - M month end frequency
+                - https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+                - defaults to "min"
+                Defaults to "1min".. Defaults to "5min".
+            number_of_columns (int, optional): Sets the number of columns for the carpet plots. Defaults to 2.
+        """
         report_generator = EnterpriseReportGenerator(
             production_plan=self.production_plan,
             enterprise_name=self.name,

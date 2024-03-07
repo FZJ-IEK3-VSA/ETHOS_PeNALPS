@@ -98,7 +98,7 @@ def test_production_plan_post_processor():
     )
 
     enterprise.start_simulation()
-    stream_handler = enterprise.get_combined_stream_handler()
+    stream_handler = enterprise._get_combined_stream_handler()
     process_step_dict = enterprise.get_all_process_steps()
     for (
         process_step_name,

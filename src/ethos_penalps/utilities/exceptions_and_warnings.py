@@ -15,7 +15,7 @@ class UnexpectedDataType(Exception):
         super().__init__(self.message, *args)
 
 
-class Misconfiguration(Exception):
+class MisconfigurationError(Exception):
     pass
 
 
@@ -32,4 +32,8 @@ class IllogicalFunctionCall(Exception):
 
 
 class UnexpectedBehaviorWarning(Warning):
+    pass
+
+
+class LoadProfileInconsistencyWarning(Warning):
     pass
