@@ -230,6 +230,56 @@ class ListOfLoadProfileEntryAnalyzer:
                     category=LoadProfileInconsistencyWarning,
                 )
 
+    def _compress_power_if_necessary(
+        self, list_of_load_profile_meta_data: ListOfLoadProfileMetaData
+    ) -> ListOfLoadProfileMetaData:
+
+        if (
+            list_of_load_profile_meta_data.maximum_power > 1000
+            or list_of_load_profile_meta_data.maximum_power < 1
+        ):
+            if list_of_load_profile_meta_data.maximum_power > 1000:
+                logger.debug("Maximum power it too large. Compress data")
+            elif list_of_load_profile_meta_data.maximum_power < 1:
+                logger.debug("Maximum power is too small. Compress data")
+            compressed_quantity = Units.compress_quantity(
+                list_of_load_profile_meta_data.maximum_power,
+                unit=Units.get_unit(list_of_load_profile_meta_data.power_unit),
+            )
+            list_of_load_profile_meta_data = self._convert_power_units(
+                list_of_load_profile_meta_data=list_of_load_profile_meta_data,
+                target_power_unit=compressed_quantity.u,
+            )
+        else:
+            logger.debug(
+                "Maximum power is in a reasonable range. No compression necessary."
+            )
+        return list_of_load_profile_meta_data
+
+    def _convert_power_units(
+        self,
+        list_of_load_profile_meta_data: ListOfLoadProfileMetaData,
+        target_power_unit: pint.Unit,
+    ) -> ListOfLoadProfileMetaData:
+
+        output_load_profile_entry_list = []
+        for load_profile_entry in list_of_load_profile_meta_data.list_of_load_profiles:
+            old_power_quantity = (
+                load_profile_entry.average_power_consumption
+                * Units.get_unit(load_profile_entry.power_unit)
+            )
+            new_power_quantity = old_power_quantity.to(target_power_unit)
+            new_load_profile_entry = load_profile_entry._adjust_power_unit(
+                new_power_value=new_power_quantity.m,
+                new_power_unit=str(target_power_unit),
+            )
+            output_load_profile_entry_list.append(new_load_profile_entry)
+        list_of_load_profile_meta_data.list_of_load_profiles = (
+            output_load_profile_entry_list
+        )
+        list_of_load_profile_meta_data.power_unit = str(target_power_unit)
+        return list_of_load_profile_meta_data
+
 
 class ListOfLoadProfileEntryHomogenizer(ListOfLoadProfileEntryAnalyzer):
     def __init__(self) -> None:

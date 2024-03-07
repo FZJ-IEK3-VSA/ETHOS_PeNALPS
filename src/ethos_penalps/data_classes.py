@@ -93,6 +93,20 @@ class LoadProfileEntry(DataClassJsonMixin):
     average_power_consumption: float
     power_unit: str
 
+    def _adjust_power_unit(
+        self, new_power_value: float, new_power_unit: str
+    ) -> "LoadProfileEntry":
+        load_profile_entry = LoadProfileEntry(
+            load_type=self.load_type,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            energy_quantity=self.energy_quantity,
+            energy_unit=self.energy_unit,
+            power_unit=new_power_unit,
+            average_power_consumption=new_power_value,
+        )
+        return load_profile_entry
+
 
 class LoopCounter:
     loop_number: float | str = "Loop has not started"

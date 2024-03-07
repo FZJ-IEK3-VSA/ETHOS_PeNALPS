@@ -32,11 +32,28 @@ jobs:
         matrix:
           os: ["ubuntu-latest","ubuntu-20.04", "macos-latest","macos-13","macos-12", "macos-11","windows-latest","windows-2019"]
       steps:
-        - name: Checkout
+        - name: Install Penalps
+          shell: pwsh
+          run: |
+            ls
+            echo "LS Done"
+            mamba install -n test_env ethos_penalps pytest
+            echo "Installation done"
+            conda list -n test_env        
+        - name: get_penalps_version
+          shell: pwsh
+          id: penalps-version
+          run: |
+              $PENALPS_STRING = conda list -e -n test_env geokit | Out-String
+              echo The penalps string is $PENALPS_STRING
+              $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos_penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
+              echo "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
+        - name: Checkout to penalps repository
           uses: actions/checkout@v4
           with:
             repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
             path: './ETHOS_PENALPS'
+            ref: ${{ steps.penalps-version.outputs.PENALPS_VERSION }}      
         - uses: conda-incubator/setup-miniconda@v3
           with:
             miniforge-version: latest
@@ -45,15 +62,10 @@ jobs:
         - name: Run tests
           shell: pwsh
           run: |
-            ls
-            echo "LS Done"
-            mamba install -n test_env ethos_penalps pytest
-            echo "Installation done"
-            conda list -n test_env
-            echo "libaries printed"
             echo "start pytest"
             conda run -n test_env pytest
             echo "Pytest done"
+        
         
     TestPeNALPSDevLocal:
       name: Ex1 (${{ matrix.python-version }}, ${{ matrix.os }})
@@ -111,5 +123,6 @@ jobs:
             cd B-Pillar_manufacturing
             conda run --name penalps_env python simulation_starter.py
             echo "Running examples terminated"
+
 
 

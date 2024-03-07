@@ -94,6 +94,12 @@ class Enterprise:
             cloudpickle.dump(network_level.main_sink, file, protocol=None)
 
     def create_network_level(self) -> NetworkLevel:
+        """Creates an instance of a network level which is the next container
+        level for each
+
+        Returns:
+            NetworkLevel: _description_
+        """
         network_level = NetworkLevel(
             production_plan=self.production_plan,
             stream_handler=StreamHandler(),
