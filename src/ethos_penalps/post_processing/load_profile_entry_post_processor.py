@@ -1,6 +1,6 @@
 import datetime
 import math
-
+import warnings
 import matplotlib
 import matplotlib.dates
 import matplotlib.figure
@@ -10,13 +10,16 @@ import numpy
 import pandas
 import pint
 
-
+from ethos_penalps.utilities.exceptions_and_warnings import (
+    LoadProfileInconsistencyWarning,
+)
 from ethos_penalps.data_classes import (
     LoadProfileDataFrameMetaInformation,
     LoadProfileEntry,
     LoadType,
     ListOfLoadProfileMetaData,
     ListLoadProfileMetaDataEmpty,
+    EmptyMetaDataInformation,
 )
 from ethos_penalps.utilities.general_functions import (
     check_if_date_1_is_before_date_2,
@@ -53,17 +56,20 @@ class ListOfLoadProfileEntryAnalyzer:
         )
         if list_of_load_profiles:
             analysis_data_frame = pandas.DataFrame(list_of_load_profiles)
-            power_unit = self.get_power_unit(
+            power_unit = self._get_power_unit(
                 analysis_data_frame=analysis_data_frame, object_name=object_name
             )
-            energy_unit = self.get_energy_unit(
+            energy_unit = self._get_energy_unit(
                 analysis_data_frame=analysis_data_frame, object_name=object_name
             )
-            total_energy_demand = self.get_total_energy(
+            total_energy_demand = self._get_total_energy(
                 analysis_data_frame=analysis_data_frame
             )
-            maximum_power = self.get_maximum_power(
+            maximum_power = self._get_maximum_power(
                 analysis_data_frame=analysis_data_frame
+            )
+            load_type = self._get_load_type(
+                list_of_load_profiles=list_of_load_profiles, object_name=object_name
             )
             list_of_load_profile_meta_data = ListOfLoadProfileMetaData(
                 object_name=object_name,
@@ -72,6 +78,7 @@ class ListOfLoadProfileEntryAnalyzer:
                 energy_unit=energy_unit,
                 total_energy=total_energy_demand,
                 maximum_power=maximum_power,
+                load_type=load_type,
             )
         else:
             list_of_load_profile_meta_data = ListLoadProfileMetaDataEmpty(
@@ -80,118 +87,162 @@ class ListOfLoadProfileEntryAnalyzer:
 
         return list_of_load_profile_meta_data
 
-    def get_power_unit(
+    def _get_load_type(
+        self, list_of_load_profiles: list[LoadProfileEntry], object_name: str
+    ) -> LoadType:
+
+        list_of_load_types = []
+        for load_profile_entry in list_of_load_profiles:
+            list_of_load_types.append(load_profile_entry.load_type)
+
+        unique_list_of_load_types = list(set(list_of_load_types))
+        if len(unique_list_of_load_types) > 1:
+            warnings.warn(
+                message="""The load profile of object: """
+                + str(object_name)
+                + """ contains multiple load types.
+                        It should only contain one unique value.""",
+                category=LoadProfileInconsistencyWarning,
+            )
+        load_type = unique_list_of_load_types[0]
+
+        return load_type
+
+    def _get_power_unit(
         self, analysis_data_frame: pandas.DataFrame, object_name: str
     ) -> str:
 
         power_unit_array = analysis_data_frame.loc[:, "power_unit"].unique()
         if len(power_unit_array) > 1:
-            logger.info(
-                """The load profile of object: %s contains multiple power units.
+            warnings.warn(
+                message="""The load profile of object:"""
+                + str(object_name)
+                + """ Contains multiple power units.
                         It should only contain one unique value.""",
-                object_name,
+                category=LoadProfileInconsistencyWarning,
             )
         power_unit = power_unit_array[0]
 
         return power_unit
 
-    def get_energy_unit(
+    def _get_energy_unit(
         self, analysis_data_frame: pandas.DataFrame, object_name: str
     ) -> str:
         energy_unit_array = analysis_data_frame.loc[:, "energy_unit"].unique()
         if len(energy_unit_array) > 1:
-            logger.info(
-                """The load profile of object: %s contains multiple energy units.
+            warnings.warn(
+                message="""The load profile of object: """
+                + str(object_name)
+                + """ contains multiple energy units.
                         It should only contain one unique value.""",
-                object_name,
+                category=LoadProfileInconsistencyWarning,
             )
         energy_unit = energy_unit_array[0]
         return energy_unit
 
-    def get_total_energy(self, analysis_data_frame: pandas.DataFrame) -> float:
+    def _get_total_energy(
+        self, analysis_data_frame: pandas.DataFrame
+    ) -> float | numpy.int64:
         total_energy_demand = analysis_data_frame.loc[:, "energy_quantity"].sum()
         return total_energy_demand
 
-    def get_maximum_power(self, analysis_data_frame: pandas.DataFrame) -> float:
+    def _get_maximum_power(self, analysis_data_frame: pandas.DataFrame) -> float:
         maximum_power = analysis_data_frame.loc[:, "average_power_consumption"].sum()
         return maximum_power
 
-    def check_if_power_and_energy_match(self):
-        pass
-
-
-class LoadProfileEntryPostProcessor:
-    def __init__(self) -> None:
-        self.load_type: LoadType
-        self.energy_unit: str
-        self.power_unit: str
-        self.start_time_of_input_load_profile: datetime.datetime
-        self.end_time_of_input_load_profile: datetime.datetime
-        self.processed_list_of_load_profile_entries: list[LoadProfileEntry]
-        self.start_date_resampled_load_profile: datetime.datetime
-        self.end_date_resampled_load_profile: datetime.datetime
-
-    def convert_time_series_to_resampled_load_profile_meta_data(
+    def check_load_profile_for_temporal_consistency(
         self,
+        list_of_load_profile_meta_data: (
+            ListOfLoadProfileMetaData | ListLoadProfileMetaDataEmpty
+        ),
         object_name: str,
-        object_type: str,
-        list_of_load_profile_entries: list[LoadProfileEntry],
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
-        x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
-        resample_frequency: str = "1min",
-    ) -> LoadProfileDataFrameMetaInformation:
+    ):
 
-        if not list_of_load_profile_entries:
-            print("Plot empty load profile")
+        if type(list_of_load_profile_meta_data) is ListLoadProfileMetaDataEmpty:
+            pass
+        elif type(list_of_load_profile_meta_data) is ListOfLoadProfileMetaData:
 
-        number_of_periods = (end_date - start_date) / x_axis_time_period_timedelta
-        if number_of_periods <= 0:
-            raise Exception(
-                "No positive number periods. Start time: "
-                + str(start_date)
-                + " End time: "
-                + str(end_date)
+            list_of_load_profile_entries = (
+                list_of_load_profile_meta_data.list_of_load_profiles
             )
-        list_of_resampled_load_profiles_entries = (
-            self.homogenize_list_of_load_profiles_entries(
-                list_of_load_profile_entries=list_of_load_profile_entries,
-                start_date_time_series=start_date,
-                end_date_time_series=end_date,
-                resample_frequency=resample_frequency,
+            analysis_data_frame_start = pandas.DataFrame(list_of_load_profile_entries)
+            analysis_data_frame_start.sort_values(
+                "start_time", ascending=True, inplace=True
             )
-        )
-        resampled_load_profile_data_frame = pandas.DataFrame(
-            data=list_of_resampled_load_profiles_entries
-        )
+            if (
+                analysis_data_frame_start.index.is_monotonic_increasing
+                or analysis_data_frame_start.index.is_monotonic_decreasing
+            ):
+                pass
+            else:
+                warnings.warn(
+                    message="""The start time of load profiles of object: """
+                    + str(object_name)
+                    + """ for load type: """
+                    + str(list_of_load_profile_meta_data.load_type.name)
+                    + """ are not well ordered""",
+                    category=LoadProfileInconsistencyWarning,
+                )
 
-        maximum_average_power = resampled_load_profile_data_frame.loc[
-            :, "average_power_consumption"
-        ].max()
-        maximum_energy = resampled_load_profile_data_frame.loc[
-            :, "energy_quantity"
-        ].max()
-        load_profile_meta_data = LoadProfileDataFrameMetaInformation(
-            name=object_name,
-            object_type=object_type,
-            data_frame=resampled_load_profile_data_frame,
-            first_start_time=start_date,
-            last_end_time=end_date,
-            load_type=self.load_type,
-            energy_unit=Units.energy_unit,
-            power_unit=Units.power_unit,
-            maximum_energy=maximum_energy,
-            maximum_average_power=maximum_average_power,
-        )
-        return load_profile_meta_data
+            analysis_data_frame_start.sort_values(
+                "end_time", ascending=True, inplace=True
+            )
+            if (
+                analysis_data_frame_start.index.is_monotonic_increasing
+                or analysis_data_frame_start.index.is_monotonic_decreasing
+            ):
+                pass
+            else:
+                warnings.warn(
+                    message="""The end time of load profiles of object: """
+                    + str(object_name)
+                    + """ for load type: """
+                    + str(list_of_load_profile_meta_data.load_type.name)
+                    + """ are not well ordered""",
+                    category=LoadProfileInconsistencyWarning,
+                )
+
+    def check_if_power_and_energy_match(
+        self, list_of_load_profile_meta_data: ListOfLoadProfileMetaData
+    ):
+        list_of_load_profiles = list_of_load_profile_meta_data.list_of_load_profiles
+
+        for load_profile in list_of_load_profiles:
+            power_value_calculated = Units.convert_energy_to_power(
+                energy_value=load_profile.energy_quantity,
+                energy_unit=load_profile.energy_unit,
+                time_step=load_profile.end_time - load_profile.start_time,
+                target_power_unit=load_profile.power_unit,
+            )
+            if power_value_calculated != load_profile.average_power_consumption:
+                warnings.warn(
+                    message="""The energy and power of a load profile do not fit for object: """
+                    + str(list_of_load_profile_meta_data.object_name)
+                    + """ and load type: """
+                    + str(list_of_load_profile_meta_data.load_type.name)
+                    + """.
+                    The expected power value is: """
+                    + str(power_value_calculated)
+                    + """ but the entry has the value: """
+                    + str(load_profile.average_power_consumption)
+                    + """. The complete entry is:\n"""
+                    + str(load_profile),
+                    category=LoadProfileInconsistencyWarning,
+                )
+
+
+class ListOfLoadProfileEntryHomogenizer(ListOfLoadProfileEntryAnalyzer):
+    def __init__(self) -> None:
+        pass
 
     def homogenize_list_of_load_profiles_entries(
         self,
         list_of_load_profile_entries: list[LoadProfileEntry],
         start_date_time_series: datetime.datetime,
         end_date_time_series: datetime.datetime,
+        object_name: str,
         resample_frequency: str = "1min",
-    ) -> list[LoadProfileEntry]:
+    ) -> ListOfLoadProfileMetaData:
         """Homogenizes and adjusts the time step length of the load profile entry list.
         It applies the following checks, conversions and additions:
             - Checks if the load profiles are ordered in temporal occurrence.
@@ -235,110 +286,170 @@ class LoadProfileEntryPostProcessor:
             list_to_invert=list_of_load_profile_entries
         )
         # Checks for the consistency of load profiles in the list
-        self.check_load_profile_for_consistency_and_extract_information(
-            list_of_load_profile_entries=inverted_list_of_load_profile_entries
+
+        list_of_load_profile_meta_data = self.create_list_of_load_profile_meta_data(
+            list_of_load_profiles=inverted_list_of_load_profile_entries,
+            object_name=object_name,
         )
-        start_filled_list_of_load_profile_entries = self.fill_from_date_to_start(
-            list_of_load_profile_entries=inverted_list_of_load_profile_entries,
+
+        list_of_load_profile_meta_data = self.fill_from_date_to_start(
+            list_of_load_profile_meta_data=list_of_load_profile_meta_data,
             start_date=start_date_time_series,
             energy_quantity_at_start=0,
         )
-        start_and_end_filled_list_of_load_profile_entries = self.fill_to_end_date(
-            list_of_load_profile_entries=start_filled_list_of_load_profile_entries,
+        list_of_load_profile_meta_data = self.fill_to_end_date(
+            list_of_load_profile_meta_data=list_of_load_profile_meta_data,
             end_date=end_date_time_series,
             energy_quantity_at_start=0,
         )
-        list_of_load_profile_entries_with_consistent_time_series = self.fill_gaps_in_time_series_with_0_values(
-            list_of_load_profile_entries=start_and_end_filled_list_of_load_profile_entries,
+        list_of_load_profile_meta_data = self.fill_gaps_in_time_series_with_0_values(
+            list_of_load_profile_meta_data=list_of_load_profile_meta_data,
             energy_value_to_fill=0,
         )
         self.check_if_list_of_load_profile_entries_has_gaps(
-            list_of_load_profile_entries=list_of_load_profile_entries_with_consistent_time_series
+            list_of_load_profile_meta_data=list_of_load_profile_meta_data
         )
 
-        list_of_load_profile_entries = self.resample_load_profile_to_target_frequency(
-            list_of_load_profile_entries=list_of_load_profile_entries_with_consistent_time_series,
+        list_of_load_profile_meta_data = self.resample_load_profile_to_target_frequency(
+            list_of_load_profile_meta_data=list_of_load_profile_meta_data,
             frequency=resample_frequency,
             start_time=start_date_time_series,
             end_time=end_date_time_series,
         )
 
-        return list_of_load_profile_entries
+        return list_of_load_profile_meta_data
+
+    def invert_list(self, list_to_invert: list):
+        return list_to_invert[::-1]
 
     def fill_from_date_to_start(
         self,
-        list_of_load_profile_entries: list[LoadProfileEntry],
+        list_of_load_profile_meta_data: ListOfLoadProfileMetaData,
         start_date: datetime.datetime,
         energy_quantity_at_start: float = 0,
         power_value_to_fill: float = 0,
-    ) -> list[LoadProfileEntry]:
+    ) -> ListOfLoadProfileMetaData:
 
-        first_entry = list_of_load_profile_entries[0]
-        # if check_if_date_1_is_before_date_2(
-        #     date_1=first_entry.start_time, date_2=start_date
-        # ):
-        #     raise Exception(
-        #         "New Start date is after the start time of the first entry. First entry: "
-        #         + str(first_entry.start_time)
-        #         + " target start time: "
-        #         + str(start_date)
-        #     )
+        first_entry = list_of_load_profile_meta_data.list_of_load_profiles[0]
 
         if check_if_date_1_is_before_date_2(
             date_1=start_date, date_2=first_entry.start_time
         ):
             new_first_load_profile = LoadProfileEntry(
-                load_type=self.load_type,
+                load_type=list_of_load_profile_meta_data.load_type,
                 start_time=start_date,
                 end_time=first_entry.start_time,
                 energy_quantity=energy_quantity_at_start,
-                energy_unit=self.energy_unit,
+                energy_unit=list_of_load_profile_meta_data.energy_unit,
                 average_power_consumption=power_value_to_fill,
-                power_unit=self.power_unit,
+                power_unit=list_of_load_profile_meta_data.power_unit,
             )
-            list_of_load_profile_entries.insert(0, new_first_load_profile)
+            list_of_load_profile_meta_data.list_of_load_profiles.insert(
+                0, new_first_load_profile
+            )
 
-        return list_of_load_profile_entries
+        return list_of_load_profile_meta_data
 
     def fill_to_end_date(
         self,
-        list_of_load_profile_entries: list[LoadProfileEntry],
+        list_of_load_profile_meta_data: ListOfLoadProfileMetaData,
         end_date: datetime.datetime,
         energy_quantity_at_start: float = 0,
         power_value_to_fill: float = 0,
-    ) -> list[LoadProfileEntry]:
-        last_entry = list_of_load_profile_entries[-1]
-        # if check_if_date_1_is_before_date_2(
-        #     date_1=end_date, date_2=last_entry.end_time
-        # ):
-        #     raise Exception(
-        #         "Target end date is before end date of last entry. Target end date:"
-        #         + str(end_date)
-        #         + " last entry: "
-        #         + str(last_entry.end_time)
-        #     )
+    ) -> ListOfLoadProfileMetaData:
+        last_entry = list_of_load_profile_meta_data.list_of_load_profiles[-1]
+
         if check_if_date_1_is_before_date_2(
             date_1=last_entry.end_time, date_2=end_date
         ):
             new_first_load_profile = LoadProfileEntry(
-                load_type=self.load_type,
+                load_type=list_of_load_profile_meta_data.load_type,
                 start_time=last_entry.end_time,
                 end_time=end_date,
                 energy_quantity=energy_quantity_at_start,
-                energy_unit=self.energy_unit,
+                energy_unit=list_of_load_profile_meta_data.energy_unit,
                 average_power_consumption=power_value_to_fill,
-                power_unit=self.power_unit,
+                power_unit=list_of_load_profile_meta_data.power_unit,
             )
-            list_of_load_profile_entries.append(new_first_load_profile)
-        return list_of_load_profile_entries
+            list_of_load_profile_meta_data.list_of_load_profiles.append(
+                new_first_load_profile
+            )
+        return list_of_load_profile_meta_data
+
+    def fill_gaps_in_time_series_with_0_values(
+        self,
+        list_of_load_profile_meta_data: ListOfLoadProfileMetaData,
+        energy_value_to_fill: float = 0,
+        power_value_to_fill: float = 0,
+    ) -> ListOfLoadProfileMetaData:
+        # Assumes that the load profiles are ordered from past to future
+        output_list_of_load_profile_entries = []
+        previous_load_profile_entry = None
+        list_index_input_list = 0
+        list_index_output_list = 0
+        for load_profile_entry in list_of_load_profile_meta_data.list_of_load_profiles:
+            if previous_load_profile_entry is not None:
+                previous_end_time = previous_load_profile_entry.end_time
+                current_start_time = load_profile_entry.start_time
+                if check_if_date_1_is_before_date_2(
+                    date_1=previous_end_time, date_2=current_start_time
+                ):
+                    load_profile_entry_to_insert = LoadProfileEntry(
+                        load_type=list_of_load_profile_meta_data.load_type,
+                        energy_unit=list_of_load_profile_meta_data.energy_unit,
+                        energy_quantity=energy_value_to_fill,
+                        start_time=previous_end_time,
+                        end_time=current_start_time,
+                        average_power_consumption=power_value_to_fill,
+                        power_unit=list_of_load_profile_meta_data.power_unit,
+                    )
+                    list_index_output_list = list_index_output_list + 1
+                    output_list_of_load_profile_entries.append(
+                        load_profile_entry_to_insert
+                    )
+            output_list_of_load_profile_entries.append(load_profile_entry)
+
+            previous_load_profile_entry = load_profile_entry
+            list_index_input_list = list_index_input_list + 1
+            list_index_output_list = list_index_output_list + 1
+
+        list_of_load_profile_meta_data.list_of_load_profiles = (
+            output_list_of_load_profile_entries
+        )
+
+        return list_of_load_profile_meta_data
+
+    def check_if_list_of_load_profile_entries_has_gaps(
+        self, list_of_load_profile_meta_data: ListOfLoadProfileMetaData
+    ):
+        row_number = 0
+        previous_entry = None
+
+        for load_profile_entry in list_of_load_profile_meta_data.list_of_load_profiles:
+            if not isinstance(load_profile_entry, LoadProfileEntry):
+                raise Exception("Unexpected  input in input list")
+            if previous_entry is not None:
+                if previous_entry.end_time != load_profile_entry.start_time:
+                    warnings.warn(
+                        message="There is a gap between last and current entry. Last entry "
+                        + str(previous_entry)
+                        + " current entry: "
+                        + str(load_profile_entry)
+                        + " at row: "
+                        + str(row_number),
+                        category=LoadProfileInconsistencyWarning,
+                    )
+
+            previous_entry = load_profile_entry
+            row_number = row_number + 1
 
     def resample_load_profile_to_target_frequency(
         self,
-        list_of_load_profile_entries: list[LoadProfileEntry],
+        list_of_load_profile_meta_data: ListOfLoadProfileMetaData,
         start_time: datetime.datetime,
         end_time: datetime.datetime,
         frequency: str = "min",
-    ) -> list[LoadProfileEntry]:
+    ) -> ListOfLoadProfileMetaData:
         """_summary_
 
         :param list_of_load_profile_entries: _description_
@@ -377,7 +488,9 @@ class LoadProfileEntryPostProcessor:
         current_target_end_date: datetime.datetime = next(target_end_date_iter)
         current_list_of_relevant_input_profile_entries: list[LoadProfileEntry] = []
         output_list_of_load_profile_entries = []
-        for current_input_load_profile_entry in list_of_load_profile_entries:
+        for (
+            current_input_load_profile_entry
+        ) in list_of_load_profile_meta_data.list_of_load_profiles:
             current_list_of_relevant_input_profile_entries.append(
                 current_input_load_profile_entry
             )
@@ -490,10 +603,10 @@ class LoadProfileEntryPostProcessor:
                         start_time=current_target_start_time,
                         end_time=current_target_end_date,
                         energy_quantity=target_energy_quantity,
-                        energy_unit=self.energy_unit,
-                        load_type=self.load_type,
+                        energy_unit=list_of_load_profile_meta_data.energy_unit,
+                        load_type=list_of_load_profile_meta_data.load_type,
                         average_power_consumption=average_power_consumption,
-                        power_unit=self.power_unit,
+                        power_unit=list_of_load_profile_meta_data.power_unit,
                     )
                     calculated_time_difference = (
                         new_load_profile_entry.end_time
@@ -541,124 +654,72 @@ class LoadProfileEntryPostProcessor:
                                 )
                     except:
                         break
-        return output_list_of_load_profile_entries
-
-    def get_energy_amount_from_list_of_load_profile_entries(
-        self, list_of_load_profile_entries: list[LoadProfileEntry]
-    ) -> float:
-        total_energy_amount = 0
-        for load_profile_entry in list_of_load_profile_entries:
-            total_energy_amount = (
-                total_energy_amount + load_profile_entry.energy_quantity
+            list_of_load_profile_meta_data.list_of_load_profiles = (
+                output_list_of_load_profile_entries
             )
-        return total_energy_amount
+        return list_of_load_profile_meta_data
 
-    def fill_gaps_in_time_series_with_0_values(
+
+class LoadProfileEntryPostProcessor(ListOfLoadProfileEntryHomogenizer):
+    def __init__(self) -> None:
+        pass
+
+    def convert_time_series_to_resampled_load_profile_meta_data(
         self,
+        object_name: str,
+        object_type: str,
         list_of_load_profile_entries: list[LoadProfileEntry],
-        energy_value_to_fill: float = 0,
-        power_value_to_fill: float = 0,
-    ) -> list[LoadProfileEntry]:
-        # Assumes that the load profiles are ordered from past to future
-        output_list_of_load_profile_entries = []
-        previous_load_profile_entry = None
-        list_index_input_list = 0
-        list_index_output_list = 0
-        for load_profile_entry in list_of_load_profile_entries:
-            if previous_load_profile_entry is not None:
-                previous_end_time = previous_load_profile_entry.end_time
-                current_start_time = load_profile_entry.start_time
-                if check_if_date_1_is_before_date_2(
-                    date_1=previous_end_time, date_2=current_start_time
-                ):
-                    load_profile_entry_to_insert = LoadProfileEntry(
-                        load_type=self.load_type,
-                        energy_unit=self.energy_unit,
-                        energy_quantity=energy_value_to_fill,
-                        start_time=previous_end_time,
-                        end_time=current_start_time,
-                        average_power_consumption=power_value_to_fill,
-                        power_unit=self.power_unit,
-                    )
-                    list_index_output_list = list_index_output_list + 1
-                    output_list_of_load_profile_entries.append(
-                        load_profile_entry_to_insert
-                    )
-            output_list_of_load_profile_entries.append(load_profile_entry)
+        start_date: datetime.datetime,
+        end_date: datetime.datetime,
+        x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
+        resample_frequency: str = "1min",
+    ) -> LoadProfileDataFrameMetaInformation | EmptyMetaDataInformation:
 
-            previous_load_profile_entry = load_profile_entry
-            list_index_input_list = list_index_input_list + 1
-            list_index_output_list = list_index_output_list + 1
+        if list_of_load_profile_entries:
+            number_of_periods = (end_date - start_date) / x_axis_time_period_timedelta
+            if number_of_periods <= 0:
+                raise Exception(
+                    "No positive number periods. Start time: "
+                    + str(start_date)
+                    + " End time: "
+                    + str(end_date)
+                )
+            list_of_load_profile_meta_data = (
+                self.homogenize_list_of_load_profiles_entries(
+                    list_of_load_profile_entries=list_of_load_profile_entries,
+                    start_date_time_series=start_date,
+                    end_date_time_series=end_date,
+                    resample_frequency=resample_frequency,
+                    object_name=object_name,
+                )
+            )
+            resampled_load_profile_data_frame = pandas.DataFrame(
+                data=list_of_load_profile_meta_data.list_of_load_profiles
+            )
 
-        return output_list_of_load_profile_entries
-
-    def check_load_profile_for_consistency_and_extract_information(
-        self,
-        list_of_load_profile_entries: list[LoadProfileEntry],
-    ):
-        if not list_of_load_profile_entries:
-            raise Exception("There are no load profile entries in the list to check")
-        self.load_type = list_of_load_profile_entries[0].load_type
-        self.energy_unit = list_of_load_profile_entries[0].energy_unit
-        self.power_unit = list_of_load_profile_entries[0].power_unit
-        self.start_time_of_input_load_profile = list_of_load_profile_entries[
-            0
-        ].start_time
-        self.end_time_of_input_load_profile = list_of_load_profile_entries[-1].end_time
-        previous_load_profile_entry = None
-        for load_profile_entry in list_of_load_profile_entries:
-            if load_profile_entry.load_type != self.load_type:
-                raise Exception(
-                    "Load type changes in load profile from: "
-                    + str(self.load_type)
-                    + " to: "
-                    + str(load_profile_entry.load_type)
-                )
-            if load_profile_entry.energy_unit != self.energy_unit:
-                raise Exception(
-                    "Energy unit changes in load profile from: "
-                    + str(self.energy_unit)
-                    + " to: "
-                    + str(load_profile_entry.energy_unit)
-                )
-            if check_if_date_1_is_before_date_2(
-                date_1=load_profile_entry.end_time, date_2=load_profile_entry.start_time
-            ):
-                raise Exception(
-                    "Load profile entry starts at: "
-                    + str(load_profile_entry.start_time)
-                    + " before it ends at: "
-                    + str(load_profile_entry.end_time)
-                )
-            if check_if_date_1_is_before_date_2(
-                date_1=load_profile_entry.start_time,
-                date_2=self.start_time_of_input_load_profile,
-            ):
-                raise Exception(
-                    "Load profile entry starts at: "
-                    + str(load_profile_entry.start_time)
-                    + " before the first entry at: "
-                    + str(self.start_time_of_input_load_profile)
-                )
-            if load_profile_entry.end_time > self.end_time_of_input_load_profile:
-                raise Exception(
-                    "Load profile entry ends at: "
-                    + str(load_profile_entry.end_time)
-                    + " before the last entry at: "
-                    + str(self.end_time_of_input_load_profile)
-                )
-            if previous_load_profile_entry is not None:
-                if load_profile_entry.end_time < previous_load_profile_entry.start_time:
-                    raise Exception(
-                        "Overlap in current load profile entry: "
-                        + str(load_profile_entry)
-                        + " and previous load profile entry: "
-                        + str(previous_load_profile_entry)
-                    )
-        logger.debug("Check is successful")
-
-    def invert_list(self, list_to_invert: list):
-        return list_to_invert[::-1]
+            maximum_average_power = resampled_load_profile_data_frame.loc[
+                :, "average_power_consumption"
+            ].max()
+            maximum_energy = resampled_load_profile_data_frame.loc[
+                :, "energy_quantity"
+            ].max()
+            load_profile_meta_data = LoadProfileDataFrameMetaInformation(
+                name=object_name,
+                object_type=object_type,
+                data_frame=resampled_load_profile_data_frame,
+                first_start_time=start_date,
+                last_end_time=end_date,
+                load_type=list_of_load_profile_meta_data.load_type,
+                energy_unit=list_of_load_profile_meta_data.energy_unit,
+                power_unit=list_of_load_profile_meta_data.power_unit,
+                maximum_energy=maximum_energy,
+                maximum_average_power=maximum_average_power,
+            )
+        else:
+            load_profile_meta_data = EmptyMetaDataInformation(
+                name=object_name, object_type=object_type
+            )
+        return load_profile_meta_data
 
     def determine_earliest_start_date_from_list_of_list_of_load_profile_entries(
         self,
@@ -673,21 +734,26 @@ class LoadProfileEntryPostProcessor:
                 "Tried to find common start point from empty load profile list"
             )
         for list_of_load_profiles in list_of_list_of_load_profile_entries:
-            inverted_list_of_list_of_load_profile_entries = self.invert_list(
-                list_to_invert=list_of_load_profiles
+            list_of_load_profile_meta_data = self.create_list_of_load_profile_meta_data(
+                list_of_load_profiles=list_of_load_profiles, object_name="Intermediate"
             )
-            self.check_load_profile_for_consistency_and_extract_information(
-                list_of_load_profile_entries=inverted_list_of_list_of_load_profile_entries
+            self.check_load_profile_for_temporal_consistency(
+                list_of_load_profile_meta_data=list_of_load_profile_meta_data,
+                object_name="Intermediate",
             )
+            start_time_of_input_load_profile = (
+                list_of_load_profile_meta_data.list_of_load_profiles[0]
+            ).start_time
             if final_output_start_date is None:
+
                 final_output_start_date = self.determine_new_start_date(
-                    start_date=self.start_time_of_input_load_profile,
+                    start_date=start_time_of_input_load_profile,
                     end_date=end_date,
                     period=period,
                 )
             if isinstance(final_output_start_date, datetime.datetime):
                 next_output_start_date = self.determine_new_start_date(
-                    start_date=self.start_time_of_input_load_profile,
+                    start_date=start_time_of_input_load_profile,
                     end_date=end_date,
                     period=period,
                 )
@@ -708,26 +774,3 @@ class LoadProfileEntryPostProcessor:
         number_of_periods_int = int(math.ceil(number_of_periods_float))
         new_start_date = end_date - number_of_periods_int * period
         return new_start_date
-
-    def check_if_list_of_load_profile_entries_has_gaps(
-        self, list_of_load_profile_entries: list[LoadProfileEntry]
-    ):
-        row_number = 0
-        previous_entry = None
-
-        for load_profile_entry in list_of_load_profile_entries:
-            if not isinstance(load_profile_entry, LoadProfileEntry):
-                raise Exception("Unexpected  input in input list")
-            if previous_entry is not None:
-                if previous_entry.end_time != load_profile_entry.start_time:
-                    raise Exception(
-                        "There is a gap between last and current entry. Last entry "
-                        + str(previous_entry)
-                        + " current entry: "
-                        + str(load_profile_entry)
-                        + " at row: "
-                        + str(row_number)
-                    )
-
-            previous_entry = load_profile_entry
-            row_number = row_number + 1

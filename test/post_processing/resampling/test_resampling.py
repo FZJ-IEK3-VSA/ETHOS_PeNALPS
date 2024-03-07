@@ -16,10 +16,10 @@ from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     ListOfLoadProfileEntryAnalyzer,
     LoadProfileEntryPostProcessor,
 )
-from ethos_penalps.post_processing.load_profile_post_processor import (
+from ethos_penalps.post_processing.carpet_plot_load_profile_generator import (
     CarpetPlotMatrix,
     LoadProfileEntryPostProcessor,
-    LoadProfilePostProcessor,
+    CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.utilities.units import Units
 
@@ -125,7 +125,7 @@ def create_sample_list_of_load_profile_entry_data(
     return list_of_load_profile_entries
 
 
-def test_resampling(
+def setup_resampling_and_matrix_conversion(
     x_axis_time_period_timedelta: datetime.timedelta,
     energy_data: EnergyData,
     power_data: PowerData,
@@ -140,15 +140,18 @@ def test_resampling(
         total_start_time=total_start_time,
         total_end_time=total_end_time,
     )
-    load_profile_post_processor = LoadProfilePostProcessor()
+    load_profile_post_processor = CarpetPlotLoadProfileGenerator()
 
     load_profile_entry_process_process = ListOfLoadProfileEntryAnalyzer()
-    load_profile_entry_process_process.check_if_power_and_energy_match()
     list_of_load_profile_meta_data = (
         load_profile_entry_process_process.create_list_of_load_profile_meta_data(
             list_of_load_profiles=list_of_load_profile_entries, object_name="Test Name"
         )
     )
+    load_profile_entry_process_process.check_if_power_and_energy_match(
+        list_of_load_profile_meta_data=list_of_load_profile_meta_data
+    )
+
     load_profile_matrix = (
         load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
             list_of_load_profile_entries=list_of_load_profile_entries,
@@ -159,16 +162,18 @@ def test_resampling(
             object_name="Test row",
         )
     )
+    total_energy_power_matrix = (
+        load_profile_post_processor.get_energy_amount_from_power_matrix(
+            carpet_plot_matrix=load_profile_matrix,
+        )
+    )
     assert type(load_profile_matrix) is CarpetPlotMatrix
     assert type(list_of_load_profile_meta_data) is ListOfLoadProfileMetaData
-    assert (
-        list_of_load_profile_meta_data.total_energy
-        == load_profile_matrix.total_energy_demand
-    )
-    return load_profile_matrix.total_energy_demand
+    assert list_of_load_profile_meta_data.total_energy == total_energy_power_matrix
 
 
-if __name__ == "__main__":
+def test_1min_resampling():
+
     total_start_time = datetime.datetime(year=2022, month=2, day=2)
     total_end_time = datetime.datetime(year=2022, month=2, day=5)
     x_axis_time_period_timedelta = datetime.timedelta(hours=1)
@@ -182,24 +187,9 @@ if __name__ == "__main__":
     )
     power_data = energy_data.convert_to_power_data(target_power_unit="MW")
 
-    list_of_load_profile_entries_1 = create_sample_list_of_load_profile_entry_data(
-        energy_data=energy_data,
-        power_data=power_data,
-        total_start_time=total_start_time,
-        total_end_time=total_end_time,
-    )
     energy_data.reset_cycle()
     power_data.reset_cycle()
-    list_of_load_profile_entries_2 = create_sample_list_of_load_profile_entry_data(
-        energy_data=energy_data,
-        power_data=power_data,
-        total_start_time=total_start_time,
-        total_end_time=total_end_time,
-    )
-    assert list_of_load_profile_entries_1 == list_of_load_profile_entries_2
-    energy_data.reset_cycle()
-    power_data.reset_cycle()
-    total_energy_demand_1 = test_resampling(
+    setup_resampling_and_matrix_conversion(
         x_axis_time_period_timedelta=x_axis_time_period_timedelta,
         energy_data=energy_data,
         power_data=power_data,
@@ -207,14 +197,30 @@ if __name__ == "__main__":
         total_end_time=total_end_time,
         resample_frequency="1min",
     )
+
+
+def test_1s_resampling():
+
+    total_start_time = datetime.datetime(year=2022, month=2, day=2)
+    total_end_time = datetime.datetime(year=2022, month=2, day=5)
+    x_axis_time_period_timedelta = datetime.timedelta(hours=1)
+    list_of_energy_values = list(range(int(0), int(10)))
+    load_type = LoadType("Electricity")
+    energy_data = EnergyData(
+        list_of_energy_values=list_of_energy_values,
+        load_type=load_type,
+        energy_unit="MJ",
+        time_step=datetime.timedelta(hours=1),
+    )
+    power_data = energy_data.convert_to_power_data(target_power_unit="MW")
+
     energy_data.reset_cycle()
     power_data.reset_cycle()
-    total_energy_demand_2 = test_resampling(
+    setup_resampling_and_matrix_conversion(
         x_axis_time_period_timedelta=x_axis_time_period_timedelta,
         energy_data=energy_data,
         power_data=power_data,
         total_start_time=total_start_time,
         total_end_time=total_end_time,
-        resample_frequency="1min",
+        resample_frequency="1s",
     )
-    assert total_energy_demand_1 == total_energy_demand_2

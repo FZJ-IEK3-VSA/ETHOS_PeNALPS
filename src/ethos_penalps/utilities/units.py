@@ -38,9 +38,12 @@ class Units:
 
         time_quantity = time_step.total_seconds() * Units.get_unit("s")
         energy_quantity = energy_value * Units.get_unit(energy_unit)
-        power_value = energy_quantity / time_quantity
-        converted_power_quantity = power_value.to(target_power_unit)
-        converted_power_value = converted_power_quantity.m
+        if time_quantity == 0:
+            converted_power_value = 0
+        else:
+            power_value = energy_quantity / time_quantity
+            converted_power_quantity = power_value.to(target_power_unit)
+            converted_power_value = converted_power_quantity.m
         return converted_power_value
 
     @staticmethod

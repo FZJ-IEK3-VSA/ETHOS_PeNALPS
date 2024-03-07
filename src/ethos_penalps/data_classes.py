@@ -300,6 +300,7 @@ class ListOfLoadProfileMetaData(ListLoadProfileMetaDataEmpty):
     energy_unit: str
     total_energy: float
     maximum_power: float
+    load_type: LoadType
 
 
 @dataclass(kw_only=True)
@@ -320,4 +321,5 @@ class CarpetPlotMatrix(CarpetPlotMatrixEmpty):
     power_unit: str
     energy_unit: str
     total_energy_demand: float
+    load_type: LoadType
     resample_frequency: str = "1min"

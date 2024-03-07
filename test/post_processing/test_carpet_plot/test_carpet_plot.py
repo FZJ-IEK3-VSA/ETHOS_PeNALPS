@@ -6,9 +6,9 @@ from dataclasses import dataclass
 
 import pint
 from ethos_penalps.data_classes import LoadProfileEntry, LoadType
-from ethos_penalps.post_processing.load_profile_post_processor import (
+from ethos_penalps.post_processing.carpet_plot_load_profile_generator import (
     CarpetPlotMatrix,
-    LoadProfilePostProcessor,
+    CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.utilities.units import Units
 
@@ -85,7 +85,7 @@ class PowerData:
         return energy_data
 
 
-def test_hour_plot(
+def create_hour_plot(
     x_axis_time_period_timedelta: datetime.timedelta,
     output_file_name: str,
     energy_data: EnergyData,
@@ -94,7 +94,7 @@ def test_hour_plot(
     total_end_time: datetime.datetime,
     resample_frequency: str,
 ):
-    load_profile_post_processor = LoadProfilePostProcessor()
+    load_profile_post_processor = CarpetPlotLoadProfileGenerator()
     list_of_load_profile_entries = []
 
     number_of_time_steps = (total_end_time - total_start_time) / energy_data.time_step
@@ -130,7 +130,6 @@ def test_hour_plot(
     figure = (
         load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
             carpet_plot_load_profile_matrix=load_profile_matrix,
-            load_type_name=energy_data.load_type.name,
         )
     )
     parent_directory = pathlib.Path(__file__).parent.absolute()
@@ -139,7 +138,7 @@ def test_hour_plot(
     figure.savefig(fname=path_to_figure, bbox_inches="tight")
 
 
-def create_1_hour_plots():
+def test_create_1_hour_plots():
     total_start_time = datetime.datetime(year=2022, month=2, day=2)
     total_end_time = datetime.datetime(year=2022, month=2, day=5)
     list_of_energy_values = list(range(int(0), int(10)))
@@ -153,7 +152,7 @@ def create_1_hour_plots():
     power_data = energy_data.convert_to_power_data(target_power_unit="MW")
     energy_data.reset_cycle()
     power_data.reset_cycle()
-    test_hour_plot(
+    create_hour_plot(
         total_start_time=total_start_time,
         total_end_time=total_end_time,
         x_axis_time_period_timedelta=datetime.timedelta(hours=1),
@@ -164,7 +163,7 @@ def create_1_hour_plots():
     )
     energy_data.reset_cycle()
     power_data.reset_cycle()
-    test_hour_plot(
+    create_hour_plot(
         total_start_time=total_start_time,
         total_end_time=total_end_time,
         x_axis_time_period_timedelta=datetime.timedelta(hours=1),
@@ -175,7 +174,7 @@ def create_1_hour_plots():
     )
     energy_data.reset_cycle()
     power_data.reset_cycle()
-    test_hour_plot(
+    create_hour_plot(
         total_start_time=total_start_time,
         total_end_time=total_end_time,
         x_axis_time_period_timedelta=datetime.timedelta(hours=1),
@@ -186,8 +185,97 @@ def create_1_hour_plots():
     )
 
 
-if __name__ == "__main__":
-    create_1_hour_plots()
+def test_create_1_day_plots():
+    total_start_time = datetime.datetime(year=2022, month=1, day=1)
+    total_end_time = datetime.datetime(year=2022, month=12, day=31)
+    x_axis_time_period_timedelta = datetime.timedelta(days=1)
+    list_of_energy_values = list(range(int(0), int(10)))
+    load_type = LoadType("Electricity")
+    energy_data = EnergyData(
+        list_of_energy_values=list_of_energy_values,
+        load_type=load_type,
+        energy_unit="MJ",
+        time_step=datetime.timedelta(hours=1),
+    )
+    power_data = energy_data.convert_to_power_data(target_power_unit="MW")
+    energy_data.reset_cycle()
+    power_data.reset_cycle()
+    create_hour_plot(
+        total_start_time=total_start_time,
+        total_end_time=total_end_time,
+        x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+        output_file_name="carpet_plot_figure_x_axis_1_day_1hour_resample.png",
+        energy_data=energy_data,
+        power_data=power_data,
+        resample_frequency="1h",
+    )
+    energy_data.reset_cycle()
+    power_data.reset_cycle()
+    create_hour_plot(
+        total_start_time=total_start_time,
+        total_end_time=total_end_time,
+        x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+        output_file_name="carpet_plot_figure_x_axis_1_day_5min_resample.png",
+        energy_data=energy_data,
+        power_data=power_data,
+        resample_frequency="5min",
+    )
+    energy_data.reset_cycle()
+    power_data.reset_cycle()
+    create_hour_plot(
+        total_start_time=total_start_time,
+        total_end_time=total_end_time,
+        x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+        output_file_name="carpet_plot_figure_x_axis_1_day_1min_resample.png",
+        energy_data=energy_data,
+        power_data=power_data,
+        resample_frequency="1min",
+    )
 
 
-# load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix()
+def test_create_1_week_plots():
+    total_start_time = datetime.datetime(year=2022, month=1, day=1)
+    total_end_time = datetime.datetime(year=2022, month=12, day=31)
+    x_axis_time_period_timedelta = datetime.timedelta(weeks=1)
+    list_of_energy_values = list(range(int(0), int(10)))
+    load_type = LoadType("Electricity")
+    energy_data = EnergyData(
+        list_of_energy_values=list_of_energy_values,
+        load_type=load_type,
+        energy_unit="MJ",
+        time_step=datetime.timedelta(hours=1),
+    )
+    power_data = energy_data.convert_to_power_data(target_power_unit="MW")
+    energy_data.reset_cycle()
+    power_data.reset_cycle()
+    create_hour_plot(
+        total_start_time=total_start_time,
+        total_end_time=total_end_time,
+        x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+        output_file_name="carpet_plot_figure_x_axis_1_week_1hour_resample.png",
+        energy_data=energy_data,
+        power_data=power_data,
+        resample_frequency="1h",
+    )
+    energy_data.reset_cycle()
+    power_data.reset_cycle()
+    create_hour_plot(
+        total_start_time=total_start_time,
+        total_end_time=total_end_time,
+        x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+        output_file_name="carpet_plot_figure_x_axis_1_week_30min_resample.png",
+        energy_data=energy_data,
+        power_data=power_data,
+        resample_frequency="30 min",
+    )
+    energy_data.reset_cycle()
+    power_data.reset_cycle()
+    create_hour_plot(
+        total_start_time=total_start_time,
+        total_end_time=total_end_time,
+        x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+        output_file_name="carpet_plot_figure_x_axis_1_week_5min_resample.png",
+        energy_data=energy_data,
+        power_data=power_data,
+        resample_frequency="5min",
+    )

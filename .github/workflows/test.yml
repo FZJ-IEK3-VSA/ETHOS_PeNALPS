@@ -87,3 +87,28 @@ jobs:
             echo "start pytest"
             conda run --name penalps_env pytest
             echo "Pytest done"
+            echo "run examples"
+        - name: Run examples
+          shell: pwsh
+          run: |
+            ls
+            cd examples
+            cd tutorial
+            conda run --name penalps_env python _1_cooking_example.py
+            conda run --name penalps_env python _2_cooking_example_more_states.py
+            conda run --name penalps_env python _3_cooking_and_mixer_exclusive_example.py
+            cd _4_connect_four_process_steps
+            conda run --name penalps_env python simulation_starter.py
+            cd ..
+            cd ..
+            cd toffee_production
+            conda run --name penalps_env python simulation_starter.py
+            cd ..
+            cd basic_examples.py
+            conda run --name penalps_env python batch_to_batch_1_node_example.py
+            cd ..
+            cd B-Pillar_manufacturing
+            conda run --name penalps_env python simulation_starter.py
+            echo "Running examples terminated"
+
+

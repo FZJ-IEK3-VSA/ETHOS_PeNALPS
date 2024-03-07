@@ -4,12 +4,12 @@ import datapane
 import matplotlib.pyplot
 import pandas
 
-from ethos_penalps.data_classes import LoadType
+from ethos_penalps.data_classes import LoadType, CarpetPlotMatrix, CarpetPlotMatrixEmpty
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
 )
-from ethos_penalps.post_processing.load_profile_post_processor import (
-    LoadProfilePostProcessor,
+from ethos_penalps.post_processing.carpet_plot_load_profile_generator import (
+    CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.network_analyzer import NetworkAnalyzer
 from ethos_penalps.post_processing.report_generator.report_options import (
@@ -38,7 +38,7 @@ class CarpetPlotPageGenerator:
 
             carpet_plot_list = []
             load_profile_matrix_dict_by_load_profile: dict[
-                LoadType, list[pandas.DataFrame]
+                str, list[CarpetPlotMatrix]
             ] = {}
 
             load_profile_entry_post_processor_for_start_time_check = (
@@ -69,9 +69,6 @@ class CarpetPlotPageGenerator:
                     period=report_generator_options.carpet_plot_options.x_axis_time_delta,
                     list_of_list_of_load_profile_entries=self.production_plan.load_profile_handler.get_list_of_list_of_all_load_profile_entries(),
                 )
-                start_date_for_display = (
-                    report_generator_options.carpet_plot_options.start_date
-                )
 
                 for (
                     stream_name,
@@ -88,7 +85,7 @@ class CarpetPlotPageGenerator:
                         load_type = stream_load_profile_collections.load_type_dict[
                             load_type_uuid
                         ]
-                        load_profile_post_processor = LoadProfilePostProcessor()
+                        load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                         load_profile_df_matrix = load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
                             list_of_load_profile_entries=list_of_load_profile_entries,
                             end_date_time_series=report_generator_options.carpet_plot_options.end_date,
@@ -97,46 +94,51 @@ class CarpetPlotPageGenerator:
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
                             object_name=stream_name,
                         )
-                        fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
-                            carpet_plot_load_profile_matrix=load_profile_df_matrix,
-                            load_type_name=load_type.name,
-                        )
-                        caption = (
-                            "Stream name: "
-                            + str(stream_name)
-                            + "Load type: "
-                            + str(load_type.name)
-                        )
+                        if type(load_profile_df_matrix) is CarpetPlotMatrixEmpty:
+                            pass
+                        elif type(load_profile_df_matrix) is CarpetPlotMatrix:
+                            fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
+                                carpet_plot_load_profile_matrix=load_profile_df_matrix
+                            )
+                            caption = (
+                                "Stream name: "
+                                + str(stream_name)
+                                + "Load type: "
+                                + str(load_type.name)
+                            )
 
-                        file_name = (
-                            "stream_load_profile_"
-                            + str(stream_name)
-                            + "-"
-                            + str(load_type.name)
-                            + output_file_extension_with_dot
-                        )
-                        file_name = file_name.replace(" ", "_")
-                        output_file = os.path.join(
-                            load_profile_carpet_plot_directory_path, file_name
-                        )
-                        fig.savefig(
-                            output_file,
-                            format=output_file_extension,
-                            bbox_inches="tight",
-                            dpi=output_file_dpi,
-                        )
+                            file_name = (
+                                "stream_load_profile_"
+                                + str(stream_name)
+                                + "-"
+                                + str(load_type.name)
+                                + output_file_extension_with_dot
+                            )
+                            file_name = file_name.replace(" ", "_")
+                            output_file = os.path.join(
+                                load_profile_carpet_plot_directory_path, file_name
+                            )
+                            fig.savefig(
+                                output_file,
+                                format=output_file_extension,
+                                bbox_inches="tight",
+                                dpi=output_file_dpi,
+                            )
 
-                        carpet_plot_list.append(
-                            datapane.Media(output_file, caption=caption)
-                        )
-                        if load_type.name in load_profile_matrix_dict_by_load_profile:
-                            load_profile_matrix_dict_by_load_profile[
+                            carpet_plot_list.append(
+                                datapane.Media(output_file, caption=caption)
+                            )
+                            if (
                                 load_type.name
-                            ].append(load_profile_df_matrix)
-                        else:
-                            load_profile_matrix_dict_by_load_profile[load_type.name] = [
-                                load_profile_df_matrix
-                            ]
+                                in load_profile_matrix_dict_by_load_profile
+                            ):
+                                load_profile_matrix_dict_by_load_profile[
+                                    load_type.name
+                                ].append(load_profile_df_matrix)
+                            else:
+                                load_profile_matrix_dict_by_load_profile[
+                                    load_type.name
+                                ] = [load_profile_df_matrix]
 
                 for (
                     process_state_name,
@@ -155,7 +157,7 @@ class CarpetPlotPageGenerator:
                                 load_type_uuid
                             ]
                         )
-                        load_profile_post_processor = LoadProfilePostProcessor()
+                        load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                         load_profile_df_matrix = load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
                             list_of_load_profile_entries=load_entry_lists,
                             end_date_time_series=report_generator_options.carpet_plot_options.end_date,
@@ -164,46 +166,51 @@ class CarpetPlotPageGenerator:
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
                             object_name=process_state_name,
                         )
-                        fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
-                            carpet_plot_load_profile_matrix=load_profile_df_matrix,
-                            load_type_name=load_type.name,
-                        )
+                        if type(load_profile_df_matrix) is CarpetPlotMatrixEmpty:
+                            pass
+                        elif type(load_profile_df_matrix) is CarpetPlotMatrix:
+                            fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
+                                carpet_plot_load_profile_matrix=load_profile_df_matrix
+                            )
 
-                        file_name = (
-                            "process_state_load_profile_"
-                            + str(process_state_name)
-                            + "-"
-                            + str(load_type.name)
-                            + output_file_extension_with_dot
-                        )
-                        output_file = os.path.join(
-                            load_profile_carpet_plot_directory_path, file_name
-                        )
-                        fig.savefig(
-                            output_file,
-                            format=output_file_extension,
-                            bbox_inches="tight",
-                            dpi=output_file_dpi,
-                        )
+                            file_name = (
+                                "process_state_load_profile_"
+                                + str(process_state_name)
+                                + "-"
+                                + str(load_type.name)
+                                + output_file_extension_with_dot
+                            )
+                            output_file = os.path.join(
+                                load_profile_carpet_plot_directory_path, file_name
+                            )
+                            fig.savefig(
+                                output_file,
+                                format=output_file_extension,
+                                bbox_inches="tight",
+                                dpi=output_file_dpi,
+                            )
 
-                        figure_caption = (
-                            "Process state: "
-                            + str(process_state_name)
-                            + "Load type: "
-                            + str(load_type.name)
-                        )
+                            figure_caption = (
+                                "Process state: "
+                                + str(process_state_name)
+                                + "Load type: "
+                                + str(load_type.name)
+                            )
 
-                        carpet_plot_list.append(
-                            datapane.Media(output_file, caption=figure_caption)
-                        )
-                        if load_type.name in load_profile_matrix_dict_by_load_profile:
-                            load_profile_matrix_dict_by_load_profile[
+                            carpet_plot_list.append(
+                                datapane.Media(output_file, caption=figure_caption)
+                            )
+                            if (
                                 load_type.name
-                            ].append(load_profile_df_matrix)
-                        else:
-                            load_profile_matrix_dict_by_load_profile[load_type.name] = [
-                                load_profile_df_matrix
-                            ]
+                                in load_profile_matrix_dict_by_load_profile
+                            ):
+                                load_profile_matrix_dict_by_load_profile[
+                                    load_type.name
+                                ].append(load_profile_df_matrix)
+                            else:
+                                load_profile_matrix_dict_by_load_profile[
+                                    load_type.name
+                                ] = [load_profile_df_matrix]
 
                 individual_load_profile_group = datapane.Group(
                     label="Load profile carpet plots",
@@ -218,22 +225,23 @@ class CarpetPlotPageGenerator:
                 list_of_combined_matrix_data_frames = []
                 list_of_combined_load_profile_figures = []
                 for (
-                    load_type_name,
+                    current_load_type,
                     list_of_matrix_data_frames,
                 ) in load_profile_matrix_dict_by_load_profile.items():
-                    load_profile_post_processor = LoadProfilePostProcessor()
+                    load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                     combined_matrix_data_frame_for_load_type = (
                         load_profile_post_processor.combine_matrix_data_frames(
-                            list_of_carpet_plot_matrices=list_of_matrix_data_frames
+                            list_of_carpet_plot_matrices=list_of_matrix_data_frames,
+                            combined_matrix_name="Combined Matrix of load: "
+                            + str(current_load_type),
                         )
                     )
                     combined_load_profile_figure = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
-                        carpet_plot_load_profile_matrix=combined_matrix_data_frame_for_load_type,
-                        load_type_name=load_type_name,
+                        carpet_plot_load_profile_matrix=combined_matrix_data_frame_for_load_type
                     )
                     file_name = (
                         "summary_load_profile-"
-                        + str(load_type_name)
+                        + str(current_load_type)
                         + output_file_extension_with_dot
                     )
                     output_file = os.path.join(
@@ -250,22 +258,20 @@ class CarpetPlotPageGenerator:
                         datapane.Media(
                             output_file,
                             caption="Whole process energy demand for Load type: "
-                            + str(load_type_name),
+                            + str(current_load_type),
                         )
                     )
                     list_of_combined_matrix_data_frames.append(
                         combined_matrix_data_frame_for_load_type
                     )
 
-                load_profile_post_processor = LoadProfilePostProcessor()
-                total_energy_combined_matrix_data_frame = (
-                    load_profile_post_processor.combine_matrix_data_frames(
-                        list_of_combined_matrix_data_frames
-                    )
+                load_profile_post_processor = CarpetPlotLoadProfileGenerator()
+                total_energy_combined_matrix_data_frame = load_profile_post_processor.combine_matrix_data_frames(
+                    list_of_combined_matrix_data_frames,
+                    combined_matrix_name="Total Energy Demand of all energy carriers",
                 )
                 total_energy_carpet_plot = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
-                    carpet_plot_load_profile_matrix=total_energy_combined_matrix_data_frame,
-                    load_type_name="Combined Load Types",
+                    carpet_plot_load_profile_matrix=total_energy_combined_matrix_data_frame
                 )
                 file_name = "total_energy_load_profile" + output_file_extension_with_dot
                 output_file = os.path.join(

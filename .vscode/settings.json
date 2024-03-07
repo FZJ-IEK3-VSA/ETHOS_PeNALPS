@@ -7,15 +7,20 @@
         "autodoc",
         "autosummary",
         "bibtex",
+        "cbar",
+        "cmap",
         "figwidth",
         "Ginter",
         "jsonpickle",
         "Korzeniowska",
         "maxdepth",
+        "minorticks",
         "penalps",
         "pydantic",
         "targetname",
-        "timedelta"
+        "timedelta",
+        "xticklabels",
+        "ylabel"
     ],
     "python.testing.pytestArgs": [
         "."
