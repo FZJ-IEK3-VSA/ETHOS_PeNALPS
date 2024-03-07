@@ -16,7 +16,7 @@ from ethos_penalps.data_classes import (
 )
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
-from ethos_penalps.utilities.exceptions_and_warnings import Misconfiguration
+from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.stream import ContinuousStream, BatchStream
 from ethos_penalps.utilities.general_functions import (
     check_if_date_1_is_before_date_2,
@@ -35,7 +35,7 @@ class SplittedOrderCollection:
 
     def check_if_order_are_empty(self):
         if self.order_data_frame.empty:
-            raise Misconfiguration(
+            raise MisconfigurationError(
                 "A splitted order of chain: "
                 + self.process_chain_identifier.chain_name
                 + " has no order. The corresponding sink has too few order too distribute to each chain."
@@ -99,7 +99,7 @@ class OrderDistributor:
         if len(self.order_collection.order_data_frame) < len(
             self.dict_of_splitted_order
         ):
-            raise Misconfiguration(
+            raise MisconfigurationError(
                 "There are too few orders to distribute in the node " + self.node_name
             )
 
@@ -330,9 +330,9 @@ class OrderDistributor:
 
         total_sum = input_order_data_frame.loc[:, "production_target"].sum()
         number_of_output_order = math.ceil(total_sum / order_target_mass)
-        input_order_data_frame.loc[
-            :, "Cumulative Target Upper Bound"
-        ] = input_order_data_frame.loc[:, "production_target"].cumsum()
+        input_order_data_frame.loc[:, "Cumulative Target Upper Bound"] = (
+            input_order_data_frame.loc[:, "production_target"].cumsum()
+        )
 
         # input_order_data_frame.loc[:, "Cumulative Target Lower Bound"] = (
         #     input_order_data_frame.loc[:, "Cumulative Target Upper Bound"]

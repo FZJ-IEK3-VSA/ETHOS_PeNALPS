@@ -25,8 +25,8 @@ from ethos_penalps.node_operations import ProductionOrder
 from ethos_penalps.post_processing.enterprise_graph_for_failed_run import (
     GraphVisualization,
 )
-from ethos_penalps.post_processing.load_profile_post_processor import (
-    LoadProfilePostProcessor,
+from ethos_penalps.post_processing.carpet_plot_load_profile_generator import (
+    CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
@@ -178,7 +178,7 @@ class ReportGeneratorProcessChain:
         report = dp.save_report(
             blocks=view,
             path=path_to_main_file,
-            open=self.open_report_after_creation
+            open=self.open_report_after_creation,
             # layout=dp.PageLayout.SIDE,
         )
 
@@ -622,7 +622,7 @@ class ReportGeneratorProcessChain:
                     ) in self.production_plan.load_profile_handler.load_profile_collection.dict_stream_load_profile_collections[
                         stream_name
                     ]:
-                        load_profile_post_processor = LoadProfilePostProcessor()
+                        load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                         load_profile_df_matrix = load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
                             list_of_load_profile_entries=self.production_plan.load_profile_handler.load_profile_collection.dict_stream_load_profile_collections[
                                 stream_name
@@ -633,6 +633,7 @@ class ReportGeneratorProcessChain:
                             start_date_time_series=combined_load_profile_start_date,
                             x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
+                            object_name=stream_name,
                         )
                         fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
                             start_date=combined_load_profile_start_date,
@@ -640,7 +641,6 @@ class ReportGeneratorProcessChain:
                             load_profile_matrix=load_profile_df_matrix,
                             x_axis_whole_period=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
-                            load_type_name=load_type,
                         )
                         caption = (
                             "Stream name: "
@@ -686,7 +686,7 @@ class ReportGeneratorProcessChain:
                     ) in self.production_plan.load_profile_handler.load_profile_collection.dict_process_step_load_profile_collections[
                         process_state_name
                     ]:
-                        load_profile_post_processor = LoadProfilePostProcessor()
+                        load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                         load_profile_df_matrix = load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
                             list_of_load_profile_entries=self.production_plan.load_profile_handler.load_profile_collection.dict_process_step_load_profile_collections[
                                 process_state_name
@@ -697,6 +697,7 @@ class ReportGeneratorProcessChain:
                             start_date_time_series=combined_load_profile_start_date,
                             x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
+                            object_name=process_state_name,
                         )
                         fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
                             start_date=combined_load_profile_start_date,
@@ -704,7 +705,6 @@ class ReportGeneratorProcessChain:
                             load_profile_matrix=load_profile_df_matrix,
                             x_axis_whole_period=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
-                            load_type_name=load_type,
                         )
 
                         file_name = (
@@ -758,7 +758,7 @@ class ReportGeneratorProcessChain:
                 list_of_combined_matrix_data_frames = []
                 list_of_combined_load_profile_figures = []
                 for load_type in load_profile_matrix_dict_by_load_profile:
-                    load_profile_post_processor = LoadProfilePostProcessor()
+                    load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                     combined_matrix_data_frame_for_load_type = load_profile_post_processor.combine_matrix_data_frames(
                         list_of_carpet_plot_matrices=load_profile_matrix_dict_by_load_profile[
                             load_type
@@ -770,7 +770,6 @@ class ReportGeneratorProcessChain:
                         end_date=report_generator_options.carpet_plot_options.end_date,
                         x_axis_whole_period=report_generator_options.carpet_plot_options.x_axis_time_delta,
                         resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
-                        load_type_name=load_type,
                     )
                     file_name = (
                         "summary_load_profile-"
@@ -798,7 +797,7 @@ class ReportGeneratorProcessChain:
                         combined_matrix_data_frame_for_load_type
                     )
 
-                load_profile_post_processor = LoadProfilePostProcessor()
+                load_profile_post_processor = CarpetPlotLoadProfileGenerator()
                 total_energy_combined_matrix_data_frame = (
                     load_profile_post_processor.combine_matrix_data_frames(
                         list_of_combined_matrix_data_frames
@@ -810,7 +809,6 @@ class ReportGeneratorProcessChain:
                     end_date=report_generator_options.carpet_plot_options.end_date,
                     x_axis_whole_period=report_generator_options.carpet_plot_options.x_axis_time_delta,
                     resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
-                    load_type_name=LoadType(name="Combined Load Types"),
                 )
                 file_name = "total_energy_load_profile" + output_file_extension_with_dot
                 output_file = os.path.join(
