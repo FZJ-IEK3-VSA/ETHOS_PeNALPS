@@ -92,6 +92,7 @@ jobs:
           shell: pwsh
           run: |
             ls
+            cd ETHOS_PENALPS
             cd examples
             cd tutorial
             conda run --name penalps_env python _1_cooking_example.py

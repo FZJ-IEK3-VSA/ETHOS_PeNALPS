@@ -47,7 +47,13 @@ class Enterprise:
     def start_simulation(
         self, number_of_iterations_in_chain: numbers.Number | None = None
     ):
-        self.prepare_process_chains_for_simulation()
+        """Start the simulation after the enterprise model has been fully defined.
+
+        Args:
+            number_of_iterations_in_chain (numbers.Number | None, optional): Can set a maximum number of internal
+                simulation iterations. This can be useful to stop ill defined simulations. Defaults to None.
+        """
+        self._prepare_process_chains_for_simulation()
         for network_level in self.list_of_network_level:
             main_sink = network_level.get_main_sink()
             main_sink.initialize_sink()
@@ -97,7 +103,7 @@ class Enterprise:
         self.list_of_network_level.append(network_level)
         return network_level
 
-    def prepare_process_chains_for_simulation(self):
+    def _prepare_process_chains_for_simulation(self):
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()
             network_level.combine_node_dict()
@@ -111,7 +117,7 @@ class Enterprise:
                     output_dictionary[node_name] = process_node
         return output_dictionary
 
-    def get_combined_stream_handler(self) -> StreamHandler:
+    def _get_combined_stream_handler(self) -> StreamHandler:
         output_stream_handler = StreamHandler()
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()
