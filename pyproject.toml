@@ -45,6 +45,11 @@ filterwarnings = [
     "ignore:the load_module()",
     "ignore:the 'timedelta' type is not supported,",
     "ignore:the imp module is deprecated in favour",
+    "ignore:Deprecated call to `pkg_resources.declare_namespace",
+    "ignore: Deprecated call to `pkg_resources.declare_namespace",
+    "ignore: distutils Version classes are deprecated.",
+    "ignore: pkg_resources is deprecated as an API."
+    
 
 ] # How to configure Filterwarning:minversion = "6.0"
 testpaths = ["test"]
@@ -54,3 +59,4 @@ console_output_style = "count"
 # Ommit a field by add ing ":" for each ommited field
 # Actions are: "default"
 # "error", "ignore", "always", "module", "once"
+markers = "load_profile_entry_analyzer"

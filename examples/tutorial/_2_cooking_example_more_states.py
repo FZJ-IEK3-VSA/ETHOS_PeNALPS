@@ -229,7 +229,7 @@ enterprise.create_post_simulation_report(
     start_date=start_date,
     end_date=end_date,
     x_axis_time_delta=datetime.timedelta(hours=1),
-    resample_frequency="1min",
+    resample_frequency="1s",
     gantt_chart_end_date=end_date,
     gantt_chart_start_date=start_date,
 )

@@ -37,6 +37,7 @@ sphinx:
     - sphinx.ext.autodoc
     - sphinx.ext.autosummary
     - sphinx.ext.inheritance_diagram
+    - sphinx.ext.napoleon
 
   config:
     autoapi_dirs: ["../src/ethos_penalps"]
