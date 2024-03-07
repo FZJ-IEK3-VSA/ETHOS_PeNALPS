@@ -41,7 +41,7 @@ from ethos_penalps.stream import (
 )
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
-from ethos_penalps.utilities.exceptions_and_warnings import Misconfiguration
+from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 logger = PeNALPSLogger.get_logger_without_handler()
@@ -91,9 +91,9 @@ class ProcessStep(ProcessNode):
                 load_profile_handler=load_profile_handler,
             )
         )
-        self.production_branch_dict: dict[
-            StaticTimePeriod, ProcessNodeCommunicator
-        ] = {}
+        self.production_branch_dict: dict[StaticTimePeriod, ProcessNodeCommunicator] = (
+            {}
+        )
         self.production_plan: ProductionPlan = production_plan
         self.process_node_communicator: ProcessNodeCommunicator = (
             ProcessNodeCommunicator(
@@ -128,7 +128,12 @@ class ProcessStep(ProcessNode):
             self.name,
         )
 
-        new_node_operation: UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder
+        new_node_operation: (
+            UpstreamNewProductionOrder
+            | DownstreamValidationOrder
+            | DownstreamAdaptionOrder
+            | UpstreamAdaptionOrder
+        )
         if isinstance(input_node_operation, DownstreamValidationOrder):
             logger.debug("An DownstreamValidationOperation is processed")
             new_node_operation = (
