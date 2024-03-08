@@ -148,10 +148,10 @@ def check_if_date_1_is_before_or_at_date_2(
 
 
 class DeltaTemplate(Template):
-    delimiter = "%"
+    delimiter = "_"
 
 
-def convert_date_time_to_string(td: datetime.timedelta, fmt):
+def convert_date_time_to_string(td: datetime.timedelta):
     # Get the timedelta’s sign and absolute number of seconds.
     sign = "-" if td.days < 0 else "+"
     secs = abs(td).total_seconds()
@@ -162,14 +162,17 @@ def convert_date_time_to_string(td: datetime.timedelta, fmt):
     mins, secs = divmod(rem, 60)
 
     # Format (as per above answers) and return the result string.
-    t = DeltaTemplate(fmt)
-    return t.substitute(
-        s=sign,
-        D="{:d}".format(int(days)),
-        H="{:02d}".format(int(hours)),
-        M="{:02d}".format(int(mins)),
-        S="{:02d}".format(int(secs)),
+
+    output_string = (
+        str(int(days))
+        + "_"
+        + str(int(hours))
+        + "_"
+        + str(int(mins))
+        + "_"
+        + str(int(secs))
     )
+    return output_string
 
 
 """>>> strfdelta(td, "%s%H:%M:%S")  # Note that %s refers to the timedelta’s sign.
@@ -242,5 +245,7 @@ if __name__ == "__main__":
     # print(a)
     # b = check_if_date_1_is_before_date_2(date_1=end, date_2=start)
     # print(b)
-    a = create_subscript_string_matplotlib(base="asd", subscripted_text="12354")
+    import datetime
+
+    a = convert_date_time_to_string(td=datetime.timedelta(minutes=30))
     print(a)

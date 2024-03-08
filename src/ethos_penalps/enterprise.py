@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import cloudpickle
 
 from ethos_penalps.data_classes import Commodity, ProcessChainIdentifier, get_new_uuid
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.network_level import NetworkLevel
 from ethos_penalps.post_processing.report_generator.enterprise_report_generator import (
     EnterpriseReportGenerator,
@@ -24,6 +24,13 @@ from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
+from ethos_penalps.post_processing.post_processed_data_handler import (
+    PostProcessSimulationDataHandler,
+)
+from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+
+
+logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class Enterprise:
@@ -36,7 +43,9 @@ class Enterprise:
         self.list_of_network_level: list[NetworkLevel] = []
         self.time_data: TimeData = time_data
         self.location: str = location
-        self.load_profile_handler: LoadProfileHandler = LoadProfileHandler()
+        self.load_profile_handler: LoadProfileHandlerSimulation = (
+            LoadProfileHandlerSimulation()
+        )
         self.production_plan = ProductionPlan(
             load_profile_handler=self.load_profile_handler,
             process_step_states_dict={},
@@ -183,11 +192,7 @@ class Enterprise:
                 Defaults to "1min".. Defaults to "5min".
             number_of_columns (int, optional): Sets the number of columns for the carpet plots. Defaults to 2.
         """
-        report_generator = EnterpriseReportGenerator(
-            production_plan=self.production_plan,
-            enterprise_name=self.name,
-            list_of_network_level=self.list_of_network_level,
-        )
+
         standard_simulation_report.full_process_gantt_chart.plot_start_time = (
             gantt_chart_start_date
         )
@@ -209,6 +214,20 @@ class Enterprise:
             number_of_columns=number_of_columns,
         )
         standard_simulation_report.debug_log_page.include = False
+
+        post_process_simulation_data_handler = PostProcessSimulationDataHandler(
+            production_plan=self.production_plan,
+            report_options=standard_simulation_report,
+        )
+        logger.info("Start to post process load profiles")
+        post_process_simulation_data_handler.start_post_processing()
+        report_generator = EnterpriseReportGenerator(
+            production_plan=self.production_plan,
+            enterprise_name=self.name,
+            list_of_network_level=self.list_of_network_level,
+            post_process_simulation_data_handler=post_process_simulation_data_handler,
+        )
+        logger.info("Start to create report")
         report_generator.generate_report(
             report_generator_options=standard_simulation_report
         )

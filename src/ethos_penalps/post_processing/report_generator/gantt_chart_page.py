@@ -5,7 +5,7 @@ import matplotlib.pyplot
 import pandas
 
 from ethos_penalps.data_classes import (
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     ProcessStepDataFrameMetaInformation,
     StorageDataFrameMetaInformation,
 )

@@ -16,7 +16,7 @@ from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.data_classes import ProcessChainIdentifier
 from ethos_penalps.production_plan import ProductionPlan
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.order_generator import OrderCollection, NOrderGenerator
 
@@ -78,11 +78,15 @@ class CapacityCalculatorProcessChain:
         process_step: ProcessStep,
     ) -> None:
         self.process_step: ProcessStep = deepcopy(process_step)
-        self.process_step_input_stream: ContinuousStream | BatchStream = self.process_step.process_state_handler.process_step_data.stream_handler.get_stream(
-            stream_name=self.process_step.process_state_handler.process_step_data.main_mass_balance.main_input_stream_name
+        self.process_step_input_stream: ContinuousStream | BatchStream = (
+            self.process_step.process_state_handler.process_step_data.stream_handler.get_stream(
+                stream_name=self.process_step.process_state_handler.process_step_data.main_mass_balance.main_input_stream_name
+            )
         )
-        self.process_step_output_stream: ContinuousStream | BatchStream = self.process_step.process_state_handler.process_step_data.stream_handler.get_stream(
-            stream_name=self.process_step.process_state_handler.process_step_data.main_mass_balance.main_output_stream_name
+        self.process_step_output_stream: ContinuousStream | BatchStream = (
+            self.process_step.process_state_handler.process_step_data.stream_handler.get_stream(
+                stream_name=self.process_step.process_state_handler.process_step_data.main_mass_balance.main_output_stream_name
+            )
         )
         self.__post_innit__()
 

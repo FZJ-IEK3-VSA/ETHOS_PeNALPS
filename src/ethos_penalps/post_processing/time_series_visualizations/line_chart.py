@@ -3,7 +3,7 @@ import pandas
 import proplot
 from toolz import interleave
 
-from ethos_penalps.data_classes import LoadProfileDataFrameMetaInformation
+from ethos_penalps.data_classes import LoadProfileMetaData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 logger = PeNALPSLogger.get_logger_without_handler()
@@ -11,7 +11,7 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 def create_line_subplot(
     current_axes,
-    load_profile_data_frame_meta_information: LoadProfileDataFrameMetaInformation,
+    load_profile_data_frame_meta_information: LoadProfileMetaData,
     include_legend: bool,
 ):
     load_profile_data_frame = load_profile_data_frame_meta_information.data_frame
@@ -58,9 +58,7 @@ def create_line_subplot(
 
 def create_multiple_line_plot(
     axes: proplot.gridspec.SubplotGrid,
-    list_of_load_profile_data_frame_meta_information: list[
-        LoadProfileDataFrameMetaInformation
-    ],
+    list_of_load_profile_data_frame_meta_information: list[LoadProfileMetaData],
     use_same_axes: bool,
     current_axes_number: int = 0,
 ):

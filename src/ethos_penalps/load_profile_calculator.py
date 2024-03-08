@@ -1,21 +1,21 @@
 import datetime
-from dataclasses import dataclass, field
 import warnings
+from dataclasses import dataclass, field
+
 import pandas as pd
 import pint
+
 from ethos_penalps.data_classes import (
     Commodity,
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     LoadProfileEntry,
     LoadType,
+    ProcessStateEnergyData,
     ProcessStateEnergyLoadData,
     ProcessStateEnergyLoadDataBasedOnStreamMass,
     ProcessStepProductionPlanEntry,
     StreamLoadEnergyData,
-    ProcessStateEnergyData,
 )
-from ethos_penalps.utilities.units import Units
-
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
 )
@@ -28,12 +28,27 @@ from ethos_penalps.stream import (
 )
 from ethos_penalps.utilities.data_base_interactions import DataBaseInteractions
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedBehaviorWarning
+from ethos_penalps.utilities.units import Units
+
+from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+
+logger = PeNALPSLogger.get_logger_without_handler()
 
 
 @dataclass
 class StreamLoadProfileEntryCollection:
+    """Summarizes the load profile simulation results of a stream during
+    the simulation."""
+
+    # Name of the stream
     object_name: str
+    # Dict of all load types for which load entries are available
+    # The key is a string of the uuid of the load type. The Value is the
+    # load type itself.
     load_type_dict: dict[str, LoadType] = field(default_factory=dict)
+    # The dictionary contains all load of profile entries for all load types
+    # of the stream. The first key is the string of the uuid of the load type.
+    # The value is the list of all load profile entries for the load type.
     dict_of_load_entry_lists: dict[str, list[LoadProfileEntry]] = field(
         default_factory=dict
     )
@@ -43,6 +58,13 @@ class StreamLoadProfileEntryCollection:
         load_type: LoadType,
         load_profile_entry: LoadProfileEntry,
     ):
+        """Adds a new LoadProfileEntry from a stream.
+
+        Args:
+            load_type (LoadType): Defines the energy carrier which is used by the stream.
+            load_profile_entry (LoadProfileEntry): Is a representation of the energy usage
+                during defined time period of the stream.
+        """
         self.load_type_dict[load_type.uuid] = load_type
         if load_type.uuid in self.dict_of_load_entry_lists:
             self.dict_of_load_entry_lists[load_type.uuid].append(load_profile_entry)
@@ -52,8 +74,18 @@ class StreamLoadProfileEntryCollection:
 
 @dataclass
 class ProcessStepLoadProfileEntryCollection:
+    """Summarizes the load profile simulation results of a process step during
+    the simulation."""
+
+    # Name of the process step
     object_name: str
+    # Dict of all load types for which load entries are available
+    # The key is a string of the uuid of the load type. The Value is the
+    # load type itself.
     load_type_dict: dict[str, LoadType] = field(default_factory=dict)
+    # The dictionary contains all load of profile entries for all load types
+    # of the stream. The first key is the string of the uuid of the load type.
+    # The value is the list of all load profile entries for the load type.
     dict_of_load_entry_lists: dict[str, list[LoadProfileEntry]] = field(
         default_factory=dict
     )
@@ -63,6 +95,15 @@ class ProcessStepLoadProfileEntryCollection:
         load_type: LoadType,
         load_profile_entry: LoadProfileEntry,
     ):
+        """Adds a new load profile entry for the process step for a
+        specific LoadType. Is called during the simulation.
+
+        Args:
+            load_type (LoadType): Defines the energy carrier which is used by
+                the process step.
+            load_profile_entry (LoadProfileEntry): Is a representation of the energy usage
+                during defined time period of the process step.
+        """
         self.load_type_dict[load_type.uuid] = load_type
         if load_type.uuid in self.dict_of_load_entry_lists:
             self.dict_of_load_entry_lists[load_type.uuid].append(load_profile_entry)
@@ -70,41 +111,38 @@ class ProcessStepLoadProfileEntryCollection:
             self.dict_of_load_entry_lists[load_type.uuid] = [load_profile_entry]
 
 
-@dataclass
-class LoadProfileMetaDataFrameCollection:
-    process_step_load_profile_meta_data_frame: dict[
-        str, dict[LoadType, LoadProfileDataFrameMetaInformation]
-    ] = field(default_factory=dict)
-    dict_stream_data_frames: dict[
-        str, dict[LoadType, LoadProfileDataFrameMetaInformation]
-    ] = field(default_factory=dict)
-    target_power_unit: str = Units.power_unit.__str__()
-    target_energy_unit: str = Units.energy_unit.__str__()
+# @dataclass
+# class LoadProfileMetaDataFrameCollection:
+#     """Collects
+#     """
+#     process_step_load_profile_meta_data_frame: dict[
+#         str, dict[LoadType, LoadProfileDataFrameMetaInformation]
+#     ] = field(default_factory=dict)
+#     dict_stream_data_frames: dict[
+#         str, dict[LoadType, LoadProfileDataFrameMetaInformation]
+#     ] = field(default_factory=dict)
+#     target_power_unit: str = Units.power_unit.__str__()
+#     target_energy_unit: str = Units.energy_unit.__str__()
 
 
 @dataclass
 class LoadProfileCollection:
+    """Is a container object for all load profiles which are created
+    during the simulation.
+    """
+
+    # Contains the load profile data for all streams
+    # The key is the stream name
     dict_stream_load_profile_collections: dict[
         str, StreamLoadProfileEntryCollection
     ] = field(default_factory=dict)
+    # Contains the load profile data for all streams
+    # The key is the process step
     dict_process_step_load_profile_collections: dict[
         str, ProcessStepLoadProfileEntryCollection
     ] = field(default_factory=dict)
+    # Summarizes all load types for which load profiles were created
     list_of_load_type: list[LoadType] = field(default_factory=list)
-    dict_stream_data_frames: dict[str, dict[LoadType, pd.DataFrame]] = field(
-        default_factory=dict
-    )
-    dict_process_step_data_frames: dict[str, dict[LoadType, pd.DataFrame]] = field(
-        default_factory=dict
-    )
-    dict_stream_data_frames_gantt_chart: dict[
-        str, dict[LoadType, pd.DataFrame]
-    ] = field(default_factory=dict)
-    dict_process_step_data_frames_gantt_chart: dict[
-        str, dict[LoadType, pd.DataFrame]
-    ] = field(default_factory=dict)
-    target_power_unit: str = Units.power_unit
-    target_energy_unit: str = Units.energy_unit
 
     def append_stream_load_profile_entry(
         self,
@@ -112,13 +150,21 @@ class LoadProfileCollection:
         load_type: LoadType,
         load_profile_entry: LoadProfileEntry,
     ):
+        """Appends a new LoadProfileEntry for a stream during the simulation.
+
+        Args:
+            stream_name (str): Name of the stream for which the LoadProfileEntry
+                should be added.
+            load_type (LoadType): The load type of the energy carrier that is used.
+            load_profile_entry (LoadProfileEntry): The actual LoadProfileEntry to be added.
+        """
         if stream_name not in self.dict_stream_load_profile_collections:
             stream_load_profile_entry_collection = StreamLoadProfileEntryCollection(
                 object_name=stream_name
             )
-            self.dict_stream_load_profile_collections[
-                stream_name
-            ] = stream_load_profile_entry_collection
+            self.dict_stream_load_profile_collections[stream_name] = (
+                stream_load_profile_entry_collection
+            )
         else:
             stream_load_profile_entry_collection = (
                 self.dict_stream_load_profile_collections[stream_name]
@@ -147,104 +193,6 @@ class LoadProfileCollection:
         process_step_lp_collection.add_load_profiles(
             load_type=load_type, load_profile_entry=load_profile_entry
         )
-
-    def convert_stream_energy_dict_to_data_frame(
-        self,
-    ) -> dict[str, dict[str, pd.DataFrame]]:
-        for (
-            stream_name,
-            stream_load_profile_collection,
-        ) in self.dict_stream_load_profile_collections.items():
-            self.dict_stream_data_frames[stream_name] = {}
-            for (
-                load_type_uuid,
-                list_of_load_profile_entries,
-            ) in stream_load_profile_collection.dict_of_load_entry_lists.items():
-                self.dict_stream_data_frames[stream_name][
-                    load_type_uuid
-                ] = pd.DataFrame(list_of_load_profile_entries)
-        return self.dict_stream_data_frames
-
-    def convert_process_state_energy_date(
-        self,
-    ) -> dict[str, dict[str, pd.DataFrame]]:
-        for (
-            process_step_name,
-            process_step_load_profile_collection,
-        ) in self.dict_process_step_load_profile_collections.items():
-            self.dict_process_step_data_frames[process_step_name] = {}
-            for (
-                load_type_uuid,
-                list_of_load_profile_entries,
-            ) in process_step_load_profile_collection.dict_of_load_entry_lists.items():
-                self.dict_process_step_data_frames[process_step_name][
-                    load_type_uuid
-                ] = pd.DataFrame(list_of_load_profile_entries)
-        return self.dict_process_step_data_frames
-
-    def convert_all_load_lists_to_gantt_chart_data_frames(
-        self,
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
-        convert_stream_load_profile_entries: bool = True,
-        convert_process_state_load_profiles: bool = True,
-    ):
-        if convert_stream_load_profile_entries is True:
-            for (
-                stream_name,
-                stream_load_profile_collection,
-            ) in self.dict_stream_load_profile_collections.items():
-                for (
-                    load_type_uuid,
-                    list_of_load_profile_entries,
-                ) in stream_load_profile_collection.dict_of_load_entry_lists.items():
-                    load_profile_entry_post_processor = LoadProfileEntryPostProcessor()
-                    stream_data_frame = load_profile_entry_post_processor.convert_time_series_to_resampled_load_profile_meta_data(
-                        object_name=stream_name,
-                        object_type="Stream",
-                        list_of_load_profile_entries=list_of_load_profile_entries,
-                        start_date=start_date,
-                        end_date=end_date,
-                    )
-                    if stream_name not in self.dict_stream_data_frames_gantt_chart:
-                        self.dict_stream_data_frames_gantt_chart[stream_name] = {
-                            load_type_uuid: stream_data_frame
-                        }
-                    else:
-                        self.dict_stream_data_frames_gantt_chart[stream_name][
-                            load_type_uuid
-                        ] = stream_data_frame
-        if convert_process_state_load_profiles is True:
-            for (
-                process_step_name,
-                process_step_load_profile_collection,
-            ) in self.dict_process_step_load_profile_collections.items():
-                for (
-                    load_type_uuid,
-                    list_of_load_profile_entries,
-                ) in (
-                    process_step_load_profile_collection.dict_of_load_entry_lists.items()
-                ):
-                    load_profile_entry_post_processor = LoadProfileEntryPostProcessor()
-                    process_step_data_frame_meta_data = load_profile_entry_post_processor.convert_time_series_to_resampled_load_profile_meta_data(
-                        object_name=process_step_name,
-                        object_type="Process Step",
-                        list_of_load_profile_entries=list_of_load_profile_entries,
-                        start_date=start_date,
-                        end_date=end_date,
-                    )
-
-                    if (
-                        process_step_name
-                        not in self.dict_process_step_data_frames_gantt_chart
-                    ):
-                        self.dict_process_step_data_frames_gantt_chart[
-                            process_step_name
-                        ] = {load_type_uuid: process_step_data_frame_meta_data}
-                    else:
-                        self.dict_process_step_data_frames_gantt_chart[
-                            process_step_name
-                        ][load_type_uuid] = process_step_data_frame_meta_data
 
 
 @dataclass
@@ -295,18 +243,15 @@ class StreamSpecificEnergyDataHandler:
     def get_stream_energy_data(self, stream_name: str) -> StreamEnergyData:
         return self.stream_energy_data_dict[stream_name]
 
-    def get_list_of_load_types(self) -> dict[str, LoadType]:
+    def get_dict_of_load_types(self) -> dict[str, LoadType]:
         return self.dict_of_all_load_types
 
 
-class LoadProfileHandler:
+class LoadProfileHandlerSimulation:
     def __init__(self) -> None:
         self.target_power_unit: str = "MW"
         self.target_energy_unit: str = "MJ"
-        self.load_profile_collection: LoadProfileCollection = LoadProfileCollection(
-            target_power_unit=self.target_power_unit,
-            target_energy_unit=self.target_energy_unit,
-        )
+        self.load_profile_collection: LoadProfileCollection = LoadProfileCollection()
         self.process_step_energy_data_handler_dict: dict[
             str, ProcessStepEnergyDataHandler
         ] = {}
@@ -315,23 +260,16 @@ class LoadProfileHandler:
         )
 
     def get_list_of_load_types(self) -> list[LoadType]:
-        output_list_of_load_types = (
-            self.stream_energy_data_collection.get_list_of_load_types()
-        )
+        dict_of_load_types = self.stream_energy_data_collection.get_dict_of_load_types()
 
         for (
-            process_step_energy_data,
+            process_step_energy_data_handler,
         ) in self.process_step_energy_data_handler_dict.values():
-            list_of_process_step_energy_data_load_types = (
-                process_step_energy_data.get_list_load_types()
+            current_dict_of_load_types = (
+                process_step_energy_data_handler.get_list_load_types()
             )
-
-            output_list_of_load_types = list(
-                set(
-                    output_list_of_load_types
-                    + list_of_process_step_energy_data_load_types
-                )
-            )
+            dict_of_load_types.update(current_dict_of_load_types)
+        output_list_of_load_types = list(dict_of_load_types.values())
         return output_list_of_load_types
 
     def get_list_of_list_of_all_load_profile_entries(
@@ -367,8 +305,9 @@ class LoadProfileHandler:
 
     def create_load_profile_entry_from_stream_entry(
         self,
-        stream_entry: ContinuousStreamProductionPlanEntry
-        | BatchStreamProductionPlanEntry,
+        stream_entry: (
+            ContinuousStreamProductionPlanEntry | BatchStreamProductionPlanEntry
+        ),
         stream_energy_data: StreamLoadEnergyData,
     ) -> LoadProfileEntry:
         if isinstance(stream_entry, ContinuousStreamProductionPlanEntry):
@@ -400,8 +339,9 @@ class LoadProfileHandler:
 
     def create_all_load_profiles_entries_from_stream_entry(
         self,
-        stream_entry: ContinuousStreamProductionPlanEntry
-        | BatchStreamProductionPlanEntry,
+        stream_entry: (
+            ContinuousStreamProductionPlanEntry | BatchStreamProductionPlanEntry
+        ),
     ):
         if (
             stream_entry.name
@@ -433,9 +373,9 @@ class LoadProfileHandler:
         process_state_energy_data: ProcessStateEnergyData,
     ):
         if process_step_name not in self.process_step_energy_data_handler_dict:
-            self.process_step_energy_data_handler_dict[
-                process_step_name
-            ] = ProcessStepEnergyDataHandler(process_step_name=process_step_name)
+            self.process_step_energy_data_handler_dict[process_step_name] = (
+                ProcessStepEnergyDataHandler(process_step_name=process_step_name)
+            )
         self.process_step_energy_data_handler_dict[
             process_step_name
         ].add_process_state_energy_data(

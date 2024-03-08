@@ -13,7 +13,7 @@ import proplot
 from matplotlib import cm
 
 from ethos_penalps.data_classes import (
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     ProcessStepDataFrameMetaInformation,
     StorageDataFrameMetaInformation,
     EmptyMetaDataInformation,
@@ -37,7 +37,7 @@ def slice_data_frames(
     list_of_meta_data_objects: list[
         StreamDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
-        | LoadProfileDataFrameMetaInformation
+        | LoadProfileMetaData
         | StorageDataFrameMetaInformation
         | EmptyMetaDataInformation
         | ProductionOrderMetadata
@@ -47,7 +47,7 @@ def slice_data_frames(
 ) -> list[
     StreamDataFrameMetaInformation
     | ProcessStepDataFrameMetaInformation
-    | LoadProfileDataFrameMetaInformation
+    | LoadProfileMetaData
     | StorageDataFrameMetaInformation
     | EmptyMetaDataInformation
     | ProductionOrderMetadata
@@ -68,7 +68,7 @@ def slice_data_frames(
             meta_information,
             StreamDataFrameMetaInformation
             | ProcessStepDataFrameMetaInformation
-            | LoadProfileDataFrameMetaInformation
+            | LoadProfileMetaData
             | StorageDataFrameMetaInformation,
         ):
             stream_data_frame = meta_information.data_frame

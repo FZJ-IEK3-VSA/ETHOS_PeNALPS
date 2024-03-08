@@ -367,6 +367,11 @@ class NOrderGenerator:
     def create_n_order_collection(
         self,
     ) -> OrderCollection:
+        """Creates an ord
+
+        Returns:
+            OrderCollection: _description_
+        """
         output_order_dict = {}
         number_of_orders = self.number_of_orders
         mass_per_order = self.mass_per_order

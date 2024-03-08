@@ -8,7 +8,7 @@ from ethos_penalps.data_classes import LoadType, CarpetPlotMatrix, CarpetPlotMat
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
 )
-from ethos_penalps.post_processing.carpet_plot_load_profile_generator import (
+from ethos_penalps.post_processing.tikz_visualizations.carpet_plot_load_profile_generator import (
     CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.network_analyzer import NetworkAnalyzer

@@ -17,7 +17,7 @@ logger = PeNALPSLogger.get_human_readable_logger(logging.INFO)
 # Set simulation time data
 time_data = TimeData(
     global_end_date=datetime.datetime(year=2023, month=1, day=1),
-    global_start_date=datetime.datetime(year=2022, month=1, day=1),
+    global_start_date=datetime.datetime(year=2022, month=12, day=30),
 )
 
 # Initialize enterprise
@@ -112,6 +112,7 @@ enterprise.create_post_simulation_report(
     gantt_chart_end_date=time_data.global_end_date,
     gantt_chart_start_date=time_data.global_end_date - datetime.timedelta(hours=28),
     x_axis_time_delta=datetime.timedelta(days=1),
-    start_date=time_data.global_end_date - datetime.timedelta(days=365),
+    start_date=time_data.global_start_date,
     end_date=time_data.global_end_date,
+    resample_frequency="1min",
 )

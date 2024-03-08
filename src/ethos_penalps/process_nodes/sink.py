@@ -10,7 +10,7 @@ from ethos_penalps.data_classes import (
     StreamBranchIdentifier,
     TemporalBranchIdentifier,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
     DownstreamValidationOrder,

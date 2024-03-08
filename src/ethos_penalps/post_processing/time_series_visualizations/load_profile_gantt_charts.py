@@ -14,7 +14,7 @@ import proplot
 from matplotlib import cm
 
 from ethos_penalps.data_classes import (
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     ProcessStepDataFrameMetaInformation,
 )
 
@@ -34,7 +34,7 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 def create_load_profile_gantt_chart(
     fig,
     axs,
-    load_profile_meta_data: LoadProfileDataFrameMetaInformation,
+    load_profile_meta_data: LoadProfileMetaData,
     subplot_number: float,
     start_time_column_name: str = "start_time",
     cmap_name: str = "OrRd",
@@ -88,7 +88,7 @@ def create_load_profile_gantt_chart(
     # Determine minimum and maximum operation rate of the current object
 
     min_value = 0
-    max_value = load_profile_meta_data.maximum_average_power
+    max_value = load_profile_meta_data.maximum_power
     cmap = matplotlib.cm.get_cmap(cmap_name)
 
     # Create list of colourbar tick numbers

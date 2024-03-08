@@ -20,12 +20,12 @@ from ethos_penalps.utilities.debugging_information import (
     DebuggingInformationLogger,
     NodeOperationViewer,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandler, LoadType
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation, LoadType
 from ethos_penalps.node_operations import ProductionOrder
 from ethos_penalps.post_processing.enterprise_graph_for_failed_run import (
     GraphVisualization,
 )
-from ethos_penalps.post_processing.carpet_plot_load_profile_generator import (
+from ethos_penalps.post_processing.tikz_visualizations.carpet_plot_load_profile_generator import (
     CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (

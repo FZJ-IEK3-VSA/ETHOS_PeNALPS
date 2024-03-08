@@ -9,7 +9,7 @@ from ethos_penalps.data_classes import (
     StreamLoadEnergyData,
 )
 from ethos_penalps.load_profile_calculator import (
-    LoadProfileHandler,
+    LoadProfileHandlerSimulation,
     StreamSpecificEnergyDataHandler,
 )
 from ethos_penalps.node_operations import ProductionOrder
@@ -39,14 +39,14 @@ class ProcessOverViewGenerator:
     def __init__(
         self,
         process_node_dict: dict[str, ProcessNode],
-        load_profile_handler: LoadProfileHandler,
+        load_profile_handler: LoadProfileHandlerSimulation,
         stream_handler: StreamHandler,
         order_dictionary: dict[float, ProductionOrder],
         enterprise_name: str,
         production_plan: ProductionPlan,
     ) -> None:
         self.process_node_dict: dict[str, ProcessNode] = process_node_dict
-        self.load_profile_handler: LoadProfileHandler = load_profile_handler
+        self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
         self.stream_handler: StreamHandler = stream_handler
         self.load_type_dict_for_product_specific_energy_demand: dict[
             LoadType, ProductEnergyData
@@ -85,9 +85,9 @@ class ProcessOverViewGenerator:
         sink = self.get_sink()
         current_stream_name = sink.get_input_stream_name()
         current_conversion_factor = 1
-        self.stream_mass_to_product_mass_dict[
-            current_stream_name
-        ] = current_conversion_factor
+        self.stream_mass_to_product_mass_dict[current_stream_name] = (
+            current_conversion_factor
+        )
         previous_stream_to_product_conversion_factor = current_conversion_factor
         stream = self.stream_handler.get_stream(stream_name=current_stream_name)
         current_node_name = stream.get_upstream_node_name()
@@ -103,9 +103,9 @@ class ProcessOverViewGenerator:
             previous_stream_to_product_conversion_factor = (
                 previous_stream_to_product_conversion_factor * current_conversion_factor
             )
-            self.stream_mass_to_product_mass_dict[
-                current_stream_name
-            ] = previous_stream_to_product_conversion_factor
+            self.stream_mass_to_product_mass_dict[current_stream_name] = (
+                previous_stream_to_product_conversion_factor
+            )
             current_node_name = current_node.get_upstream_node_name()
             current_node = self.process_node_dict[current_node_name]
 
@@ -194,9 +194,9 @@ class ProcessOverViewGenerator:
             product_energy_data_type.specific_energy_demand = (
                 product_energy_data_type.specific_energy_demand + energy_value_to_add
             )
-            self.load_type_dict_for_product_specific_energy_demand[
-                load_type
-            ] = product_energy_data_type
+            self.load_type_dict_for_product_specific_energy_demand[load_type] = (
+                product_energy_data_type
+            )
 
     def create_empty_product_energy_dict(self):
         list_of_load_types = self.load_profile_handler.get_list_of_load_types()
@@ -212,9 +212,9 @@ class ProcessOverViewGenerator:
                 product_commodity=product_commodity,
                 load_type=load_type,
             )
-            self.load_type_dict_for_product_specific_energy_demand[
-                load_type
-            ] = product_energy_data
+            self.load_type_dict_for_product_specific_energy_demand[load_type] = (
+                product_energy_data
+            )
 
     def get_sink(self) -> Sink:
         for process_node_name in self.process_node_dict:
@@ -387,9 +387,9 @@ class ProcessOverViewGenerator:
                     column_name_specific_energy_demand = (
                         "Specific energy demand " + str(load_type.name)
                     )
-                    energy_demand_row_dictionary[
-                        column_name_specific_energy_demand
-                    ] = specific_energy_demand
+                    energy_demand_row_dictionary[column_name_specific_energy_demand] = (
+                        specific_energy_demand
+                    )
 
                     energy_demand_row_dictionary["Mass specific energy unit"] = (
                         specific_stream_energy_quantity.u / stream_energy_data.mass_unit
@@ -408,12 +408,12 @@ class ProcessOverViewGenerator:
                         unit=stream_energy_data.energy_unit,
                         quantity_value=total_energy_demand,
                     )
-                    energy_demand_row_dictionary[
-                        total_energy_demand_column_name
-                    ] = total_energy_demand_quantity.m
-                    energy_demand_row_dictionary[
-                        "Total energy unit"
-                    ] = total_energy_demand_quantity.u
+                    energy_demand_row_dictionary[total_energy_demand_column_name] = (
+                        total_energy_demand_quantity.m
+                    )
+                    energy_demand_row_dictionary["Total energy unit"] = (
+                        total_energy_demand_quantity.u
+                    )
 
                 row_dictionary = {
                     "Total stream mass": total_mass_produced,

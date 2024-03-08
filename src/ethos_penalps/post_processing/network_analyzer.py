@@ -2,13 +2,13 @@ from dataclasses import dataclass
 
 from ethos_penalps.data_classes import (
     EmptyMetaDataInformation,
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     ProcessChainIdentifier,
     ProcessStepDataFrameMetaInformation,
     ProductionOrderMetadata,
     StorageDataFrameMetaInformation,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.network_level import NetworkLevel
 from ethos_penalps.order_generator import OrderCollection
 from ethos_penalps.post_processing.time_series_visualizations.order_plot import (
@@ -21,6 +21,9 @@ from ethos_penalps.process_nodes.sink import Sink, Source
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import StreamDataFrameMetaInformation
 from ethos_penalps.stream_node_distributor import SplittedOrderCollection
+from ethos_penalps.post_processing.post_processed_data_handler import (
+    PostProcessSimulationDataHandler,
+)
 
 
 class NetworkAnalyzer:
@@ -87,7 +90,7 @@ class NetworkAnalyzer:
 @dataclass
 class StreamResults:
     stream_meta_data_frame: StreamDataFrameMetaInformation
-    list_of_load_profile_meta_data: list[LoadProfileDataFrameMetaInformation]
+    list_of_load_profile_meta_data: list[LoadProfileMetaData]
 
     def get_stream_meta_data_list(
         self,
@@ -97,9 +100,7 @@ class StreamResults:
     def get_stream_and_load_profile_meta_data_list(
         self, load_profiles_above: bool = True
     ) -> list[
-        StreamDataFrameMetaInformation
-        | LoadProfileDataFrameMetaInformation
-        | EmptyMetaDataInformation
+        StreamDataFrameMetaInformation | LoadProfileMetaData | EmptyMetaDataInformation
     ]:
         output_meta_data_list = []
         if load_profiles_above is True:
@@ -116,7 +117,7 @@ class ProcessStepResults:
     list_of_input_stream_results: list[StreamResults]
     list_of_output_stream_results: list[StreamResults]
     internal_storage_meta_data: StorageDataFrameMetaInformation
-    load_profile_meta_data_frame: list[LoadProfileDataFrameMetaInformation]
+    load_profile_meta_data_frame: list[LoadProfileMetaData]
 
     def get_meta_data_list_with_input_and_output_streams(
         self, input_at_top: bool = True, include_internal_storage: bool = False
@@ -388,18 +389,25 @@ class ResultSelector:
         self,
         production_plan: ProductionPlan,
         list_of_network_level: list[NetworkLevel],
-        load_profile_handler: LoadProfileHandler,
+        load_profile_handler: LoadProfileHandlerSimulation,
+        post_process_simulation_data_handler: PostProcessSimulationDataHandler,
     ) -> None:
         self.production_plan: ProductionPlan = production_plan
         self.list_of_network_level: list[NetworkLevel] = list_of_network_level
         self.network_analyzer: NetworkAnalyzer = NetworkAnalyzer(
             list_of_network_level=list_of_network_level
         )
-        self.load_profile_handler: LoadProfileHandler = load_profile_handler
+        self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
+        self.post_process_simulation_data_handler: PostProcessSimulationDataHandler = (
+            post_process_simulation_data_handler
+        )
 
     def get_structured_network_results(self) -> StructuredNetworkResults:
         list_of_structured_level_results = []
-        self.initialize_data_frames()
+        assert (
+            self.post_process_simulation_data_handler.postprocessing_is_initialized
+            is True
+        )
         for network_level in self.list_of_network_level:
             structured_network_level_results = (
                 self._create_structured_network_level_results(
@@ -417,12 +425,15 @@ class ResultSelector:
     def _create_structured_network_level_results(
         self, network_level: NetworkLevel
     ) -> StructuredNetworkLevelResults:
+
+        source_results: ProcessChainStorageResults | SourceResults
         if type(network_level.main_source) is Source:
             source_results = self._get_source_results(source=network_level.main_source)
         elif type(network_level.main_source) is ProcessChainStorage:
             source_results = self._get_process_chain_storage_results(
                 process_chain_storage=network_level.main_source
             )
+        sink_results: ProcessChainStorageResults | SinkResults
         if type(network_level.main_sink) is Sink:
             sink_results = self._get_sink_results(sink=network_level.main_sink)
         elif type(network_level.main_sink) is ProcessChainStorage:
@@ -469,13 +480,11 @@ class ResultSelector:
     def _get_process_step_results(
         self, process_step: ProcessStep
     ) -> ProcessStepResults:
-        process_step_meta_data_frame = (
-            self.production_plan.get_process_step_meta_data_by_name(
-                process_step_name=process_step.name
-            )
+        process_step_meta_data_frame = self.post_process_simulation_data_handler.get_process_step_meta_data_by_name(
+            process_step_name=process_step.name
         )
         internal_storage_meta_data_frame = (
-            self.production_plan.get_storage_meta_data_by_name(
+            self.post_process_simulation_data_handler.get_storage_meta_data_by_name(
                 storage_name=process_step.name
             )
         )
@@ -500,8 +509,10 @@ class ResultSelector:
         return process_step_results
 
     def _get_sink_results(self, sink: Sink) -> SinkResults:
-        storage_meta_data_frame = self.production_plan.get_storage_meta_data_by_name(
-            storage_name=sink.name
+        storage_meta_data_frame = (
+            self.post_process_simulation_data_handler.get_storage_meta_data_by_name(
+                storage_name=sink.name
+            )
         )
         # Get output stream result list
         list_of_input_stream_results = []
@@ -525,9 +536,9 @@ class ResultSelector:
             splitted_order_meta_data = post_process_order_collection(
                 order_collection=splitted_order
             )
-            dict_of_splitted_order_meta_data_by_stream_name[
-                stream_name
-            ] = splitted_order_meta_data
+            dict_of_splitted_order_meta_data_by_stream_name[stream_name] = (
+                splitted_order_meta_data
+            )
         sink_results = SinkResults(
             name=sink.name,
             storage_meta_data_frame=storage_meta_data_frame,
@@ -543,8 +554,10 @@ class ResultSelector:
         self, process_chain_storage: ProcessChainStorage
     ) -> ProcessChainStorageResults:
         # Get storage meta data frame
-        storage_meta_data_frame = self.production_plan.get_storage_meta_data_by_name(
-            storage_name=process_chain_storage.name
+        storage_meta_data_frame = (
+            self.post_process_simulation_data_handler.get_storage_meta_data_by_name(
+                storage_name=process_chain_storage.name
+            )
         )
         # Get input stream result list
         list_of_input_stream_results = []
@@ -582,9 +595,9 @@ class ResultSelector:
             splitted_order_meta_data = post_process_order_collection(
                 order_collection=splitted_order
             )
-            dict_of_splitted_order_meta_data_by_stream_name[
-                stream_name
-            ] = splitted_order_meta_data
+            dict_of_splitted_order_meta_data_by_stream_name[stream_name] = (
+                splitted_order_meta_data
+            )
 
         process_chain_storage_results = ProcessChainStorageResults(
             name=process_chain_storage.name,
@@ -599,8 +612,10 @@ class ResultSelector:
         return process_chain_storage_results
 
     def _get_source_results(self, source: Source) -> SourceResults:
-        storage_meta_data_frame = self.production_plan.get_storage_meta_data_by_name(
-            storage_name=source.name
+        storage_meta_data_frame = (
+            self.post_process_simulation_data_handler.get_storage_meta_data_by_name(
+                storage_name=source.name
+            )
         )
         # Get output stream result list
         list_of_output_stream_results = []
@@ -617,8 +632,10 @@ class ResultSelector:
         return source_results
 
     def _get_stream_results(self, stream_name: str) -> StreamResults:
-        stream_meta_data_frame = self.production_plan.get_stream_meta_data_by_name(
-            stream_name=stream_name
+        stream_meta_data_frame = (
+            self.post_process_simulation_data_handler.get_stream_meta_data_by_name(
+                stream_name=stream_name
+            )
         )
 
         stream_results = StreamResults(
@@ -627,12 +644,12 @@ class ResultSelector:
         )
         return stream_results
 
-    def initialize_data_frames(self):
-        if not self.production_plan.dict_of_process_step_data_frames:
-            self.production_plan.convert_process_state_dictionary_to_list_of_data_frames()
+    # def initialize_data_frames(self):
+    #     if not self.production_plan.dict_of_process_step_data_frames:
+    #         self.production_plan.convert_process_state_dictionary_to_list_of_data_frames()
 
-        if not self.production_plan.dict_of_stream_meta_data_data_frames:
-            self.production_plan.convert_stream_entries_to_meta_data_data_frames()
+    #     if not self.production_plan.dict_of_stream_meta_data_data_frames:
+    #         self.production_plan.convert_stream_entries_to_meta_data_data_frames()
 
-        if not self.production_plan.dict_of_storage_meta_data_data_frames:
-            self.production_plan.convert_list_of_storage_entries_to_meta_data()
+    #     if not self.production_plan.dict_of_storage_meta_data_data_frames:
+    #         self.production_plan.convert_list_of_storage_entries_to_meta_data()

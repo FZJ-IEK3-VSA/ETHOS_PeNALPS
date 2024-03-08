@@ -1,8 +1,10 @@
 import datetime
 import pathlib
 
-from cutting_and_heating_chain import fill_cutting_and_heating_chain
-from forming_quenching_and_trimming_chain import (
+from test.production_plan_tests.cutting_and_heating_chain import (
+    fill_cutting_and_heating_chain,
+)
+from test.production_plan_tests.forming_quenching_and_trimming_chain import (
     fill_forming_quenching_and_trimming_chain,
 )
 

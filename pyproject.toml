@@ -52,11 +52,28 @@ filterwarnings = [
     
 
 ] # How to configure Filterwarning:minversion = "6.0"
-testpaths = ["test"]
+# https://docs.pytest.org/en/7.1.x/reference/reference.html#confval-pythonpath
+testpaths = ["test"] # Sets the path where to look for tests
+pythonpath =["test"] # Sets the path which should be prepended to pythonpath relative to the root folder
+
 console_output_style = "count"
 # https://docs.python.org/3/library/warnings.html#warning-filter
 # action:message:category:module:line
 # Ommit a field by add ing ":" for each ommited field
 # Actions are: "default"
 # "error", "ignore", "always", "module", "once"
-markers = "load_profile_entry_analyzer"
+markers = ["load_profile_entry_analyzer","carpet_plot_tests","matrix_resample_and_compression_tests","resample_load_profile_meta_data"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs= true
+
+[[tool.mypy.overrides]]
+module = ["cloudpickle.*","datapane.*","matplotlib.*"]
+ignore_missing_imports = true
+
+
+[tool.ruff.lint]
+ignore = ["F401"]

@@ -1,6 +1,6 @@
 import pathlib
 from ethos_penalps.production_plan import ProductionPlan
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.storage import Storage
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
@@ -9,7 +9,7 @@ from ethos_penalps.simulation_data.container_simulation_data import (
     ValidatedPostProductionStateData,
 )
 
-production_plan = ProductionPlan(load_profile_handler=LoadProfileHandler())
+production_plan = ProductionPlan(load_profile_handler=LoadProfileHandlerSimulation())
 
 current_working_directory = pathlib.Path(__file__).parent.absolute()
 
