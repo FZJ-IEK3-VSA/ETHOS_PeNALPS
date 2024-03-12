@@ -1,11 +1,14 @@
 import datetime
+import os
 import pathlib
-
-from cutting_and_heating_chain import fill_cutting_and_heating_chain
-from forming_quenching_and_trimming_chain import (
+from test.production_plan_tests.cutting_and_heating_chain import (
+    fill_cutting_and_heating_chain,
+)
+from test.production_plan_tests.forming_quenching_and_trimming_chain import (
     fill_forming_quenching_and_trimming_chain,
 )
 
+import pytest
 from ethos_penalps.capacity_calculator import CapacityAdjuster, CapacityCalculator
 from ethos_penalps.data_classes import Commodity
 from ethos_penalps.enterprise import Enterprise, NetworkLevel
@@ -15,6 +18,7 @@ from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 # from process_chain_2_1 import fill_process_chain_2_1
+pytestmark = pytest.mark.production_plan_input_output
 
 
 def test_write_production_plan():
@@ -97,9 +101,20 @@ def test_write_production_plan():
     enterprise.start_simulation()
     # current_directory_directory = pathlib.Path(__file__).parent.absolute()
 
-    list_of_output_file_paths = (
-        enterprise.production_plan.save_all_simulation_results_to_sqlite()
+    path_to_current_file = os.path.dirname(__file__)
+    path_to_stream_database = str(
+        os.path.abspath(os.path.join(path_to_current_file, "stream_result.db"))
     )
+    path_to_process_step_database = str(
+        os.path.abspath(os.path.join(path_to_current_file, "process_step_result.db"))
+    )
+    list_of_output_file_paths = (
+        enterprise.production_plan.save_all_simulation_results_to_sqlite(
+            full_path_to_stream_data_base=path_to_stream_database,
+            full_path_to_process_step_data_base=path_to_process_step_database,
+        )
+    )
+
     pathlib.Path(list_of_output_file_paths[0]).unlink()
     pathlib.Path(list_of_output_file_paths[1]).unlink()
 

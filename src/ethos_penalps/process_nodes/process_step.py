@@ -9,7 +9,7 @@ from ethos_penalps.data_classes import (
     StaticTimePeriod,
     TemporalBranchIdentifier,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.mass_balance import MassBalance
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
@@ -60,7 +60,7 @@ class ProcessStep(ProcessNode):
         name: str,
         stream_handler: StreamHandler,
         production_plan: ProductionPlan,
-        load_profile_handler: LoadProfileHandler,
+        load_profile_handler: LoadProfileHandlerSimulation,
         enterprise_time_data: TimeData,
     ):
         """Initiates the instance of a process step

@@ -12,7 +12,7 @@ import proplot
 from matplotlib import cm
 
 from ethos_penalps.data_classes import (
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     ProcessStepDataFrameMetaInformation,
     ProductionOrderMetadata,
     StorageDataFrameMetaInformation,
@@ -169,7 +169,7 @@ class GanttChartGenerator:
 
     def create_load_profile_gantt_chart_from_load_profile_meta_data(
         self,
-        load_profile_meta_data: LoadProfileDataFrameMetaInformation,
+        load_profile_meta_data: LoadProfileMetaData,
         save_path: str | None = None,
     ):
         sliced_list_of_meta_data = slice_data_frames(
@@ -260,7 +260,7 @@ class GanttChartGenerator:
         self,
         list_of_meta_data: list[
             StorageDataFrameMetaInformation
-            | LoadProfileDataFrameMetaInformation
+            | LoadProfileMetaData
             | ProcessStepDataFrameMetaInformation
             | StreamDataFrameMetaInformation
             | ProductionOrderMetadata
@@ -289,7 +289,7 @@ class GanttChartGenerator:
         self,
         list_of_meta_data: list[
             StorageDataFrameMetaInformation
-            | LoadProfileDataFrameMetaInformation
+            | LoadProfileMetaData
             | ProcessStepDataFrameMetaInformation
             | StreamDataFrameMetaInformation
             | ProductionOrderMetadata
@@ -298,7 +298,7 @@ class GanttChartGenerator:
         end_date: datetime.datetime,
     ) -> list[
         StorageDataFrameMetaInformation
-        | LoadProfileDataFrameMetaInformation
+        | LoadProfileMetaData
         | ProcessStepDataFrameMetaInformation
         | StreamDataFrameMetaInformation
         | ProductionOrderMetadata
@@ -325,7 +325,7 @@ def create_gantt_chart(
     list_of_data_frame_meta_data: list[
         ProcessStepDataFrameMetaInformation
         | StreamDataFrameMetaInformation
-        | LoadProfileDataFrameMetaInformation
+        | LoadProfileMetaData
         | StorageDataFrameMetaInformation
         | ProductionOrderMetadata
     ],
@@ -374,9 +374,7 @@ def create_gantt_chart(
                 subplot_number=subplot_number,
                 stream_data_frame_meta_information=data_frame_meta_information,
             )
-        elif isinstance(
-            data_frame_meta_information, LoadProfileDataFrameMetaInformation
-        ):
+        elif isinstance(data_frame_meta_information, LoadProfileMetaData):
             list_of_load_profiles_meta_data_information.append(
                 data_frame_meta_information
             )
@@ -435,7 +433,7 @@ def create_gantt_chart(
 def create_color_column(
     meta_data_list: list[
         StreamDataFrameMetaInformation
-        | LoadProfileDataFrameMetaInformation
+        | LoadProfileMetaData
         | StorageDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
         | ProductionOrderMetadata
@@ -443,7 +441,7 @@ def create_color_column(
     current_value_column_name: str = "current_operation_rate_value",
 ) -> list[
     StreamDataFrameMetaInformation
-    | LoadProfileDataFrameMetaInformation
+    | LoadProfileMetaData
     | StorageDataFrameMetaInformation
     | ProcessStepDataFrameMetaInformation
     | ProductionOrderMetadata
@@ -480,12 +478,12 @@ def create_color_column(
             pass
         elif isinstance(
             meta_data,
-            LoadProfileDataFrameMetaInformation,
+            LoadProfileMetaData,
         ):
             colormap_string = "OrRd"
             current_value_column_name = "average_power_consumption"
             data_frame = meta_data.data_frame
-            max_value = meta_data.maximum_average_power
+            max_value = meta_data.maximum_power
             min_value = 0
             norm = matplotlib.colors.Normalize(vmin=min_value, vmax=max_value)
             cmap = matplotlib.cm.get_cmap(colormap_string)
@@ -503,14 +501,14 @@ def create_color_column(
 def convert_unbound_operation_rate_to_maximum_operation_rate(
     list_of_meta_data: list[
         StreamDataFrameMetaInformation
-        | LoadProfileDataFrameMetaInformation
+        | LoadProfileMetaData
         | StorageDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
         | ProductionOrderMetadata
     ],
 ) -> list[
     StreamDataFrameMetaInformation
-    | LoadProfileDataFrameMetaInformation
+    | LoadProfileMetaData
     | StorageDataFrameMetaInformation
     | ProcessStepDataFrameMetaInformation
     | ProductionOrderMetadata
@@ -538,7 +536,7 @@ def convert_unbound_operation_rate_to_maximum_operation_rate(
                     ].max()
                 else:
                     data_frame["Maximum limit has been set"] = 1
-        elif isinstance(meta_information, LoadProfileDataFrameMetaInformation):
+        elif isinstance(meta_information, LoadProfileMetaData):
             pass
         elif isinstance(
             meta_information, StorageDataFrameMetaInformation | ProductionOrderMetadata

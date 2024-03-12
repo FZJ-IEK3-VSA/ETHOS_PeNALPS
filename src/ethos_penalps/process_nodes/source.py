@@ -32,7 +32,7 @@ from ethos_penalps.node_operations import (
 from ethos_penalps.process_node_communicator import EmptyProductionBranch
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.production_plan import ProductionPlan
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.simulation_data.simulation_data_branch import (
     IncompleteOutputBranchData,
     CompleteOutputBranchData,

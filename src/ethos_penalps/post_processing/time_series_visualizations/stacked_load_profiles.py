@@ -8,16 +8,14 @@ import pandas
 import proplot
 
 from ethos_penalps.data_classes import (
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     LoadProfileEntry,
     LoadType,
 )
 
 
 def create_stacked_line_plot(
-    list_of_load_profile_meta_data_information: list[
-        LoadProfileDataFrameMetaInformation
-    ],
+    list_of_load_profile_meta_data_information: list[LoadProfileMetaData],
     file_path: str | None = None,
 ):
     proplot.rc["grid.linewidth"] = 0

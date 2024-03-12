@@ -7,7 +7,7 @@ from ethos_penalps.data_classes import (
     ProcessChainIdentifier,
     get_new_uuid,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_step import ProcessNode
@@ -23,12 +23,12 @@ class NetworkLevel:
         self,
         stream_handler: StreamHandler,
         production_plan: ProductionPlan,
-        load_profile_handler: LoadProfileHandler,
+        load_profile_handler: LoadProfileHandlerSimulation,
         time_data: TimeData,
     ) -> None:
         self.stream_handler: StreamHandler = stream_handler
         self.production_plan: ProductionPlan = production_plan
-        self.load_profile_handler: LoadProfileHandler = load_profile_handler
+        self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
         self.main_source: Source | ProcessChainStorage
         self.main_sink: Sink | ProcessChainStorage
         self.node_dictionary: dict[ProcessNode] = {}

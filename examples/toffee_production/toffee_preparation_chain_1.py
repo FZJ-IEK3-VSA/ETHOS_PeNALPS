@@ -2,6 +2,7 @@ import datetime
 
 from ethos_penalps.data_classes import LoadType
 from ethos_penalps.process_chain import ProcessChain
+from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
 from ethos_penalps.stream import BatchStreamStaticData, ContinuousStreamStaticData
@@ -9,7 +10,7 @@ from ethos_penalps.stream import BatchStreamStaticData, ContinuousStreamStaticDa
 
 def fill_toffee_preparation_chain_1(
     process_chain: ProcessChain,
-    cooled_toffee_sink: Sink,
+    cooled_toffee_sink: Sink | ProcessChainStorage,
     raw_toffee_source: Source,
     electricity_load: LoadType,
     natural_gas_load: LoadType,

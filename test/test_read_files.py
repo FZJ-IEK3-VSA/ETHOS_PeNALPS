@@ -4,7 +4,7 @@ import pathlib
 
 
 from ethos_penalps.data_classes import Commodity, LoadType
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import (
@@ -22,7 +22,9 @@ from ethos_penalps.time_data import TimeData
 
 
 def test_read_files():
-    production_plan = ProductionPlan(load_profile_handler=LoadProfileHandler())
+    production_plan = ProductionPlan(
+        load_profile_handler=LoadProfileHandlerSimulation()
+    )
     parent_directory = pathlib.Path(__file__).parent.absolute()
     case_folder_name = r"cases"
     case_1_name = r"case_1"

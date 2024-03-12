@@ -34,6 +34,7 @@ class PeNALPSLogger:
     has_been_called: bool = False
     logger = logging.getLogger(logger_name)
 
+    @staticmethod
     def initialize_logger():
         root = logging.getLogger()
         root.removeHandler(root.handlers[0])
@@ -44,6 +45,7 @@ class PeNALPSLogger:
         # table_logger.addHandler(logging.NullHandler())
         return table_logger
 
+    @staticmethod
     def get_logger_without_handler() -> logging.Logger:
         # https://docs.python.org/3/library/logging.html#logrecord-attributes
         # create logger
@@ -54,6 +56,7 @@ class PeNALPSLogger:
         table_logger: logging.Logger = PeNALPSLogger.logger
         return table_logger
 
+    @staticmethod
     def get_human_readable_logger(logging_level: int = logging.INFO) -> logging.Logger:
         # create logger
         logger: logging.Logger = PeNALPSLogger.logger
@@ -77,6 +80,7 @@ class PeNALPSLogger:
 
         return logger
 
+    @staticmethod
     def get_logger_to_create_table(logging_level=logging.INFO) -> logging.Logger:
         logger: logging.Logger = PeNALPSLogger.logger
         result_path_generator = ResultPathGenerator()
@@ -126,6 +130,7 @@ class PeNALPSLogger:
         logger.addHandler(file_handler)
         return logger
 
+    @staticmethod
     def read_log_to_data_frame(path_to_log_file: str | None = None) -> pd.DataFrame:
         if path_to_log_file is None:
             data_frame = pd.read_csv(

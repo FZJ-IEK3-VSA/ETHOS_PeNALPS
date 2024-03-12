@@ -13,13 +13,23 @@ from ethos_penalps.stream import (
 )
 from ethos_penalps.data_classes import EmptyMetaDataInformation
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.post_processing.post_processed_data_handler import (
+    PostProcessSimulationDataHandler,
+)
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class DataFramePageGenerator:
-    def __init__(self, production_plan: ProductionPlan) -> None:
+    def __init__(
+        self,
+        production_plan: ProductionPlan,
+        post_process_simulation_data_handler: PostProcessSimulationDataHandler,
+    ) -> None:
         self.production_plan: ProductionPlan = production_plan
+        self.post_process_simulation_data_handler: PostProcessSimulationDataHandler = (
+            post_process_simulation_data_handler
+        )
 
     def create_stream_state_data_frame_selector(
         self, report_generator_options: ReportGeneratorOptions
@@ -31,7 +41,9 @@ class DataFramePageGenerator:
         ):
             logger.info("Start generation of page with stream data frames")
             stream_data_frame_list = list(
-                (self.production_plan.dict_of_stream_meta_data_data_frames.values())
+                (
+                    self.post_process_simulation_data_handler.dict_of_stream_meta_data_data_frames.values()
+                )
             )
             for stream_data_frame_meta_information in stream_data_frame_list:
                 if isinstance(
@@ -111,7 +123,7 @@ class DataFramePageGenerator:
             logger.info("Start generation of page with process state data frames")
 
             process_state_data_frame_list = list(
-                self.production_plan.dict_of_process_step_data_frames.values()
+                self.post_process_simulation_data_handler.dict_of_process_step_data_frames.values()
             )
             for (
                 process_state_data_frame_meta_information
@@ -155,12 +167,17 @@ class DataFramePageGenerator:
                         storage_state_dictionary[process_step_name][commodity]
                     )
                     storage_state_block_list.append(
-                        datapane.DataTable(storage_data_frame)
+                        datapane.DataTable(
+                            storage_data_frame,
+                            caption=process_step_name,
+                            label=process_step_name,
+                        )
                     )
 
         if len(storage_state_block_list) > 1:
             process_state_data_frame_selector = datapane.Select(
-                blocks=storage_state_block_list, label="Storage States"
+                blocks=storage_state_block_list,
+                label="Storage States",
             )
         elif len(storage_state_block_list) == 1:
             process_state_data_frame_selector = datapane.Group(

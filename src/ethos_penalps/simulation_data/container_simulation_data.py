@@ -62,9 +62,11 @@ class ProductionProcessStateContainer(
 
     def restore_process_state_data(
         self,
-        state_data_to_update: ValidatedPostProductionStateData
-        | PostProductionStateData
-        | PreProductionStateData,
+        state_data_to_update: (
+            ValidatedPostProductionStateData
+            | PostProductionStateData
+            | PreProductionStateData
+        ),
     ):
         self.state_data = state_data_to_update
 
@@ -95,7 +97,7 @@ class ProductionProcessStateContainer(
         return validated_input_stream_list_is_longer_than_1
 
     def get_post_production_state_data(self) -> PostProductionStateData:
-        if not type(self.state_data) is PostProductionStateData:
+        if type(self.state_data) is not PostProductionStateData:
             raise UnexpectedDataType(
                 current_data_type=self.state_data,
                 expected_data_type=PostProductionStateData,
@@ -103,7 +105,7 @@ class ProductionProcessStateContainer(
         return self.state_data
 
     def get_pre_production_state_data(self) -> PreProductionStateData:
-        if not type(self.state_data) is PreProductionStateData:
+        if type(self.state_data) is not PreProductionStateData:
             raise UnexpectedDataType(
                 current_data_type=self.state_data,
                 expected_data_type=PreProductionStateData,
@@ -113,7 +115,7 @@ class ProductionProcessStateContainer(
     def get_pre_or_post_production_state_data(
         self,
     ) -> PreProductionStateData | PostProductionStateData:
-        if not type(self.state_data) in (
+        if type(self.state_data) not in (
             PostProductionStateData,
             PreProductionStateData,
         ):
