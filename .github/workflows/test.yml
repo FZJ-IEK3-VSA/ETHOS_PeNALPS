@@ -120,7 +120,7 @@ jobs:
             conda run --name penalps_env python _1_cooking_example.py
             conda run --name penalps_env python _2_cooking_example_more_states.py
             conda run --name penalps_env python _3_add_more_cooker_for_parallel_operation.py
-            conda run --name penalps_env python _4_cooking_and_mixer_exclusive_example
+            conda run --name penalps_env python _4_cooking_and_mixer_exclusive_example.py
             cd _5_connect_four_process_steps
             conda run --name penalps_env python simulation_starter.py
             cd ..
