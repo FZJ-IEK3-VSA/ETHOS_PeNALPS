@@ -4,16 +4,19 @@ import datapane
 import matplotlib.pyplot
 import pandas
 
-from ethos_penalps.data_classes import LoadType, CarpetPlotMatrix, CarpetPlotMatrixEmpty
+from ethos_penalps.data_classes import CarpetPlotMatrix, CarpetPlotMatrixEmpty, LoadType
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
 )
-from ethos_penalps.post_processing.tikz_visualizations.carpet_plot_load_profile_generator import (
-    CarpetPlotLoadProfileGenerator,
-)
 from ethos_penalps.post_processing.network_analyzer import NetworkAnalyzer
+from ethos_penalps.post_processing.post_processed_data_handler import (
+    PostProcessSimulationDataHandler,
+)
 from ethos_penalps.post_processing.report_generator.report_options import (
     ReportGeneratorOptions,
+)
+from ethos_penalps.post_processing.tikz_visualizations.carpet_plot_load_profile_generator import (
+    CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.time_series_visualizations.gantt_chart import (
     GanttChartGenerator,
@@ -26,9 +29,17 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class CarpetPlotPageGenerator:
-    def __init__(self, production_plan: ProductionPlan, report_directory: str) -> None:
+    def __init__(
+        self,
+        production_plan: ProductionPlan,
+        report_directory: str,
+        post_process_simulation_data_handler: PostProcessSimulationDataHandler,
+    ) -> None:
         self.production_plan: ProductionPlan = production_plan
         self.report_directory: str = report_directory
+        self.post_process_simulation_data_handler: PostProcessSimulationDataHandler = (
+            post_process_simulation_data_handler
+        )
 
     def create_carpet_plot_page(
         self, report_generator_options: ReportGeneratorOptions
@@ -41,9 +52,6 @@ class CarpetPlotPageGenerator:
                 str, list[CarpetPlotMatrix]
             ] = {}
 
-            load_profile_entry_post_processor_for_start_time_check = (
-                LoadProfileEntryPostProcessor()
-            )
             list_of_list_of_load_profile_entries = (
                 self.production_plan.load_profile_handler.get_list_of_list_of_all_load_profile_entries()
             )
@@ -59,46 +67,45 @@ class CarpetPlotPageGenerator:
             output_file_extension = "png"
             output_file_extension_with_dot = "." + output_file_extension
             output_file_dpi = 900
-
+            carpet_plot_load_profile_generator = CarpetPlotLoadProfileGenerator()
             combined_carpet_plot_groups = None
             individual_load_profile_group = None
 
             if list_of_list_of_load_profile_entries:
-                combined_load_profile_start_date = load_profile_entry_post_processor_for_start_time_check.determine_earliest_start_date_from_list_of_list_of_load_profile_entries(
-                    end_date=report_generator_options.carpet_plot_options.end_date,
-                    period=report_generator_options.carpet_plot_options.x_axis_time_delta,
-                    list_of_list_of_load_profile_entries=self.production_plan.load_profile_handler.get_list_of_list_of_all_load_profile_entries(),
-                )
 
                 for (
                     stream_name,
                     stream_load_profile_collections,
                 ) in (
-                    self.production_plan.load_profile_handler.load_profile_collection.dict_stream_load_profile_collections.items()
+                    self.post_process_simulation_data_handler.load_profile_collection_post_processing.dict_stream_load_profile_collections.items()
                 ):
                     for (
                         load_type_uuid,
-                        list_of_load_profile_entries,
+                        load_profile_meta_data_resampled,
                     ) in (
-                        stream_load_profile_collections.dict_of_load_entry_lists.items()
+                        stream_load_profile_collections.dict_of_load_entry_meta_data_resampled.items()
                     ):
                         load_type = stream_load_profile_collections.load_type_dict[
                             load_type_uuid
                         ]
-                        load_profile_post_processor = CarpetPlotLoadProfileGenerator()
-                        load_profile_df_matrix = load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
-                            list_of_load_profile_entries=list_of_load_profile_entries,
+
+                        carpet_plot_matrix = carpet_plot_load_profile_generator.convert_load_profile_meta_data_to_carpet_plot_matrix(
+                            load_profile_meta_data_resampled=load_profile_meta_data_resampled,
+                            x_axis_period_time_delta=report_generator_options.carpet_plot_options.x_axis_time_delta,
+                            start_date_time_series=report_generator_options.carpet_plot_options.start_date,
                             end_date_time_series=report_generator_options.carpet_plot_options.end_date,
-                            start_date_time_series=combined_load_profile_start_date,
-                            x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
                             object_name=stream_name,
                         )
-                        if type(load_profile_df_matrix) is CarpetPlotMatrixEmpty:
+
+                        if type(carpet_plot_matrix) is CarpetPlotMatrixEmpty:
                             pass
-                        elif type(load_profile_df_matrix) is CarpetPlotMatrix:
-                            fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
-                                carpet_plot_load_profile_matrix=load_profile_df_matrix
+                        elif type(carpet_plot_matrix) is CarpetPlotMatrix:
+                            carpet_plot_matrix = carpet_plot_load_profile_generator.compress_power_of_carpet_plot_matrix_if_necessary(
+                                carpet_plot_load_profile_matrix=carpet_plot_matrix
+                            )
+                            fig = carpet_plot_load_profile_generator.plot_load_profile_carpet_from_data_frame_matrix(
+                                carpet_plot_load_profile_matrix=carpet_plot_matrix
                             )
                             caption = (
                                 "Stream name: "
@@ -134,48 +141,51 @@ class CarpetPlotPageGenerator:
                             ):
                                 load_profile_matrix_dict_by_load_profile[
                                     load_type.name
-                                ].append(load_profile_df_matrix)
+                                ].append(carpet_plot_matrix)
                             else:
                                 load_profile_matrix_dict_by_load_profile[
                                     load_type.name
-                                ] = [load_profile_df_matrix]
+                                ] = [carpet_plot_matrix]
 
                 for (
-                    process_state_name,
+                    process_step_name,
                     process_step_load_profile_collections,
                 ) in (
-                    self.production_plan.load_profile_handler.load_profile_collection.dict_process_step_load_profile_collections.items()
+                    self.post_process_simulation_data_handler.load_profile_collection_post_processing.dict_process_step_load_profile_collections.items()
                 ):
                     for (
                         load_type_uuid,
-                        load_entry_lists,
+                        load_profile_meta_data_resampled,
                     ) in (
-                        process_step_load_profile_collections.dict_of_load_entry_lists.items()
+                        process_step_load_profile_collections.dict_of_load_entry_meta_data_resampled.items()
                     ):
                         load_type = (
                             process_step_load_profile_collections.load_type_dict[
                                 load_type_uuid
                             ]
                         )
-                        load_profile_post_processor = CarpetPlotLoadProfileGenerator()
-                        load_profile_df_matrix = load_profile_post_processor.convert_lpg_load_profile_to_data_frame_matrix(
-                            list_of_load_profile_entries=load_entry_lists,
+
+                        carpet_plot_matrix = carpet_plot_load_profile_generator.convert_load_profile_meta_data_to_carpet_plot_matrix(
+                            load_profile_meta_data_resampled=load_profile_meta_data_resampled,
+                            x_axis_period_time_delta=report_generator_options.carpet_plot_options.x_axis_time_delta,
+                            start_date_time_series=report_generator_options.carpet_plot_options.start_date,
                             end_date_time_series=report_generator_options.carpet_plot_options.end_date,
-                            start_date_time_series=combined_load_profile_start_date,
-                            x_axis_time_period_timedelta=report_generator_options.carpet_plot_options.x_axis_time_delta,
                             resample_frequency=report_generator_options.carpet_plot_options.resample_frequency,
-                            object_name=process_state_name,
+                            object_name=process_step_name,
                         )
-                        if type(load_profile_df_matrix) is CarpetPlotMatrixEmpty:
+                        if type(carpet_plot_matrix) is CarpetPlotMatrixEmpty:
                             pass
-                        elif type(load_profile_df_matrix) is CarpetPlotMatrix:
-                            fig = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
-                                carpet_plot_load_profile_matrix=load_profile_df_matrix
+                        elif type(carpet_plot_matrix) is CarpetPlotMatrix:
+                            carpet_plot_matrix = carpet_plot_load_profile_generator.compress_power_of_carpet_plot_matrix_if_necessary(
+                                carpet_plot_load_profile_matrix=carpet_plot_matrix
+                            )
+                            fig = carpet_plot_load_profile_generator.plot_load_profile_carpet_from_data_frame_matrix(
+                                carpet_plot_load_profile_matrix=carpet_plot_matrix
                             )
 
                             file_name = (
                                 "process_state_load_profile_"
-                                + str(process_state_name)
+                                + str(process_step_name)
                                 + "-"
                                 + str(load_type.name)
                                 + output_file_extension_with_dot
@@ -192,7 +202,7 @@ class CarpetPlotPageGenerator:
 
                             figure_caption = (
                                 "Process state: "
-                                + str(process_state_name)
+                                + str(process_step_name)
                                 + "Load type: "
                                 + str(load_type.name)
                             )
@@ -206,11 +216,11 @@ class CarpetPlotPageGenerator:
                             ):
                                 load_profile_matrix_dict_by_load_profile[
                                     load_type.name
-                                ].append(load_profile_df_matrix)
+                                ].append(carpet_plot_matrix)
                             else:
                                 load_profile_matrix_dict_by_load_profile[
                                     load_type.name
-                                ] = [load_profile_df_matrix]
+                                ] = [carpet_plot_matrix]
 
                 individual_load_profile_group = datapane.Group(
                     label="Load profile carpet plots",
@@ -228,15 +238,17 @@ class CarpetPlotPageGenerator:
                     current_load_type,
                     list_of_matrix_data_frames,
                 ) in load_profile_matrix_dict_by_load_profile.items():
-                    load_profile_post_processor = CarpetPlotLoadProfileGenerator()
+                    carpet_plot_load_profile_generator = (
+                        CarpetPlotLoadProfileGenerator()
+                    )
                     combined_matrix_data_frame_for_load_type = (
-                        load_profile_post_processor.combine_matrix_data_frames(
+                        carpet_plot_load_profile_generator.combine_matrix_data_frames(
                             list_of_carpet_plot_matrices=list_of_matrix_data_frames,
                             combined_matrix_name="Combined Matrix of load: "
                             + str(current_load_type),
                         )
                     )
-                    combined_load_profile_figure = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
+                    combined_load_profile_figure = carpet_plot_load_profile_generator.plot_load_profile_carpet_from_data_frame_matrix(
                         carpet_plot_load_profile_matrix=combined_matrix_data_frame_for_load_type
                     )
                     file_name = (
@@ -265,12 +277,12 @@ class CarpetPlotPageGenerator:
                         combined_matrix_data_frame_for_load_type
                     )
 
-                load_profile_post_processor = CarpetPlotLoadProfileGenerator()
-                total_energy_combined_matrix_data_frame = load_profile_post_processor.combine_matrix_data_frames(
+                carpet_plot_load_profile_generator = CarpetPlotLoadProfileGenerator()
+                total_energy_combined_matrix_data_frame = carpet_plot_load_profile_generator.combine_matrix_data_frames(
                     list_of_combined_matrix_data_frames,
                     combined_matrix_name="Total Energy Demand of all energy carriers",
                 )
-                total_energy_carpet_plot = load_profile_post_processor.plot_load_profile_carpet_from_data_frame_matrix(
+                total_energy_carpet_plot = carpet_plot_load_profile_generator.plot_load_profile_carpet_from_data_frame_matrix(
                     carpet_plot_load_profile_matrix=total_energy_combined_matrix_data_frame
                 )
                 file_name = "total_energy_load_profile" + output_file_extension_with_dot

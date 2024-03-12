@@ -34,10 +34,10 @@ Each of the new intermediate states is connected with an additional process stat
 
 $$
 E_{heating, state} = m_{potato,water}*c_{p,water}*(T_{target}-T_{start})
-=650 g *4.2kj/kg *(100°C-20°C)=0.06kWh
+=650 g *4.2kj/kg *(100°C-20°C)≈0.06066667kWh
 $$
 $$
-t_{heating,state}=E_{heating, state}/P_{max}=0.06kWh/2000W=1.82 minutes
+t_{heating,state}=E_{heating, state}/P_{max}≈0.06066667kWh/2000W≈1.82 minutes
 $$
 
 The Assuming that the total cooking time does not change
@@ -102,19 +102,19 @@ process_step.process_state_handler.process_state_switch_selector_handler.create_
 )
 ```
 
-Now the the energy data must be updated to model the different energy usage in both states. Therefore the energy demand must be converted to MJ/t for each state. It is assumed that the total energy demand does not change. There fore the heat demand for hold temperature phase is:
+Now the the energy data must be updated to model the different energy usage in both states. Therefore the energy demand must be converted to MJ/t for each state. It is assumed that the total energy demand does not change. Therefore the heat demand for hold temperature phase is:
 
 $$
-E_{hold_temperature, state} = E_{total}-E_{heating, state}= 0.15 kWH -0.06kWh= 0.09kWH
+E_{hold_temperature, state} = E_{total}-E_{heating, state}= 0.15 kWH -0.06066667kWh= 0.089333333kWh
 $$
 
 The energy demand for both phase is converted into mass specific energy using the following conversion:
 $$
-SEC_{heating, state}=E_{heating, state}/m_{potato,water}=0.06kWh/650 g=332.31 MJ/t
+SEC_{heating, state}=E_{heating, state}/m_{potato,water}=0.06066667kWh/650 g=336.0 MJ/t
 $$
 
 $$
-SEC_{hold_temperature, state}=E_{hold_temperature, state}/m_{potato,water}=0.09kWh/650 g=498.46 MJ/t
+SEC_{hold_temperature, state}=E_{hold_temperature, state}/m_{potato,water}=0.089333333kWh/650 g=494.7692307692307 MJ/t
 $$
 
 In this case it is assumed that no energy is used during the cleaning.
@@ -133,4 +133,23 @@ hold_temperature_state.create_process_state_energy_data_based_on_stream_mass(
 )
 ```
 
-The next example shows how to implement multiple cookers that produced in parallel.
+Figure {numref}`gantt-chart-more-states-cooker` shows the gantt chart of the cooker with the additional states. Compared to the previous example
+it can be seen that the cooking state is replaced by two states heating and hold temperature. Also the cleaning state has been added. Due to the cleaning more time between the two cooking sessions is required.
+
+
+:::{figure-md} gantt-chart-more-states-cooker
+<img src="./figures/2_tutorial/gantt_chart_cooker_more_states.png" >
+
+Gantt chart of the cooker model with additional states, the input stream and the output stream.
+:::
+
+
+The influence of the heating and hold temperature state can been seen in figure {numref}`gantt-chart-more-states-cooker`. It has high power demand state (heating) followed by a lower power demand state (hold temperature). It can be seen that the cooker operates at the maximum power of 2000W during the heating state. This is the result of the previous assumptions.
+
+:::{figure-md} carpet-plot-more-states-cooker
+<img src="./figures/2_tutorial/carpet_plot_cooker_more_states.png" >
+
+Carpet plot of the load profiles of the cooker model with more states.
+:::
+ 
+The next example shows how to implement multiple cookers that operate in parallel.

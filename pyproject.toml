@@ -9,7 +9,7 @@ where = ["src"]
 
 [project]
 name = "ethos_penalps"
-version = "1.0.2"
+version = "1.0.3"
 description = "A package to create energy load curves for industry locations in Germany"
 readme = "README.md"
 authors = [
@@ -48,7 +48,8 @@ filterwarnings = [
     "ignore:Deprecated call to `pkg_resources.declare_namespace",
     "ignore: Deprecated call to `pkg_resources.declare_namespace",
     "ignore: distutils Version classes are deprecated.",
-    "ignore: pkg_resources is deprecated as an API."
+    "ignore: pkg_resources is deprecated as an API.",
+    "ignore: Deprecated API features detected! These feature(s) are not compatible with SQLAlchemy 2.0"
     
 
 ] # How to configure Filterwarning:minversion = "6.0"
@@ -62,7 +63,7 @@ console_output_style = "count"
 # Ommit a field by add ing ":" for each ommited field
 # Actions are: "default"
 # "error", "ignore", "always", "module", "once"
-markers = ["load_profile_entry_analyzer","carpet_plot_tests","matrix_resample_and_compression_tests","resample_load_profile_meta_data"]
+markers = ["load_profile_entry_analyzer","carpet_plot_tests","matrix_resample_and_compression_tests","resample_load_profile_meta_data","production_plan_input_output","test_load_profile_post_processing"]
 
 [tool.mypy]
 python_version = "3.10"

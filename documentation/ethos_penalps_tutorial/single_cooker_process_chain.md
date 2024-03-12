@@ -3,7 +3,7 @@
 This section shows how to setup a minimal simulation of a production system that simulates a single cooker. A depiction of the ETHOS.PeNALPS Model is shown in figure {numref}`cooking-example-single`. The energy, time and mass data is used from an experiment by {cite}`Korzeniowska_Ginter_2019`. Korzeniowska-Ginter et al . conducted a series of experiments to determine cooking length and energy of potatoes demand using household appliances. For this case the data from the electric stove with a metal plate is used. 
 
 :::{figure-md} cooking-example-single
-<img src="./figures/single_cooker_process_chain_example.png" width=300>
+<img src="./figures/1_tutorial/single_cooker_process_chain_example.png" width=300>
 
 Depiction of the minimal production system model in ETHOS.PeNALPS which simulates a simple cooker.
 :::
@@ -234,10 +234,12 @@ Lastly, the simulation and post processing must be started. Optionally, a maximu
 - A figure of the modelled process
 - The production plan 
   - Table
-  - downloadable CSV file
+  - Downloadable CSV file
 - Load Profiles 
-  - Table
-  - downloadable CSV file
+  - direct simulation output
+  - resampled to target frequency
+    - Data table
+    - Downloadable CSV file
 - Gantt chart of streams, process steps, sink and source
 - A carpet plot of the load profiles
 
@@ -252,5 +254,38 @@ enterprise.create_post_simulation_report(
     gantt_chart_start_date=start_date,
 )
 ```
+In the following figures {numref}`cooking-example-single-gantt-chart-source` to {numref}`cooking-example-single-gantt-chart-sink` show the activity of the production system during the simulation.
+
+:::{figure-md} cooking-example-single-gantt-chart-source
+<img src="./figures/1_tutorial/gantt_chart_source.png">
+
+Gantt chart that shows the activity of the raw goods source and the output stream of the source.
+:::
+
+Figure {numref}`cooking-example-single-gantt-chart` shows the gantt chart of the gantt chart of the cooker, its input stream and the output stream. The input stream of the cooker an the output stream of the source are the same object.
+Additionally the internal storage level of the cooker is shown.
+
+
+:::{figure-md} cooking-example-single-gantt-chart
+<img src="./figures/1_tutorial/gantt_chart_1.png">
+
+Gantt chart that shows the activity of the single simple cooker, the input, the output stream and the internal storage level.
+:::
+
+Figure {numref}`cooking-example-single-gantt-chart-sink` shows the activity of the sink and its input stream.
+
+:::{figure-md} cooking-example-single-gantt-chart-sink
+<img src="./figures/1_tutorial/gantt_chart_sink.png">
+
+Gantt chart that shows the activity of the sink and it input stream.
+:::
+
+Lastly figure {numref}`cooking-example-single-carpet-plot` show the load profile of the cooker as a carpet plot.
+
+:::{figure-md} cooking-example-single-carpet-plot
+<img src="./figures/1_tutorial/carpet_plot_single_simple_cooker.png">
+
+Carpet plot that shows the load profile of the single simple cooker. It can be seen that no energy is used during the charging and discharging.
+:::
 
 The next sections shows how the cooking process can be modelled in greater detail.

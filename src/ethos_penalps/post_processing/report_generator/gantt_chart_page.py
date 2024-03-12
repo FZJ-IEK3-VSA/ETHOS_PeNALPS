@@ -43,6 +43,14 @@ class GanttChartPageGenerator:
     def create_network_level_gantt_chart_page(
         self, report_generator_options: ReportGeneratorOptions
     ) -> datapane.Group:
+        """Create Gantt Charts for all Network Level.
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): _description_
+
+        Returns:
+            datapane.Group: _description_
+        """
         figure_list = []
         if report_generator_options.full_process_gantt_chart.create_gantt_chart is True:
             logger.info("Start generation of process step gantt charts")
@@ -61,6 +69,7 @@ class GanttChartPageGenerator:
             ) in (
                 structured_network_results.get_network_level_in_material_flow_direction()
             ):
+                # Check if Network Level is
                 if (
                     current_network_level_counter
                     == structured_network_results.upstream_network_level_position

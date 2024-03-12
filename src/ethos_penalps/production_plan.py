@@ -2,7 +2,7 @@ import datetime
 import os
 from dataclasses import dataclass, field
 from typing import List, Optional
-
+import pathlib
 import pandas as pd
 
 import __main__
@@ -53,17 +53,15 @@ class ResultBaseClass:
 
     def save_all_simulation_results_to_sqlite(
         self,
-        full_path_to_data_base: str | None = None,
-        database_name: str | None = None,
+        full_path_to_stream_data_base: str | None = None,
+        full_path_to_process_step_data_base: str | None = None,
     ) -> list[str]:
         list_of_output_file_paths = []
         path_to_stream_db = self.save_stream_plan_to_sqlite_db(
-            full_path_to_data_base=full_path_to_data_base,
-            database_name=database_name,
+            full_path_to_data_base=full_path_to_stream_data_base,
         )
         path_to_process_state_db = self.save_process_state_plan_to_sqlite_db(
-            full_path_to_data_base=full_path_to_data_base,
-            database_name=database_name,
+            full_path_to_data_base=full_path_to_process_step_data_base,
         )
         list_of_output_file_paths.append(path_to_stream_db)
         list_of_output_file_paths.append(path_to_process_state_db)
@@ -72,7 +70,6 @@ class ResultBaseClass:
     def save_stream_plan_to_sqlite_db(
         self,
         full_path_to_data_base: str | None = None,
-        database_name: str | None = None,
     ) -> str:
         if full_path_to_data_base is None:
             path_to_main_module = os.path.dirname(__main__.__file__)
@@ -81,14 +78,16 @@ class ResultBaseClass:
             if not os.path.exists(results_directory):
                 os.makedirs(results_directory)
 
-            if database_name is None:
-                date_appendix = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-                file_name = "stream_plan_" + date_appendix + ".db"
-            else:
-                pass
+            date_appendix = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+            file_name = "stream_plan_" + date_appendix + ".db"
+
             full_path_to_data_base = os.path.join(results_directory, file_name)
         else:
             pass
+        if isinstance(full_path_to_data_base, str):
+            if not os.path.exists(pathlib.Path(full_path_to_data_base).parent):
+                os.makedirs(pathlib.Path(full_path_to_data_base).parent)
+
         data_base_handler = DataBaseInteractions(
             path_to_database=full_path_to_data_base
         )
@@ -102,7 +101,6 @@ class ResultBaseClass:
     def save_process_state_plan_to_sqlite_db(
         self,
         full_path_to_data_base: str | None = None,
-        database_name: str | None = None,
     ) -> str:
         if full_path_to_data_base is None:
             path_to_main_module = os.path.dirname(__main__.__file__)
@@ -111,11 +109,9 @@ class ResultBaseClass:
             if not os.path.exists(results_directory):
                 os.makedirs(results_directory)
 
-            if database_name is None:
-                date_appendix = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-                file_name = "process_states" + date_appendix + ".db"
-            else:
-                pass
+            date_appendix = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+            file_name = "process_states" + date_appendix + ".db"
+
             full_path_to_data_base = os.path.join(results_directory, file_name)
         else:
             pass

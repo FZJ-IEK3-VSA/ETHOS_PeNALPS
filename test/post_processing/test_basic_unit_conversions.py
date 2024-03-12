@@ -23,9 +23,9 @@ def test_convert_energy_in_time_step_to_power():
         time_step=datetime.timedelta(seconds=60),
         target_power_unit="MW",
     )
-    MW_target = 1
+    mw_target = 1
 
-    assert converted_power_value == MW_target
+    assert converted_power_value == mw_target
 
 
 def test_convert_power_to_energy_in_time_step():
@@ -35,9 +35,9 @@ def test_convert_power_to_energy_in_time_step():
         time_step=datetime.timedelta(seconds=60),
         target_energy_unit="MJ",
     )
-    MJ_target = 180
+    mj_target = 180
 
-    assert converted_energy_value == MJ_target
+    assert converted_energy_value == mj_target
 
 
 def test_compress_units():

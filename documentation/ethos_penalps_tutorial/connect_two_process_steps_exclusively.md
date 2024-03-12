@@ -223,3 +223,34 @@ cooker_step.process_state_handler.process_step_data.main_mass_balance.create_sto
 ```
 
 In the next example shows how to connect three or more process steps non exclusively.
+
+
+:::{figure-md} cooking-blender-exclusive-example-blender-gantt-chart
+<img src="./figures/3_tutorial/gantt_chart_blender.png">
+
+Depiction of the cooker model with two parallel cookers.
+:::
+
+:::{figure-md} cooking-blender-exclusive-example-cooker-gantt-chart
+<img src="./figures/3_tutorial/gantt_chart_cooker.png" >
+
+Depiction of the cooker model with two parallel cookers.
+:::
+
+:::{figure-md} cooking-blender-exclusive-example-blender-carpet-plot
+<img src="./figures/3_tutorial/carpet_plot_blender.png">
+
+Depiction of the cooker model with two parallel cookers.
+:::
+
+:::{figure-md} cooking-blender-exclusive-example-cooker-carpet-plot
+<img src="./figures/3_tutorial/carpet_plot_cooker.png" >
+
+Depiction of the cooker model with two parallel cookers.
+:::
+
+:::{figure-md} cooking-blender-exclusive-example-electricity-combined
+<img src="./figures/3_tutorial/carpet_plot_electricity_combined.png">
+
+Depiction of the cooker model with two parallel cookers.
+:::

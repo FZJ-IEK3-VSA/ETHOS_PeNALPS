@@ -295,6 +295,16 @@ class EmptyLoadProfileMetadata:
 
 
 @dataclass
+class ListOfLoadProfileEntryMetaData:
+    name: str
+    object_type: str
+    list_of_load_profiles: list[LoadProfileEntry]
+    load_type: LoadType
+    power_unit: str
+    energy_unit: str
+
+
+@dataclass
 class LoadProfileMetaData(DataClassJsonMixin):
     name: str
     object_type: str

@@ -122,7 +122,7 @@ class EnterpriseReportGenerator:
                         subdirectory_name="report"
                     )
                 )
-
+        # Create Process Overview Page
         process_overview_page_generator = ProcessOverviewPage(
             enterprise_name=self.enterprise_name,
             report_directory=self.report_directory,
@@ -134,8 +134,8 @@ class EnterpriseReportGenerator:
                 report_generator_options=report_generator_options
             )
         )
-
         self.group_list.append(process_overview_page)
+        # Create Production Plan Data Frame Page
         if (
             report_generator_options.production_plan_data_frame.create_data_frame_page
             is True
@@ -149,34 +149,38 @@ class EnterpriseReportGenerator:
         )
         self.group_list.append(data_frame_page)
 
+        # Create Load Profile Overview Page
         load_profile_data_page_generator = LoadProfileDataPageGenerator(
             production_plan=self.production_plan,
             post_process_simulation_data_handler=self.post_process_simulation_data_handler,
         )
-
         load_profile_data_page = (
             load_profile_data_page_generator.create_load_profile_data_page()
         )
         self.group_list.append(load_profile_data_page)
-        # gantt_chart_page_generator = GanttChartPageGenerator(
-        #     production_plan=self.production_plan,
-        #     network_analyzer=self.network_analyzer,
-        #     report_directory=self.report_directory,
-        #     result_selector=self.result_selector,
-        # )
-        # gantt_chart_page = (
-        #     gantt_chart_page_generator.create_network_level_gantt_chart_page(
-        #         report_generator_options=report_generator_options
-        #     )
-        # )
-        # self.group_list.append(gantt_chart_page)
-        # carpet_plot_page_generator = CarpetPlotPageGenerator(
-        #     production_plan=self.production_plan, report_directory=self.report_directory
-        # )
-        # carpet_plot_page = carpet_plot_page_generator.create_carpet_plot_page(
-        #     report_generator_options=report_generator_options
-        # )
-        # self.group_list.append(carpet_plot_page)
+
+        # Create Data Frame Page
+        gantt_chart_page_generator = GanttChartPageGenerator(
+            production_plan=self.production_plan,
+            network_analyzer=self.network_analyzer,
+            report_directory=self.report_directory,
+            result_selector=self.result_selector,
+        )
+        gantt_chart_page = (
+            gantt_chart_page_generator.create_network_level_gantt_chart_page(
+                report_generator_options=report_generator_options
+            )
+        )
+        self.group_list.append(gantt_chart_page)
+        carpet_plot_page_generator = CarpetPlotPageGenerator(
+            production_plan=self.production_plan,
+            report_directory=self.report_directory,
+            post_process_simulation_data_handler=self.post_process_simulation_data_handler,
+        )
+        carpet_plot_page = carpet_plot_page_generator.create_carpet_plot_page(
+            report_generator_options=report_generator_options
+        )
+        self.group_list.append(carpet_plot_page)
 
         if self.report_directory is None:
             result_path_generator = ResultPathGenerator()

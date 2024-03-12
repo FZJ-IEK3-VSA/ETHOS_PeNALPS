@@ -23,7 +23,7 @@ cooked_commodity = Commodity(name="Cooked Goods")
 # Enterprise structure
 
 # Set simulation time data
-start_date = datetime.datetime(2022, 1, 2, hour=22, minute=30)
+start_date = datetime.datetime(2022, 1, 2, hour=22)
 end_date = datetime.datetime(2022, 1, 3)
 time_data = TimeData(
     global_start_date=start_date,

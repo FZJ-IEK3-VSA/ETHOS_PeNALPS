@@ -1,6 +1,6 @@
 # Add More Cookers for Parallel Operation
 
-This sections explains how to model the parallel operation of two process steps using the previous cooker example which is shown in {numref}`cooking-example-two-cooker`. In this example two cookers are implemented.
+This sections explains how to model the parallel operation of two process steps using the previous cooker example which is shown in figure {numref}`cooking-example-two-cooker`. In this example two cookers are implemented.
 :::{figure-md} cooking-example-two-cooker
 <img src="./figures/parallel_cooker_operation.png" width=300>
 

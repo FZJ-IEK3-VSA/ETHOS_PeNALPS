@@ -11,6 +11,7 @@ from ethos_penalps.network_level import NetworkLevel
 from ethos_penalps.post_processing.report_generator.enterprise_report_generator import (
     EnterpriseReportGenerator,
 )
+from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.post_processing.report_generator.report_options import (
     standard_simulation_report,
 )
@@ -193,6 +194,26 @@ class Enterprise:
             number_of_columns (int, optional): Sets the number of columns for the carpet plots. Defaults to 2.
         """
 
+        number_of_periods = (end_date - start_date) / x_axis_time_delta
+        if number_of_periods <= 0:
+            raise MisconfigurationError(
+                "No positive number periods. The start_date: "
+                + str(start_date)
+                + " must be before the end_date: "
+                + str(end_date)
+            )
+
+        if not number_of_periods.is_integer():
+            raise Exception(
+                """(end_date - start_date)/x_axis_time_delta must be an integer to create the carpet plots.
+                  number of periods."""
+                + " start_date is: "
+                + str(start_date)
+                + " end_date: "
+                + str(end_date)
+                + " x_axis_time_delta: "
+                + str(x_axis_time_delta)
+            )
         standard_simulation_report.full_process_gantt_chart.plot_start_time = (
             gantt_chart_start_date
         )

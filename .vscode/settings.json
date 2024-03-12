@@ -20,6 +20,7 @@
         "penalps",
         "pydantic",
         "pytest",
+        "pytestmark",
         "targetname",
         "timedelta",
         "xticklabels",

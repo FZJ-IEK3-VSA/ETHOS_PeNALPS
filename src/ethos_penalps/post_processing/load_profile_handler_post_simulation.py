@@ -235,7 +235,7 @@ class LoadProfileCollectionPostProcessing:
             stream_load_profile_entry_collection = (
                 StreamLoadProfileEntryCollectionResampled(object_name=stream_name)
             )
-
+            logger.info("Start post processing stream_name: %s", stream_name)
             for (
                 load_type_uuid,
                 list_of_load_profile_entries,
@@ -243,32 +243,12 @@ class LoadProfileCollectionPostProcessing:
                 load_type = stream_load_profile_collections.load_type_dict[
                     load_type_uuid
                 ]
-                resampled_load_profile_meta_data = self.load_profile_entry_post_processor.homogenize_list_of_load_profiles_entries(
+                logger.info("Start to create load profile meta data: %s", stream_name)
+                load_profile_meta_data = self.load_profile_entry_post_processor.create_load_profile_meta_data(
                     object_name=stream_name,
                     list_of_load_profile_entries=list_of_load_profile_entries,
                     start_date_time_series=self.report_generator_options.carpet_plot_options.start_date,
                     end_date_time_series=self.report_generator_options.carpet_plot_options.end_date,
-                    resample_frequency=self.report_generator_options.carpet_plot_options.resample_frequency,
-                    object_type="Stream",
-                )
-                if (
-                    type(resampled_load_profile_meta_data)
-                    is LoadProfileMetaDataResampled
-                ):
-                    stream_load_profile_entry_collection.add_list_of_load_profile_meta_data_resampled(
-                        load_type=load_type,
-                        list_of_load_profile_entry_meta_data=resampled_load_profile_meta_data,
-                    )
-                elif type(resampled_load_profile_meta_data) is EmptyLoadProfileMetadata:
-                    pass
-                else:
-                    raise UnexpectedCase(
-                        "Received unexpected datatype during resampling of load profile for stream:"
-                        + str(stream_name)
-                    )
-                load_profile_meta_data = self.load_profile_entry_post_processor.create_list_of_load_profile_meta_data(
-                    list_of_load_profiles=list_of_load_profile_entries,
-                    object_name=stream_name,
                     object_type="Stream",
                 )
                 if type(load_profile_meta_data) is LoadProfileMetaData:
@@ -276,7 +256,28 @@ class LoadProfileCollectionPostProcessing:
                         load_type=load_type,
                         list_of_load_profile_entry_meta_data=load_profile_meta_data,
                     )
-                elif type(load_profile_meta_data) is EmptyMetaDataInformation:
+                    logger.info("Start resampling stream_name: %s", stream_name)
+                    resampled_load_profile_meta_data = self.load_profile_entry_post_processor.resample_load_profile_meta_data(
+                        load_profile_meta_data=load_profile_meta_data,
+                        start_date=self.report_generator_options.carpet_plot_options.start_date,
+                        end_date=self.report_generator_options.carpet_plot_options.end_date,
+                        x_axis_time_period_timedelta=self.report_generator_options.carpet_plot_options.x_axis_time_delta,
+                        resample_frequency=self.report_generator_options.carpet_plot_options.resample_frequency,
+                    )
+                    if (
+                        type(resampled_load_profile_meta_data)
+                        is LoadProfileMetaDataResampled
+                    ):
+                        stream_load_profile_entry_collection.add_list_of_load_profile_meta_data_resampled(
+                            load_type=load_type,
+                            list_of_load_profile_entry_meta_data=resampled_load_profile_meta_data,
+                        )
+                    else:
+                        raise UnexpectedCase(
+                            "Received unexpected datatype during resampling of load profile for stream:"
+                            + str(stream_name)
+                        )
+                elif type(load_profile_meta_data) is EmptyLoadProfileMetadata:
                     pass
                 else:
                     raise UnexpectedCase(
@@ -300,6 +301,7 @@ class LoadProfileCollectionPostProcessing:
         ) in (
             self.load_profile_collection.dict_process_step_load_profile_collections.items()
         ):
+            logger.info("Start resampling process step: %s", process_step_name)
             process_step_load_profile_entry_collection = (
                 ProcessStepLoadProfileEntryCollectionResampled(
                     object_name=process_step_name
@@ -312,48 +314,47 @@ class LoadProfileCollectionPostProcessing:
                 load_type = process_step_load_profile_collections.load_type_dict[
                     load_type_uuid
                 ]
-                resampled_load_profile_meta_data = self.load_profile_entry_post_processor.homogenize_list_of_load_profiles_entries(
+                load_profile_meta_data = self.load_profile_entry_post_processor.create_load_profile_meta_data(
                     object_name=process_step_name,
                     list_of_load_profile_entries=list_of_load_profile_entries,
                     start_date_time_series=self.report_generator_options.carpet_plot_options.start_date,
                     end_date_time_series=self.report_generator_options.carpet_plot_options.end_date,
-                    resample_frequency=self.report_generator_options.carpet_plot_options.resample_frequency,
-                    object_type="Stream",
-                )
-                if (
-                    type(resampled_load_profile_meta_data)
-                    is LoadProfileMetaDataResampled
-                ):
-                    process_step_load_profile_entry_collection.add_list_of_load_profile_meta_data_resampled(
-                        load_type=load_type,
-                        list_of_load_profile_entry_meta_data=resampled_load_profile_meta_data,
-                    )
-                elif type(resampled_load_profile_meta_data) is EmptyMetaDataInformation:
-                    pass
-                else:
-                    raise UnexpectedCase(
-                        "Received unexpected datatype during resampling of load profile for process step:"
-                        + str(process_step_name)
-                    )
-                process_step_data_frame_meta_data = self.load_profile_entry_post_processor.create_list_of_load_profile_meta_data(
-                    list_of_load_profiles=list_of_load_profile_entries,
-                    object_name=process_step_name,
                     object_type="Process Step",
                 )
-                if type(process_step_data_frame_meta_data) is LoadProfileMetaData:
+                if type(load_profile_meta_data) is LoadProfileMetaData:
                     process_step_load_profile_entry_collection.add_list_of_load_profile_meta_data(
                         load_type=load_type,
-                        list_of_load_profile_entry_meta_data=process_step_data_frame_meta_data,
+                        list_of_load_profile_entry_meta_data=load_profile_meta_data,
                     )
-                elif (
-                    type(process_step_data_frame_meta_data) is EmptyLoadProfileMetadata
-                ):
+                    resampled_load_profile_meta_data = self.load_profile_entry_post_processor.resample_load_profile_meta_data(
+                        load_profile_meta_data=load_profile_meta_data,
+                        start_date=self.report_generator_options.carpet_plot_options.start_date,
+                        end_date=self.report_generator_options.carpet_plot_options.end_date,
+                        x_axis_time_period_timedelta=self.report_generator_options.carpet_plot_options.x_axis_time_delta,
+                        resample_frequency=self.report_generator_options.carpet_plot_options.resample_frequency,
+                    )
+                    if (
+                        type(resampled_load_profile_meta_data)
+                        is LoadProfileMetaDataResampled
+                    ):
+                        process_step_load_profile_entry_collection.add_list_of_load_profile_meta_data_resampled(
+                            load_type=load_type,
+                            list_of_load_profile_entry_meta_data=resampled_load_profile_meta_data,
+                        )
+
+                    else:
+                        raise UnexpectedCase(
+                            "Received unexpected datatype during resampling of load profile for process step:"
+                            + str(process_step_name)
+                        )
+                elif type(load_profile_meta_data) is EmptyMetaDataInformation:
                     pass
                 else:
                     raise UnexpectedCase(
                         "Received unexpected datatype during resampling of load profile for process step:"
                         + str(process_step_name)
                     )
+
             dict_of_resampled_load_profile_meta_data[process_step_name] = (
                 process_step_load_profile_entry_collection
             )

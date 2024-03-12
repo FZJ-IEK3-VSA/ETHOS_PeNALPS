@@ -1,16 +1,19 @@
 import datetime
-import pytest
 import warnings
+
+import pytest
+from ethos_penalps.data_classes import (
+    ListOfLoadProfileEntryMetaData,
+    LoadProfileEntry,
+    LoadType,
+)
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     ListOfLoadProfileEntryAnalyzer,
 )
-from ethos_penalps.data_classes import LoadProfileEntry, LoadType
-from ethos_penalps.utilities.units import Units
 from ethos_penalps.utilities.exceptions_and_warnings import (
     LoadProfileInconsistencyWarning,
 )
-
-list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+from ethos_penalps.utilities.units import Units
 
 # load_type = LoadType(name="Electricity")
 # energy_unit = "MJ"
@@ -300,6 +303,7 @@ class SmallLoadProfileEntryGenerator:
 
 
 class TestLoadProfileAnalyzer(SmallLoadProfileEntryGenerator):
+
     def test_correct_order_load_profiles(self):
         # Asserts that no LoadProfileInconsistencyWarning is raised
         with warnings.catch_warnings():
@@ -307,15 +311,19 @@ class TestLoadProfileAnalyzer(SmallLoadProfileEntryGenerator):
                 action="error", category=LoadProfileInconsistencyWarning
             )
             list_of_load_profiles = self.create_three_load_profiles_well_ordered()
-            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_meta_data(
-                list_of_load_profiles=list_of_load_profiles, object_name="Test Object"
+            list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+            load_profile_entry_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_entry_meta_data(
+                list_of_load_profiles=list_of_load_profiles,
+                object_name="Test Object",
+                object_type="Test Type",
             )
+            assert type(load_profile_entry_meta_data) is ListOfLoadProfileEntryMetaData
             list_of_load_profile_entry_analyzer.check_load_profile_for_temporal_consistency(
-                list_of_load_profile_meta_data=load_profile_meta_data,
+                list_of_load_profile_meta_data=load_profile_entry_meta_data,
                 object_name="Test Object",
             )
             list_of_load_profile_entry_analyzer.check_if_power_and_energy_match(
-                list_of_load_profile_meta_data=load_profile_meta_data
+                list_of_load_profile_meta_data=load_profile_entry_meta_data
             )
 
     # Filters all warnings because this test is intended to raise a warning
@@ -325,9 +333,13 @@ class TestLoadProfileAnalyzer(SmallLoadProfileEntryGenerator):
         with warnings.catch_warnings():
             pytest.warns(LoadProfileInconsistencyWarning)
             list_of_load_profiles = self.create_three_load_profiles_wrong_ordered()
-            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_meta_data(
-                list_of_load_profiles=list_of_load_profiles, object_name="Test Object"
+            list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_entry_meta_data(
+                list_of_load_profiles=list_of_load_profiles,
+                object_name="Test Object",
+                object_type="Test Type",
             )
+            assert type(load_profile_meta_data) is ListOfLoadProfileEntryMetaData
             list_of_load_profile_entry_analyzer.check_load_profile_for_temporal_consistency(
                 list_of_load_profile_meta_data=load_profile_meta_data,
                 object_name="Test Object",
@@ -345,9 +357,13 @@ class TestLoadProfileAnalyzer(SmallLoadProfileEntryGenerator):
             list_of_load_profiles = (
                 self.create_three_load_profiles_with_0_length_entry()
             )
-            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_meta_data(
-                list_of_load_profiles=list_of_load_profiles, object_name="Test Object"
+            list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_entry_meta_data(
+                list_of_load_profiles=list_of_load_profiles,
+                object_name="Test Object",
+                object_type="Test Type",
             )
+            assert type(load_profile_meta_data) is ListOfLoadProfileEntryMetaData
             list_of_load_profile_entry_analyzer.check_load_profile_for_temporal_consistency(
                 list_of_load_profile_meta_data=load_profile_meta_data,
                 object_name="Test Object",
@@ -365,10 +381,13 @@ class TestLoadProfileAnalyzer(SmallLoadProfileEntryGenerator):
             list_of_load_profiles = (
                 self.create_load_profile_with_wrong_power_and_energy_combination()
             )
-
-            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_meta_data(
-                list_of_load_profiles=list_of_load_profiles, object_name="Test Object"
+            list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_entry_meta_data(
+                list_of_load_profiles=list_of_load_profiles,
+                object_name="Test Object",
+                object_type="Test Type",
             )
+            assert type(load_profile_meta_data) is ListOfLoadProfileEntryMetaData
             list_of_load_profile_entry_analyzer.check_if_power_and_energy_match(
                 list_of_load_profile_meta_data=load_profile_meta_data
             )
@@ -382,9 +401,13 @@ class TestLoadProfileAnalyzer(SmallLoadProfileEntryGenerator):
             list_of_load_profiles = (
                 self.create_two_load_profiles_with_different_load_type()
             )
-            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_meta_data(
-                list_of_load_profiles=list_of_load_profiles, object_name="Test Object"
+            list_of_load_profile_entry_analyzer = ListOfLoadProfileEntryAnalyzer()
+            load_profile_meta_data = list_of_load_profile_entry_analyzer.create_list_of_load_profile_entry_meta_data(
+                list_of_load_profiles=list_of_load_profiles,
+                object_name="Test Object",
+                object_type="Test Type",
             )
+            assert type(load_profile_meta_data) is ListOfLoadProfileEntryMetaData
             list_of_load_profile_entry_analyzer.check_load_profile_for_temporal_consistency(
                 list_of_load_profile_meta_data=load_profile_meta_data,
                 object_name="Test Object",

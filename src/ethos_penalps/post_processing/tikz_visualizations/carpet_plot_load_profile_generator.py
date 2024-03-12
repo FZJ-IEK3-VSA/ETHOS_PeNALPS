@@ -9,6 +9,7 @@ import numpy
 import pandas
 import pint
 import seaborn
+import math
 
 from ethos_penalps.data_classes import (
     CarpetPlotMatrix,
@@ -82,6 +83,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         start_date_time_series: datetime.datetime,
         end_date_time_series: datetime.datetime,
         object_name: str,
+        object_type: str,
         x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
         resample_frequency: str = "1min",
     ) -> CarpetPlotMatrix | CarpetPlotMatrixEmpty:
@@ -128,31 +130,43 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
                     be positive."""
                 )
 
-            list_of_load_profile_meta_data = (
-                self.homogenize_list_of_load_profiles_entries(
-                    list_of_load_profile_entries=list_of_load_profile_entries,
+            list_of_load_profile_meta_data = self.create_load_profile_meta_data(
+                list_of_load_profile_entries=list_of_load_profile_entries,
+                start_date_time_series=start_date_time_series,
+                end_date_time_series=end_date_time_series,
+                object_name=object_name,
+                object_type=object_type,
+            )
+            assert type(list_of_load_profile_meta_data) is LoadProfileMetaData
+            list_of_load_profile_meta_data_resampled = (
+                self.resample_load_profile_meta_data(
+                    load_profile_meta_data=list_of_load_profile_meta_data,
+                    start_date=start_date_time_series,
+                    end_date=end_date_time_series,
+                    x_axis_time_period_timedelta=x_axis_time_period_timedelta,
+                    resample_frequency=resample_frequency,
+                )
+            )
+
+            carpet_plot_matrix: CarpetPlotMatrix | CarpetPlotMatrixEmpty
+            if (
+                type(list_of_load_profile_meta_data_resampled)
+                is LoadProfileMetaDataResampled
+            ):
+
+                carpet_plot_matrix = self.convert_load_profile_meta_data_to_carpet_plot_matrix(
+                    load_profile_meta_data_resampled=list_of_load_profile_meta_data_resampled,
+                    x_axis_period_time_delta=x_axis_time_period_timedelta,
                     start_date_time_series=start_date_time_series,
                     end_date_time_series=end_date_time_series,
                     resample_frequency=resample_frequency,
                     object_name=object_name,
                 )
-            )
 
-            carpet_plot_matrix: CarpetPlotMatrix | CarpetPlotMatrixEmpty
-            if type(list_of_load_profile_meta_data) is LoadProfileMetaDataResampled:
-
-                carpet_plot_matrix = (
-                    self.convert_load_profile_meta_data_to_carpet_plot_matrix(
-                        list_of_load_profile_meta_data=list_of_load_profile_meta_data,
-                        x_axis_period_time_delta=x_axis_time_period_timedelta,
-                        start_date_time_series=start_date_time_series,
-                        end_date_time_series=end_date_time_series,
-                        resample_frequency=resample_frequency,
-                        object_name=object_name,
-                    )
-                )
-
-            elif type(list_of_load_profile_meta_data) is EmptyLoadProfileMetadata:
+            elif (
+                type(list_of_load_profile_meta_data_resampled)
+                is EmptyLoadProfileMetadata
+            ):
                 logger.debug(
                     "The homogenization yielded an empty load profile data frame"
                 )
@@ -170,7 +184,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
 
     def convert_load_profile_meta_data_to_carpet_plot_matrix(
         self,
-        list_of_load_profile_meta_data: LoadProfileMetaDataResampled,
+        load_profile_meta_data_resampled: LoadProfileMetaDataResampled,
         x_axis_period_time_delta: datetime.timedelta,
         start_date_time_series: datetime.datetime,
         end_date_time_series: datetime.datetime,
@@ -194,9 +208,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         Returns:
             _type_: _description_
         """
-        input_data_frame = pandas.DataFrame(
-            data=list_of_load_profile_meta_data.list_of_load_profiles
-        )
+        input_data_frame = load_profile_meta_data_resampled.data_frame
         input_data_frame.index = input_data_frame.loc[:, "start_time"]
 
         # Check if separation into time periods is possible
@@ -214,6 +226,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
                 + " End time: "
                 + str(end_time)
             )
+
         if not number_of_periods.is_integer():
             raise Exception(
                 "Start date, end date, and periodic time delta dont fit to an integer number of periods"
@@ -236,7 +249,9 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             - duration_of_a_single_load_profile_entry
         )
         # Determine Index of new data_frame
-        energy_quantity_data_frame = input_data_frame["average_power_consumption"]
+        energy_quantity_data_frame = input_data_frame.loc[
+            :, "average_power_consumption"
+        ]
         first_row_index = energy_quantity_data_frame[
             start_time_of_period:end_time_of_period
         ].index
@@ -274,11 +289,11 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             end_date_time_series=end_date_time_series,
             x_axis_time_period_timedelta=x_axis_period_time_delta,
             resample_frequency=resample_frequency,
-            power_unit=list_of_load_profile_meta_data.power_unit,
-            energy_unit=list_of_load_profile_meta_data.energy_unit,
-            total_energy_demand=list_of_load_profile_meta_data.total_energy,
+            power_unit=load_profile_meta_data_resampled.power_unit,
+            energy_unit=load_profile_meta_data_resampled.energy_unit,
+            total_energy_demand=load_profile_meta_data_resampled.total_energy,
             object_name=object_name,
-            load_type=list_of_load_profile_meta_data.load_type,
+            load_type=load_profile_meta_data_resampled.load_type,
         )
 
         return carpet_plot_matrix
@@ -309,75 +324,125 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
 
         return total_energy_converted_value
 
+    def get_common_load_type(
+        self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
+    ) -> LoadType:
+
+        list_of_load_types = []
+        for carpet_plot_matrix in list_of_carpet_plot_matrices:
+            list_of_load_types.append(carpet_plot_matrix.load_type)
+
+        unique_list_of_load_types = list(set(list_of_load_types))
+        # if len(unique_list_of_load_types) > 1:
+        #     warnings.warn(
+        #         message="Tried to combine multiple load types.",
+        #         category=LoadProfileInconsistencyWarning,
+        #     )
+        return unique_list_of_load_types[0]
+
+    def get_common_energy_unit_string(
+        self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
+    ) -> str:
+
+        list_of_energy_units = []
+        for carpet_plot_matrix in list_of_carpet_plot_matrices:
+            list_of_energy_units.append(carpet_plot_matrix.energy_unit)
+
+        unique_list_of_energy_unit = list(set(list_of_energy_units))
+        if len(unique_list_of_energy_unit) > 1:
+            warnings.warn(
+                message="Tried to combine multiple energy units.",
+                category=LoadProfileInconsistencyWarning,
+            )
+        return unique_list_of_energy_unit[0]
+
+    def convert_power_unit_of_list_of_carpet_plot_matrix(
+        self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
+    ) -> tuple[str, list[CarpetPlotMatrix]]:
+        list_of_power_units = []
+        for carpet_plot_matrix in list_of_carpet_plot_matrices:
+            list_of_power_units.append(carpet_plot_matrix.power_unit)
+
+        unique_list_of_power_unit = list(set(list_of_power_units))
+        common_power_unit = unique_list_of_power_unit[0]
+        output_list_of_carpet_plot_matrices = []
+        if len(unique_list_of_power_unit) > 1:
+            for current_carpet_plot_matrix in list_of_carpet_plot_matrices:
+                converted_carpet_plot_matrix = self.convert_power_of_carpet_plot_matrix(
+                    carpet_plot_load_profile_matrix=current_carpet_plot_matrix,
+                    target_power_unit=Units.get_unit(unit_string=common_power_unit),
+                )
+                output_list_of_carpet_plot_matrices.append(converted_carpet_plot_matrix)
+        else:
+            output_list_of_carpet_plot_matrices = list_of_carpet_plot_matrices
+
+        return (common_power_unit, output_list_of_carpet_plot_matrices)
+
     def combine_matrix_data_frames(
         self,
         list_of_carpet_plot_matrices: list[CarpetPlotMatrix],
         combined_matrix_name: str,
     ) -> CarpetPlotMatrix:
-        carpet_plot_matrix = list_of_carpet_plot_matrices[0]
-        current_df = carpet_plot_matrix.data_frame
-        iterator = 1
-        start_date_time_series = carpet_plot_matrix.start_date_time_series
-        end_date_time_series = carpet_plot_matrix.end_date_time_series
-        x_axis_time_period_timedelta = carpet_plot_matrix.x_axis_time_period_timedelta
-        resample_frequency = carpet_plot_matrix.resample_frequency
-        list_of_power_units = []
-        list_of_energy_units = []
-        list_of_total_energy_demand = []
-        list_of_load_types = []
-        if len(list_of_carpet_plot_matrices) == 1:
-            current_carpet_plot_matrix = list_of_carpet_plot_matrices[0]
-            list_of_power_units.append(current_carpet_plot_matrix.power_unit)
-            list_of_energy_units.append(current_carpet_plot_matrix.energy_unit)
-            list_of_total_energy_demand.append(
-                current_carpet_plot_matrix.total_energy_demand
+        """Sums a list of CarpetPlotMatrices to a single CarpetPlotMatrix. The
+
+        Args:
+            list_of_carpet_plot_matrices (list[CarpetPlotMatrix]): _description_
+            combined_matrix_name (str): _description_
+
+        Returns:
+            CarpetPlotMatrix: _description_
+        """
+
+        common_power_unit, converted_list_of_carpet_plot_matrices = (
+            self.convert_power_unit_of_list_of_carpet_plot_matrix(
+                list_of_carpet_plot_matrices=list_of_carpet_plot_matrices
             )
-            list_of_load_types.append(current_carpet_plot_matrix.load_type)
+        )
+        current_carpet_plot_matrix = converted_list_of_carpet_plot_matrices[0]
+        current_df = current_carpet_plot_matrix.data_frame
+        list_of_total_energy_demand = [current_carpet_plot_matrix.total_energy_demand]
+        iterator = 1
+        if len(converted_list_of_carpet_plot_matrices) == 1:
+            current_carpet_plot_matrix = converted_list_of_carpet_plot_matrices[0]
         else:
-            for current_list_row in range(len(list_of_carpet_plot_matrices) - 1):
-                current_carpet_plot_matrix = list_of_carpet_plot_matrices[iterator]
-                list_of_power_units.append(current_carpet_plot_matrix.power_unit)
-                list_of_energy_units.append(current_carpet_plot_matrix.energy_unit)
+            for current_index in range(len(converted_list_of_carpet_plot_matrices) - 1):
+                current_carpet_plot_matrix = converted_list_of_carpet_plot_matrices[
+                    iterator
+                ]
                 list_of_total_energy_demand.append(
                     current_carpet_plot_matrix.total_energy_demand
                 )
                 current_df = current_df.add(current_carpet_plot_matrix.data_frame)
-                list_of_load_types.append(current_carpet_plot_matrix.load_type)
                 iterator = iterator + 1
-        unique_power_unit_list = list(set(list_of_power_units))
-        if len(unique_power_unit_list) > 1:
-            warnings.warn(
-                message="Tried to combine multiple power units.",
-                category=LoadProfileInconsistencyWarning,
-            )
-        combined_power_unit = unique_power_unit_list[0]
-        unique_energy_unit_list = list(set(list_of_energy_units))
-        if len(unique_energy_unit_list) > 1:
-            warnings.warn(
-                message="Tried to combine multiple energy units.",
-                category=LoadProfileInconsistencyWarning,
-            )
-        unique_list_of_load_types = list(set(list_of_load_types))
-        combined_energy_unit = unique_energy_unit_list[0]
+
         total_energy_demand = sum(list_of_total_energy_demand)
+        combined_energy_unit = self.get_common_energy_unit_string(
+            list_of_carpet_plot_matrices=list_of_carpet_plot_matrices
+        )
+        common_load_type = self.get_common_load_type(
+            list_of_carpet_plot_matrices=list_of_carpet_plot_matrices
+        )
         carpet_plot_matrix = CarpetPlotMatrix(
             data_frame=current_df,
-            start_date_time_series=start_date_time_series,
-            end_date_time_series=end_date_time_series,
-            x_axis_time_period_timedelta=x_axis_time_period_timedelta,
-            resample_frequency=resample_frequency,
+            start_date_time_series=current_carpet_plot_matrix.start_date_time_series,
+            end_date_time_series=current_carpet_plot_matrix.end_date_time_series,
+            x_axis_time_period_timedelta=current_carpet_plot_matrix.x_axis_time_period_timedelta,
+            resample_frequency=current_carpet_plot_matrix.resample_frequency,
             object_name=combined_matrix_name,
-            power_unit=combined_power_unit,
+            power_unit=common_power_unit,
             total_energy_demand=total_energy_demand,
             energy_unit=combined_energy_unit,
-            load_type=unique_list_of_load_types[0],
+            load_type=common_load_type,
+        )
+        carpet_plot_matrix = self.compress_power_of_carpet_plot_matrix_if_necessary(
+            carpet_plot_load_profile_matrix=carpet_plot_matrix
         )
         return carpet_plot_matrix
 
     def compress_power_of_carpet_plot_matrix_if_necessary(
         self, carpet_plot_load_profile_matrix: CarpetPlotMatrix
     ) -> CarpetPlotMatrix:
-        maximum_power = carpet_plot_load_profile_matrix.data_frame.max()[0]
+        maximum_power = carpet_plot_load_profile_matrix.data_frame.max().max()
         power_unit = carpet_plot_load_profile_matrix.power_unit
         if maximum_power > 1000 or maximum_power < 1:
             if maximum_power > 1000:

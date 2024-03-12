@@ -13,7 +13,7 @@ logger = PeNALPSLogger.get_human_readable_logger(logging.INFO)
 # Enterprise structure
 
 # Set simulation time data
-start_date = datetime.datetime(2022, 1, 2, hour=22, minute=30)
+start_date = datetime.datetime(2022, 1, 2, hour=23)
 end_date = datetime.datetime(2022, 1, 3)
 time_data = TimeData(
     global_start_date=start_date,
@@ -29,7 +29,7 @@ input_commodity = Commodity(name="Raw Goods")
 # Create all order for the simulation
 order_generator = NOrderGenerator(
     commodity=output_commodity,
-    mass_per_order=0.0005,
+    mass_per_order=0.00065,
     production_deadline=end_date,
     number_of_orders=2,
 )
@@ -71,7 +71,7 @@ raw_materials_to_cooking_stream = process_chain.stream_handler.create_batch_stre
         end_process_step_name=process_step.name,
         delay=datetime.timedelta(minutes=1),
         commodity=input_commodity,
-        maximum_batch_mass_value=0.0005,
+        maximum_batch_mass_value=0.00065,
     )
 )
 cooking_to_sink_stream = process_chain.stream_handler.create_batch_stream(
@@ -80,7 +80,7 @@ cooking_to_sink_stream = process_chain.stream_handler.create_batch_stream(
         end_process_step_name=sink.name,
         delay=datetime.timedelta(minutes=1),
         commodity=output_commodity,
-        maximum_batch_mass_value=0.0005,
+        maximum_batch_mass_value=0.00065,
     )
 )
 
@@ -197,12 +197,12 @@ process_step.process_state_handler.process_state_switch_selector_handler.create_
 
 electricity_load = LoadType(name="Electricity")
 heating_state.create_process_state_energy_data_based_on_stream_mass(
-    specific_energy_demand=332.31,
+    specific_energy_demand=336.0,
     load_type=electricity_load,
     stream=raw_materials_to_cooking_stream,
 )
 hold_temperature_state.create_process_state_energy_data_based_on_stream_mass(
-    specific_energy_demand=498.46,
+    specific_energy_demand=494.7692307692307,
     load_type=electricity_load,
     stream=raw_materials_to_cooking_stream,
 )
@@ -229,7 +229,7 @@ enterprise.create_post_simulation_report(
     start_date=start_date,
     end_date=end_date,
     x_axis_time_delta=datetime.timedelta(hours=1),
-    resample_frequency="1s",
+    resample_frequency="1min",
     gantt_chart_end_date=end_date,
     gantt_chart_start_date=start_date,
 )

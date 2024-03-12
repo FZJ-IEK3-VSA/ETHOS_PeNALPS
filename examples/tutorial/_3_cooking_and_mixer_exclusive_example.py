@@ -13,7 +13,7 @@ logger = PeNALPSLogger.get_human_readable_logger(logging.DEBUG)
 # Enterprise structure
 
 # Set simulation time data
-start_date = datetime.datetime(2022, 1, 2, hour=22, minute=30)
+start_date = datetime.datetime(2022, 1, 2, hour=23)
 end_date = datetime.datetime(2022, 1, 3)
 time_data = TimeData(
     global_start_date=start_date,
@@ -32,7 +32,7 @@ order_generator = NOrderGenerator(
     commodity=output_commodity,
     mass_per_order=0.00065,
     production_deadline=end_date,
-    number_of_orders=4,
+    number_of_orders=2,
 )
 
 order_collection = order_generator.create_n_order_collection()

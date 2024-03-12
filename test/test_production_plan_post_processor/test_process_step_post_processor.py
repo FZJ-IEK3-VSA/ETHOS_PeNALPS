@@ -139,6 +139,3 @@ def test_production_plan_post_processor():
             earliest_start_date=earliest_process_step_time,
             latest_end_date=latest_process_step_time,
         )
-
-        print(process_step.name)
-        print(throughput)

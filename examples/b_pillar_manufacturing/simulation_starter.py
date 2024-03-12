@@ -16,7 +16,7 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 logger = PeNALPSLogger.get_human_readable_logger(logging.INFO)
 
 
-start_date = datetime.datetime(year=2022, month=12, day=30)
+start_date = datetime.datetime(year=2022, month=12, day=31, hour=23)
 end_date = datetime.datetime(year=2023, month=1, day=1)
 # Set simulation time data
 time_data = TimeData(
