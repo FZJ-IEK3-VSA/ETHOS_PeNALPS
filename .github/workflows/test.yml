@@ -49,7 +49,7 @@ jobs:
           shell: pwsh
           id: penalps-version
           run: |
-              $PENALPS_STRING = conda list -e -n test_env geokit | Out-String
+              $PENALPS_STRING = conda list -e -n test_env ethos_penalps | Out-String
               echo The penalps string is $PENALPS_STRING
               $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos_penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
               echo "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
@@ -109,8 +109,9 @@ jobs:
             cd tutorial
             conda run --name penalps_env python _1_cooking_example.py
             conda run --name penalps_env python _2_cooking_example_more_states.py
-            conda run --name penalps_env python _3_cooking_and_mixer_exclusive_example.py
-            cd _4_connect_four_process_steps
+            conda run --name penalps_env python _3_add_more_cooker_for_parallel_operation.py
+            conda run --name penalps_env python _4_cooking_and_mixer_exclusive_example
+            cd _5_connect_four_process_steps
             conda run --name penalps_env python simulation_starter.py
             cd ..
             cd ..
