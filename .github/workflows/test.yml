@@ -48,7 +48,7 @@ jobs:
         - name: get_penalps_version
           shell: pwsh
           id: penalps-version
-          # use ethos-penalps instead of ethos_penalps for looup due to diffrent formatting in conda list output
+          #  ethos_penalps might be displayed as ethos-penalps which requires adaption of the following code
           run: |
               $PENALPS_STRING = conda list -n test_env ethos_penalps -e | Out-String
               echo "The penalps string is"
