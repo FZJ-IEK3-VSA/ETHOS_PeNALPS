@@ -55,7 +55,7 @@ jobs:
               echo $PENALPS_STRING
               echo "Start to extract the version"
               $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos_penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
-              "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
+              "PENALPS_VERSION=$PENALPS_VERSION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
               echo "Print the extracted version"
               echo $PENALPS_VERSION
               echo "Terminate get penalps version"
@@ -138,3 +138,4 @@ jobs:
 
 
 
+#"PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
