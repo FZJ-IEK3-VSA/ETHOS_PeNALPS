@@ -50,11 +50,11 @@ jobs:
           id: penalps-version
           # use ethos-penalps instead of ethos_penalps for looup due to diffrent formatting in conda list output
           run: |
-              $PENALPS_STRING = conda list -n test_env ethos_penalps -e | Out-String
+              $PENALPS_STRING = conda list -n test_env ethos-penalps -e | Out-String
               echo "The penalps string is"
               echo  $PENALPS_STRING
               echo "Start to extract the version"
-              $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos_penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
+              $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos-penalps-penalpslps=(\d+\.\d+\.\d+)=').Groups[1].Value 
               "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
               echo "Print the extracted version"
               echo $PENALPS_VERSION
@@ -89,6 +89,7 @@ jobs:
           with:
             repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
             path: './ETHOS_PENALPS'
+            ref: ${{ github.ref }}
         - uses: conda-incubator/setup-miniconda@v3
           with:
             miniforge-version: latest

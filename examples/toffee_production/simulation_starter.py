@@ -1,7 +1,5 @@
-import cProfile
 import datetime
 import logging
-import pstats
 
 from cutting_and_packaging_chain import fill_cutting_and_packaging_chain
 from ethos_penalps.data_classes import Commodity, LoadType
@@ -120,33 +118,3 @@ def start_simulation():
         end_date=time_data.global_end_date,
         resample_frequency="1s",
     )
-
-
-if __name__ == "__main__":
-    profiler = cProfile.Profile()
-    profiler.enable()
-    start_simulation()
-    profiler.disable()
-
-    with open(
-        r".\examples\toffee_production\profilingStatsAsTextSortedCumulative.txt",
-        "w",
-        encoding="utf-8",
-    ) as f:
-        stats = pstats.Stats(profiler, stream=f).sort_stats("cumulative")
-        stats.print_stats()
-    with open(
-        r".\examples\toffee_production\\profilingStatsAsTextSortedcalls.txt",
-        "w",
-        encoding="utf-8",
-    ) as f:
-        stats = pstats.Stats(profiler, stream=f).sort_stats("ncalls")
-        stats.print_stats()
-    with open(
-        r".\examples\toffee_production\\profilingStatsAsTextSortedTotalTime.txt",
-        "w",
-        encoding="utf-8",
-    ) as f:
-        stats = pstats.Stats(profiler, stream=f).sort_stats("tottime")
-        stats.print_stats()
-    stats.dump_stats(r".\examples\toffee_production\\profile-export-data.prof")
