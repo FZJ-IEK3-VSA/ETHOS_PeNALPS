@@ -48,17 +48,20 @@ jobs:
         - name: get_penalps_version
           shell: pwsh
           id: penalps-version
+          # use ethos-penalps instead of ethos_penalps for looup due to diffrent formatting in conda list output
           run: |
-              $PENALPS_STRING = conda list -e -n test_env ethos_penalps | Out-String
+              $PENALPS_STRING = conda list -e -n test_env ethos-penalps | Out-String
               echo The penalps string is $PENALPS_STRING
-              $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos_penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
+              $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos-penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
               echo "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
+              echo $PENALPS_VERSION
         - name: Checkout to penalps repository
           uses: actions/checkout@v4
           with:
             repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
             path: './ETHOS_PENALPS'
-            ref: ${{ steps.penalps-version.outputs.PENALPS_VERSION }}      
+            ref: ${{ steps.penalps-version.outputs.PENALPS_VERSION }}     
+            fetch-depth: 0  
         - name: Run tests
           shell: pwsh
           run: |
@@ -118,7 +121,7 @@ jobs:
             cd toffee_production
             conda run --name penalps_env python simulation_starter.py
             cd ..
-            cd basic_examples.py
+            cd basic_examples
             conda run --name penalps_env python batch_to_batch_1_node_example.py
             cd ..
             cd B-Pillar_manufacturing
