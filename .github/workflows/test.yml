@@ -66,13 +66,14 @@ jobs:
             path: './ETHOS_PENALPS'
             ref: ${{ steps.penalps-version.outputs.PENALPS_VERSION }}     
             fetch-depth: 0  
+            fetch-tags: true
         - name: Run tests
           shell: pwsh
           run: |
             echo "The checkout ethos_penalps version was:"
             echo ${{ steps.penalps-version.outputs.PENALPS_VERSION }}  
             echo "start pytest"
-            conda run -n test_env pytest -n auto
+            conda run -n test_env pytest
             echo "Pytest done"
         
         
@@ -107,7 +108,7 @@ jobs:
             conda list --name penalps_env
             echo "libaries printed"
             echo "start pytest"
-            conda run --name penalps_env pytest -n auto
+            conda run --name penalps_env pytest
             echo "Pytest done"
             echo "run examples"
         - name: Run examples
