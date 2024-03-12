@@ -49,9 +49,11 @@ class ListOfLoadProfileEntryAnalyzer:
     ) -> ListOfLoadProfileEntryMetaData | EmptyLoadProfileMetadata:
         """Creates the ListOfLoadProfileEntryMetaData object from a list of load profile entries.
         It contains the list of load profiles and some summarized information:
+
             - Common Power Unit
             - Common LoadType
             - Common Energy Unit
+
         It is expected that the list of load profile is homogeneous concerning the load type,
         energy unit and the power unit.
 
@@ -628,6 +630,7 @@ class LoadProfileEntryPostProcessor(LoadProfileMetaDataCreator):
                 - M month end frequency
                 - https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
                 - defaults to "min"
+                
                 Defaults to "1min".
 
         Returns:

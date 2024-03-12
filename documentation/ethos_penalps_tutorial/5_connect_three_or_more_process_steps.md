@@ -3,14 +3,15 @@
 In order to connect three or more process steps two network levels are required. In this example two blenders are connected to two cookers which are shown in figure {numref}`two-cooker-two-blender-example`. The process steps are connected through the storage which connects the two network levels. It replaces the sink the upper network level and the source of the lower network level. It distributes the outputs of both blenders to the inputs of both cookers evenly. 
 
 :::{figure-md} two-cooker-two-blender-example
-<img src="./figures/two_blender_and_two_cooker.png" width=300>
+<img src="./figures/5_tutorial/two_blender_and_two_cooker.png" width=300>
 
 Depiction of the cooker model with two two cooker and two blender.
 :::
 
-To prevent repetition the model is distributed between three modules. The module simulation_starter.py contains the definition of the time data, commodities, enterprise, network level, process chains, sources, sinks and storages. The process chains are filled using a function which can be applied to each process chain in a network level. The function for each network level is located in their own module. These functions are called fill_blending_process_chain and fill_cooking_process_chain. By calling these functions multiple times an arbitrary number of process chains can be created easily.
+To prevent repetition the model is distributed between three python modules. The module simulation_starter.py contains the definition of the time data, commodities, enterprise, network level, process chains, sources, sinks and storages. The required objects of process chains instantiated using a function which can be applied to each process chain object in a network level. The function for each network level is located in their own module. These functions are called fill_blending_process_chain and fill_cooking_process_chain. By calling these functions multiple times an arbitrary number of process chains can be instantiated easily.
 
 ## simulation_starter.py
+This section shows the contents of the simulation_starter.py module.
 ### Create Time Data and Orders
 First the commodities, time data and orders are created. Each process chain needs at least one order to start the simulation.
 ```
@@ -22,12 +23,10 @@ time_data = TimeData(
     global_end_date=end_date,
 )
 
-
 # Determine all relevant commodities
 raw_commodity = Commodity(name="Raw Goods")
 uncooked_commodity = Commodity(name="Uncooked Goods")
 output_commodity = Commodity(name="Cooked Goods")
-
 
 # Create all order for the simulation
 order_generator = NOrderGenerator(
@@ -145,7 +144,7 @@ enterprise.create_post_simulation_report(
 )
 ```
 ## Fill Blender Process Chain
-Now the definition of the functions that fill the process chains are shown.
+Now the definition of the functions that fill the process chains are shown. The function is located in the blending_process_chain.py module.
 
 ### Pass Process Chain, Commodity and Process Step Name 
 First the process chain instance and the commodities, source and storage which are shared among process chains are passed to the fill function.
@@ -160,7 +159,7 @@ def fill_blending_process_chain(
 ):
 ```
 ### Create Process Step and Streams
-Then Process Steps and Streams are created. The only difference is that the argument from the functions are used for the process chain, process step name and commodities.
+Then process steps and streams are created. The only difference is that the argument from the functions are used for the process chain, process step name and commodities.
 ```
     # Create Process nodes
     blender_step = process_chain.create_process_step(name=process_step_name)
@@ -187,7 +186,7 @@ Then Process Steps and Streams are created. The only difference is that the argu
     )
 ```
 ### Define Petri Net of States
-The petri nets of the blender are defined as in the [example in which the blender was introduced](connect_two_process_steps_exclusively.md).
+The petri nets of the blender are defined as in the [example in which the blender was introduced](4_connect_two_process_steps_exclusively.md).
 ```
     idle_state = blender_step.process_state_handler.create_idle_process_state(
         process_state_name="Idle"
@@ -274,7 +273,7 @@ Also the mass balance and storage do not change compared to the minimal example.
 ```
 
 ## Fill Cooking Process Chain
-The fill cooking process chain function is very similar to the fill blender process chain function. It differs mainly in the arguments that are passed to it, the petri net and the energy data. However the petri net and energy data did not change compared to the [example](connect_two_process_steps_exclusively.md) in which the blender was introduced.
+The fill cooking process chain function is very similar to the fill blender process chain function. It differs mainly in the arguments that are passed to it, the petri net and the energy data. However the petri net and energy data did not change compared to the [example](4_connect_two_process_steps_exclusively.md) in which the blender was introduced.
 
 ### Pass process Chain, Commodity and Process Step Name 
 The first argument is the process chain in which the cooker should be initiated. The commodities are the input and output commodity of the cooker. The sink and storage are required to connect it to the streams in the process chain. The process step name is required to distinguish the process steps from each other. 
@@ -323,7 +322,7 @@ Then the process step and streams are created. Then the streams are connected.
 ```
 ### Define Petri Net of States
 
-The Petri net did not change compared to the definition in the [single cooker example](single_cooker_process_chain.md).
+The Petri net did not change compared to the definition in the [single cooker example](1_single_cooker_process_chain.md).
 
 ```
     idle_state = process_step.process_state_handler.create_idle_process_state(
@@ -418,3 +417,46 @@ The mass balance and storage did not change compared to the previous example of 
         current_storage_level=0
     )
 ```
+## Simulation Results
+
+The following section shows the simulation results.
+### Production Plan
+
+{numref}`blender-1-nxm-example-process-chain-gantt-chart`  and {numref}`blender-2-nxm-example-process-chain-gantt-chart` show a gantt chart of the blender 1 and blender 2. They are shifted slightly due to the shifted input orders.
+
+:::{figure-md} blender-1-nxm-example-process-chain-gantt-chart
+<img src="./figures/5_tutorial/gantt_chart_blending_chain_1.png">
+
+Gantt Chart of the production plan of the exclusively connected cooker and blender.
+:::
+
+:::{figure-md} blender-2-nxm-example-process-chain-gantt-chart
+<img src="./figures/5_tutorial/gantt_chart_blending_chain_2.png">
+
+Carpet plot of the electricity load profile of the blender.
+:::
+
+
+{numref}`cooker-1-nxm-example-process-chain-gantt-chart`  and {numref}`cooker-2-nxm-example-process-chain-gantt-chart` show a gantt chart of the cooker 1 and cooker 2. They are shifted slightly due to the shifted input orders.
+
+:::{figure-md} cooker-1-nxm-example-process-chain-gantt-chart
+<img src="./figures/5_tutorial/gantt_chart_cooker_1.png" >
+
+Depiction of the cooker model with two parallel cookers.
+:::
+
+:::{figure-md} cooker-2-nxm-example-process-chain-gantt-chart
+<img src="./figures/5_tutorial/gantt_chart_cooker_2.png" >
+
+Depiction of the cooker model with two parallel cookers.
+:::
+
+### Load Profiles
+
+Figure {numref}`nxm-example-electricity-combined` shows the carpet plot of the combined load profile of both cookers and both blenders. Due to higher number of process steps a more complex load profile can be seen. This is caused by the increased possibilities for asynchronous operations. 
+  
+:::{figure-md} nxm-example-electricity-combined
+<img src="./figures/5_tutorial/carpet_plot_electricity_combined.png">
+
+Depiction of the cooker model with two parallel cookers.
+:::

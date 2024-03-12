@@ -54,7 +54,7 @@ trimmed_part_sink = forming_and_trimming_level.create_main_sink(
 )
 
 hot_part_storage = forming_and_trimming_level.create_process_chain_storage_as_source(
-    name="Hot Part Sink",
+    name="Hot Part Storage",
     commodity=trimmed_part,
 )
 

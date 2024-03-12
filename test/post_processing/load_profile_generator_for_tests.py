@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pint
 import pytest
 from ethos_penalps.data_classes import LoadProfileEntry, LoadType
-from ethos_penalps.post_processing.tikz_visualizations.carpet_plot_load_profile_generator import (
+from ethos_penalps.post_processing.time_series_visualizations.carpet_plot_load_profile_generator import (
     CarpetPlotLoadProfileGenerator,
     CarpetPlotMatrix,
 )

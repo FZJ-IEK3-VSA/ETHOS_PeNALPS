@@ -1,6 +1,6 @@
 # Simple Cooker Example
 
-This section shows how to setup a minimal simulation of a production system that simulates a single cooker. A depiction of the ETHOS.PeNALPS Model is shown in figure {numref}`cooking-example-single`. The energy, time and mass data is used from an experiment by {cite}`Korzeniowska_Ginter_2019`. Korzeniowska-Ginter et al . conducted a series of experiments to determine cooking length and energy of potatoes demand using household appliances. For this case the data from the electric stove with a metal plate is used. 
+This section shows how to setup a minimal simulation of a production system which consists of a single cooker. A depiction of the ETHOS.PeNALPS Model is shown in {numref}`cooking-example-single`. The energy, time and mass data is used from an experiment by Korzeniowska-Ginter et al. {cite}`Korzeniowska_Ginter_2019`. They conducted a series of experiments to determine cooking length and energy demand that are required to cook potatoes using household appliances. For this case the data from the electric stove with a metal plate is used. 
 
 :::{figure-md} cooking-example-single
 <img src="./figures/1_tutorial/single_cooker_process_chain_example.png" width=300>
@@ -9,7 +9,7 @@ Depiction of the minimal production system model in ETHOS.PeNALPS which simulate
 :::
 
 ## Initialize Time Data
-The first step is to setup the desired simulation period. The start time is only relevant for the period displayed. The simulation starts internally at the end date and terminates when all orders are created, which is shown in the following section.
+The first step is to setup the desired simulation period. The start time can not shorten the simulation period. If the simulation terminates at an later date, the load profiles are extended with zero demand entries. The simulation starts internally at the end date and terminates when all orders are created, which is shown in the following section.
 
 ```
 import datetime
@@ -51,7 +51,7 @@ The fourth step is to provide the minimum set of container classes. This consist
 - a network level
 - a process chain. 
 
-These become relevant when multiple process steps should be modeled in a production system. [This is discussed in a later part of the tutorial](add_network_level_and_process_chains.md). It is important that the respective creator methods must be used as shown in this example. If the network level and process chain are instantiated directly from the class they are not connected properly.
+These become relevant when multiple process steps should be modeled in a production system. [This is discussed in a later part of the tutorial](3_add_more_cookers_for_parallel_operations.md). It is important that the respective creator methods must be used as shown in this example. If the network level and process chain are instantiated directly from the class they are not connected properly.
 
 ```
 from ethos_penalps.enterprise import Enterprise
@@ -61,7 +61,7 @@ network_level = enterprise.create_network_level()
 process_chain = network_level.create_process_chain(process_chain_name="Cooker Chain")
 ```
 ## Create Source, Sink and Process Step
-In the next step source, sink and process step are created. The sink and source connect the production system to environment. The sink collects the requested products and the source provides the required raw materials. Additionally, the sink and source must be connected to process chain.
+In the next step source, sink and process step are created. The sink and source connect the production system to the environment. The sink collects the requested products and the source provides the required raw materials. Additionally, the sink and source must be connected to process chain.
 
 ```
 # Create all sources, sinks and network level storages
@@ -201,7 +201,7 @@ process_step.process_state_handler.process_state_switch_selector_handler.create_
 ```
 ## Initialize Energy Data
 
-Finally the energy data must be initialized. Therefore, the energy load type must be initialized, which is electricity in this example. It can either be addressed to a specific state or to the activity of a stream. Here the complete energy is consumed during the cooking state. The specific energy demand is provided in the units MJ/t. An energy demand of 830.76 MJ/t is assumed it is based on the energy demand of 0.15 kWh/650 gram {cite}`Korzeniowska_Ginter_2019` p.5  The input stream of the corresponding process step must be passed to the energy data to determine the mass that is processed in the state.
+Finally the energy data must be initialized. Therefore, the energy load type must be initialized, which is electricity in this example. It can either be addressed to a specific state or to the activity of a stream. Here the complete energy is consumed during the cooking state. The specific energy demand is provided in the units MJ/t. An energy demand of 830.76 MJ/t for the cooking process. It is  based on the energy demand of 0.15 kWh/650 gram from Korzeniowska-Ginter et al. {cite}`Korzeniowska_Ginter_2019` p.5.  The input stream of the corresponding process step must be passed to the energy data to determine the mass that is processed in the state.
 
 ```
 electricity_load = LoadType(name="Electricity")
@@ -236,8 +236,8 @@ Lastly, the simulation and post processing must be started. Optionally, a maximu
   - Table
   - Downloadable CSV file
 - Load Profiles 
-  - direct simulation output
-  - resampled to target frequency
+  - Direct simulation output
+  - Resampled to target frequency
     - Data table
     - Downloadable CSV file
 - Gantt chart of streams, process steps, sink and source
@@ -254,7 +254,11 @@ enterprise.create_post_simulation_report(
     gantt_chart_start_date=start_date,
 )
 ```
-In the following figures {numref}`cooking-example-single-gantt-chart-source` to {numref}`cooking-example-single-gantt-chart-sink` show the activity of the production system during the simulation.
+
+## Simulation Results
+
+### Production Plan
+In the following {numref}`cooking-example-single-gantt-chart-source` to {numref}`cooking-example-single-gantt-chart-sink` show the activity of the production system during the simulation. {numref}`cooking-example-single-gantt-chart-source` shows the activity of the source and its output stream. It is assumed that all necessary raw materials available at the start time of the simulation.
 
 :::{figure-md} cooking-example-single-gantt-chart-source
 <img src="./figures/1_tutorial/gantt_chart_source.png">
@@ -262,8 +266,7 @@ In the following figures {numref}`cooking-example-single-gantt-chart-source` to 
 Gantt chart that shows the activity of the raw goods source and the output stream of the source.
 :::
 
-Figure {numref}`cooking-example-single-gantt-chart` shows the gantt chart of the gantt chart of the cooker, its input stream and the output stream. The input stream of the cooker an the output stream of the source are the same object.
-Additionally the internal storage level of the cooker is shown.
+{numref}`cooking-example-single-gantt-chart` shows the gantt chart of the gantt chart of input stream to the cooker, the internal storage of the cooker, the cooker itself  and the output stream of the cooker. The input stream of the cooker an the output stream of the source are the same object. It is included in {numref}`cooking-example-single-gantt-chart-source` and {numref}`cooking-example-single-gantt-chart` to show how the activity of the stream depends on the activity of the source and process step.
 
 
 :::{figure-md} cooking-example-single-gantt-chart
@@ -272,15 +275,17 @@ Additionally the internal storage level of the cooker is shown.
 Gantt chart that shows the activity of the single simple cooker, the input, the output stream and the internal storage level.
 :::
 
-Figure {numref}`cooking-example-single-gantt-chart-sink` shows the activity of the sink and its input stream.
+{numref}`cooking-example-single-gantt-chart-sink` shows the activity of the sink and its input stream. The input stream is also the same as the output stream in {numref}`cooking-example-single-gantt-chart`.
 
 :::{figure-md} cooking-example-single-gantt-chart-sink
 <img src="./figures/1_tutorial/gantt_chart_sink.png">
 
-Gantt chart that shows the activity of the sink and it input stream.
+Gantt chart that shows the activity of the sink and its input stream.
 :::
 
-Lastly figure {numref}`cooking-example-single-carpet-plot` show the load profile of the cooker as a carpet plot.
+### Load Profiles
+
+Lastly {numref}`cooking-example-single-carpet-plot` show the load profile of the cooker as a carpet plot. It can be seen that the energy is required continuously during the cooking process which is interrupted by the charging and discharging.
 
 :::{figure-md} cooking-example-single-carpet-plot
 <img src="./figures/1_tutorial/carpet_plot_single_simple_cooker.png">

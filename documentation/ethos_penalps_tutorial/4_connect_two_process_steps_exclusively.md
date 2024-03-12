@@ -1,16 +1,16 @@
 # Connect Two Process Steps Exclusively 
-In order to connect two process steps sequentially they must be in the same process chain and be connected by streams . This will be demonstrated by adding a blender prior to the cooker which is shown in figure {numref}`cooking-blender-exclusive-example`.
+In order to connect two process steps sequentially they must be in the same process chain. This will be demonstrated by adding a blender prior to the cooker which is shown in {numref}`cooking-blender-exclusive-example`.
 
   
 :::{figure-md} cooking-blender-exclusive-example
-<img src="./figures/blender_and_cooker_exclusively_connected.png" width=300>
+<img src="./figures/4_tutorial/blender_and_cooker_exclusively_connected.png" width=300>
 
 Depiction of the cooker model with two parallel cookers.
 :::
 
 ## Add Additional Commodity
 
-First additional commodities must be added for each of the new commodity states between source, process steps and sink.
+First additional commodities must be added for each of the new materials between source, process steps and sink.
 
 ```
 raw_commodity = Commodity(name="Raw Goods")
@@ -26,6 +26,7 @@ cooker_step = process_chain.create_process_step(name="Cooker")
 ```
 
 ## Create Streams
+Now streams are created to connect the source, both process steps and the sinks.
 ```
 raw_materials_to_blender_stream = process_chain.stream_handler.create_batch_stream(
     batch_stream_static_data=BatchStreamStaticData(
@@ -56,6 +57,7 @@ cooker_to_sink_stream = process_chain.stream_handler.create_batch_stream(
 )
 ```
 ## Add Streams 
+The streams that have the sink or source must be connected to the respective object explicitly.
 ```
 source.add_output_stream(
     output_stream=raw_materials_to_blender_stream,
@@ -69,8 +71,10 @@ sink.add_input_stream(
 
 ## Create Petri Nets for Each Process Step:
 
+Now the petri net must be defined for each process step.
 ### Blender
 
+The petri net for blender is similar to the one from cooker. It resembles a basic batch process with a continuous energy demand state between input and output. The major difference is that it is assumed to be much shorter.
 ```
 activate_not_blending = blender_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
     start_process_state=discharge_goods_state_blender,
@@ -111,6 +115,7 @@ blender_step.process_state_handler.process_state_switch_selector_handler.create_
 
 ### Cooker
 
+The cooker petri net is the same as in the first example.
 ```
 idle_state_cooker = cooker_step.process_state_handler.create_idle_process_state(
     process_state_name="Idle"
@@ -222,35 +227,43 @@ cooker_step.process_state_handler.process_step_data.main_mass_balance.create_sto
 )
 ```
 
-In the next example shows how to connect three or more process steps non exclusively.
+## Simulation Results
 
+### Production Plan
+{numref}`cooking-blender-exclusive-process-chain-gantt-chart` shows the production plan of the exclusively connected blender and cooker. It shows that the cooker fully occupied during the simulation. Whereas the blender is idle for a considerable time. This caused by the assumption that the blender requires a lot less time to blend the input stream for cooker. It has a higher capacity and could blend more material in the same time if it was requested from the cooker.
 
-:::{figure-md} cooking-blender-exclusive-example-blender-gantt-chart
-<img src="./figures/3_tutorial/gantt_chart_blender.png">
+:::{figure-md} cooking-blender-exclusive-process-chain-gantt-chart
+<img src="./figures/4_tutorial/gantt_chart_process_chain.png">
 
-Depiction of the cooker model with two parallel cookers.
+Gantt Chart of the production plan of the exclusively connected cooker and blender.
 :::
 
-:::{figure-md} cooking-blender-exclusive-example-cooker-gantt-chart
-<img src="./figures/3_tutorial/gantt_chart_cooker.png" >
-
-Depiction of the cooker model with two parallel cookers.
-:::
+### Load Profiles
+{numref}`cooking-blender-exclusive-example-blender-carpet-plot` shows the carpet plot of the electricity load profile of the blender. It has short periods of high electricity consumptions which is caused by the overcapacity of the blender towards the cooker.   
 
 :::{figure-md} cooking-blender-exclusive-example-blender-carpet-plot
-<img src="./figures/3_tutorial/carpet_plot_blender.png">
+<img src="./figures/4_tutorial/carpet_plot_blender.png">
 
-Depiction of the cooker model with two parallel cookers.
+Carpet plot of the electricity load profile of the blender.
 :::
+
+{numref}`cooking-blender-exclusive-example-cooker-carpet-plot` shows the electricity load profile carpet plot of the cooker. It is much more evenly distributed because the cooker operates at its maximum capacity. The electricity demand is only interrupted to charge and discharge the contents of the cooker. 
 
 :::{figure-md} cooking-blender-exclusive-example-cooker-carpet-plot
-<img src="./figures/3_tutorial/carpet_plot_cooker.png" >
+<img src="./figures/4_tutorial/carpet_plot_cooker.png" >
 
 Depiction of the cooker model with two parallel cookers.
 :::
 
+{numref}`cooking-blender-exclusive-example-electricity-combined` shows the carpet plot of the combined load profile of the cooker and blender. The fluctuations are caused by
+- the asynchronous operation of the cooker and blender 
+- the different energy demands of the operation sates of the blender and cooker
+- the need to charge and discharge the blender and cooker
+  
 :::{figure-md} cooking-blender-exclusive-example-electricity-combined
-<img src="./figures/3_tutorial/carpet_plot_electricity_combined.png">
+<img src="./figures/4_tutorial/carpet_plot_electricity_combined.png">
 
 Depiction of the cooker model with two parallel cookers.
 :::
+
+In the next example shows how to connect three or more process steps non exclusively.

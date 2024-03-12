@@ -118,7 +118,7 @@ def start_simulation():
         x_axis_time_delta=datetime.timedelta(days=1),
         start_date=time_data.global_start_date,
         end_date=time_data.global_end_date,
-        resample_frequency="1min",
+        resample_frequency="1s",
     )
 
 

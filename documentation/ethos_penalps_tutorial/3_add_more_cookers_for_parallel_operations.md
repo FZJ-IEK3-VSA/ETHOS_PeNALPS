@@ -1,16 +1,31 @@
 # Add More Cookers for Parallel Operation
 
-This sections explains how to model the parallel operation of two process steps using the previous cooker example which is shown in figure {numref}`cooking-example-two-cooker`. In this example two cookers are implemented.
+This sections explains how to model the parallel operation of two process steps. Therefore an additional cooker is added to the previous cooker example which is shown in {numref}`cooking-example-two-cooker`.
 :::{figure-md} cooking-example-two-cooker
-<img src="./figures/parallel_cooker_operation.png" width=300>
+<img src="./figures/3_tutorial/parallel_cooker_operation.png" width=300>
 
 Depiction of the cooker model with two parallel cookers.
 :::
 
-Therefore two process chains must be created. Each of the chains must hold an own instance of the cooker. 
+## Increase Number of Orders and Shift Orders
+
+The number of orders is doubled to create a similar production load for each cookers as in the previous examples. Additionally, the orders are shifted
+by five minutes to show that each of the cooker can operate independently from each other.
+
+```
+order_generator = NOrderGenerator(
+    commodity=output_commodity,
+    mass_per_order=0.00065,
+    production_deadline=end_date,
+    number_of_orders=4,
+    time_span_between_order=datetime.timedelta(minutes=5),
+)
+```
+
+ 
 
 ## Create Two Process Chains
-The first change that must be applied is to the original example is to add an additional process chain. 
+To implement two parallel operating cookers two process chains must be created. 
 
 ```
 process_chain_1 = network_level.create_process_chain(
@@ -19,8 +34,6 @@ process_chain_1 = network_level.create_process_chain(
 process_chain_2 = network_level.create_process_chain(
     process_chain_name="Cooker Chain 2"
 )
-
-
 ```
 ## Connect Chains with Sink and Source
 Both chains must then be connected to the sink and source
@@ -31,8 +44,8 @@ process_chain_1.add_source(source=source)
 process_chain_2.add_sink(sink=sink)
 process_chain_2.add_source(source=source)
 ```
-## Create two process steps
-Then two process steps are created.
+## Create Two Process Steps
+Each of the chains must hold an own instance of the cooker. It is important that the names of the process steps are unique.
 ```
 process_step_1 = process_chain_1.create_process_step(name="Cooker 1")
 process_step_2 = process_chain_2.create_process_step(name="Cooker 2")
@@ -47,7 +60,7 @@ raw_materials_to_cooking_stream_1 = process_chain_1.stream_handler.create_batch_
         end_process_step_name=process_step_1.name,
         delay=datetime.timedelta(minutes=1),
         commodity=input_commodity,
-        maximum_batch_mass_value=0.0005,
+        maximum_batch_mass_value=0.00065,
     )
 )
 cooking_to_sink_stream_1 = process_chain_1.stream_handler.create_batch_stream(
@@ -56,7 +69,7 @@ cooking_to_sink_stream_1 = process_chain_1.stream_handler.create_batch_stream(
         end_process_step_name=sink.name,
         delay=datetime.timedelta(minutes=1),
         commodity=output_commodity,
-        maximum_batch_mass_value=0.0005,
+        maximum_batch_mass_value=0.00065,
     )
 )
 
@@ -66,7 +79,7 @@ raw_materials_to_cooking_stream_2 = process_chain_2.stream_handler.create_batch_
         end_process_step_name=process_step_2.name,
         delay=datetime.timedelta(minutes=1),
         commodity=input_commodity,
-        maximum_batch_mass_value=0.0005,
+        maximum_batch_mass_value=0.00065,
     )
 )
 cooking_to_sink_stream_2 = process_chain_2.stream_handler.create_batch_stream(
@@ -75,13 +88,13 @@ cooking_to_sink_stream_2 = process_chain_2.stream_handler.create_batch_stream(
         end_process_step_name=sink.name,
         delay=datetime.timedelta(minutes=1),
         commodity=output_commodity,
-        maximum_batch_mass_value=0.0005,
+        maximum_batch_mass_value=0.00065,
     )
 )
 ```
 
 ## Connect Streams
-Then both of the streams must be connected to respective sink and source. It is not necessary to add them to the respective process step.
+Then both of the streams must be connected to respective sink and source. 
 
 ```
 source.add_output_stream(
@@ -229,12 +242,12 @@ Now the energy data must be added two the states of each machine.
 ```
 electricity_load = LoadType(name="Electricity")
 cooking_state_1.create_process_state_energy_data_based_on_stream_mass(
-    specific_energy_demand=1.8,
+    specific_energy_demand=830.76,
     load_type=electricity_load,
     stream=raw_materials_to_cooking_stream_1,
 )
 cooking_state_2.create_process_state_energy_data_based_on_stream_mass(
-    specific_energy_demand=1.8,
+    specific_energy_demand=830.76,
     load_type=electricity_load,
     stream=raw_materials_to_cooking_stream_2,
 )
@@ -268,5 +281,47 @@ process_step_2.process_state_handler.process_step_data.main_mass_balance.create_
 )
 ```
 
-The process to start the simulation is the same as in the previous example. It does not depend on the configuration of process steps, process chains and network level. The next example shows how to connect two process steps exclusively using a process chain.
+## Simulation Results
 
+The simulation is started in the same as in the previous example. It does not depend on the configuration of process steps, process chains and network level. In the following the results of the example simulation are shown. 
+
+### Production Plan
+Figure {numref}`two-parallel-cooker-1-gantt-chart` and figure {numref}`two-parallel-cooker-2-gantt-chart` show the Gantt Chart of cooker one and two. The only difference between both figures is that they are shifted a little bit. This is caused by the shifted deadlines of the orders. These are distributed equally between both process chains by the sink. 
+
+:::{figure-md} two-parallel-cooker-1-gantt-chart
+<img src="./figures/3_tutorial/gantt_chart_cooker_1.png">
+
+Depiction of the production plan of cooker 1 as a Gantt Chart.
+:::
+
+:::{figure-md} two-parallel-cooker-2-gantt-chart
+<img src="./figures/3_tutorial/gantt_chart_cooker_2.png" >
+
+Depiction of the production plan of cooker 2 as a Gantt Chart.
+:::
+
+### Load Profiles
+
+Figure {numref}`two-parallel-cooker-1-carpet-plot` and figure {numref}`two-parallel-cooker-2-carpet-plot` show the simulated electricity load profile. It has been resampled to a uniform time step which is required to create a carpet plot. In both figures it can be seen that the energy demand is interrupted by the charging and discharging states. Their only difference is that they are shifted due to the shifted orders.
+
+:::{figure-md} two-parallel-cooker-1-carpet-plot
+<img src="./figures/3_tutorial/carpet_plot_cooker_1.png">
+
+Depiction of the electricity load profile of cooker 1 as a carpet plot.
+:::
+
+:::{figure-md} two-parallel-cooker-2-carpet-plot
+<img src="./figures/3_tutorial/carpet_plot_cooker_2.png" >
+
+Depiction of the electricity load profile of cooker 1 as a carpet plot.
+:::
+
+Figure {numref}`two-parallel-cooker-combined-electricity-carpet-plot` shows the combined carpet plot of cooker one and two. It shows varying power consumption of the whole production system due to the charging states, discharging states and the asynchronous operation of both cookers.  
+
+:::{figure-md} two-parallel-cooker-combined-electricity-carpet-plot
+<img src="./figures/3_tutorial/carpet_plot_electricity_combined.png">
+
+Depiction of the combined electricity load profile of cooker 1 and cooker 2 as a carpet plot.
+:::
+
+The next example shows how to connect two process steps exclusively using a process chain.

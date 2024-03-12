@@ -58,7 +58,6 @@ class PostProcessSimulationDataHandler:
     def start_post_processing(self):
         logger.info("Start load profile post processing")
         self.load_profile_collection_post_processing.start_post_processing()
-        logger.info("Stream Entry Post Processing")
         self.convert_stream_entries_to_meta_data_data_frames()
         self.convert_process_state_dictionary_to_list_of_data_frames()
         self.convert_list_of_storage_entries_to_meta_data()

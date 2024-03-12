@@ -2,9 +2,9 @@
 
 This page describes how an ETHOS.PeNALPS simulation works internally. The workflow is depicted in {numref}`ethos-penalps-workflow`. The three simulation main components are:
 
-a. The Material Flow Simulation
-b. Production Plan
-c. Load Profiles
+- (a) The Material Flow Simulation
+- (b) Production Plan
+- (c) Load Profiles
 
 The material flow simulation creates a production plan which tracks all activities, intermediate product and raw materials that are required to produce a set of product orders at a given deadline. The activity schedule is then used to calculate load profiles using specific energy demands. These energy demands are specific to the mass that is converted during the activity. The Material flow simulation is capable of modeling noncyclical industrial production networks.
 

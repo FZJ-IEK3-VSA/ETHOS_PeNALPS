@@ -153,19 +153,21 @@ class Enterprise:
         resample_frequency: str = "5min",
         number_of_columns: int = 2,
     ):
-        """Creates a HTML report from the simulation results. It contains
+        """Creates a HTML report from the simulation results. It contains:
+
         - A process overview page
-            - A depiction of the modelled process
-            - All orders in the sinks and storages of the process
+           - A depiction of the modelled process
+           - All orders in the sinks and storages of the process
         - A page with the production plan which is downloadable as csv file for
-            - The process steps
-            - The streams
+           - The process steps
+           - The streams
         - A page with a with all load profiles for each:
-            - Process steps
-            - Streams
+           - Process steps
+           - Streams
         - A page with a gantt chart for each stream and process step for a selected period
         - A page with a carpet plot for each energy carrier for each stream, process step
             and the sum for each energy carrier.
+
         Args:
             gantt_chart_start_date (datetime.datetime): Determines the start for the displayed period
                 for the Gantt Chart.
@@ -177,7 +179,6 @@ class Enterprise:
                 for the carpet Chart.
             x_axis_time_delta (datetime.timedelta): Determines the duration repetitive period
                 on the x axis of the carpet plot.
-
             resample_frequency (str, optional): The load profiles must have a uniform time step
                 to create the carpet plot from them. Thus they must be resampled. The frequency must
                 be provided as a string in the the pandas resample style:
@@ -189,8 +190,9 @@ class Enterprise:
                 - W weekly frequency
                 - M month end frequency
                 - https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
-                - defaults to "min"
-                Defaults to "1min".. Defaults to "5min".
+
+                Defaults to "5min".
+
             number_of_columns (int, optional): Sets the number of columns for the carpet plots. Defaults to 2.
         """
 

@@ -24,7 +24,9 @@ def fill_cutting_and_heating_chain(
 
     # Create process steps
     coil_cutter = process_chain.create_process_step(name="Coil Cutter")
-    open_hearth_furnace = process_chain.create_process_step(name="Open Hearth Furnace")
+    roller_hearth_furnace = process_chain.create_process_step(
+        name="Roller Hearth Furnace"
+    )
 
     # Create process state petri nets
     # Coil cutter
@@ -38,7 +40,7 @@ def fill_cutting_and_heating_chain(
     )
     discharge_strip = (
         coil_cutter.process_state_handler.create_batch_output_stream_providing_state(
-            process_state_name="discharge"
+            process_state_name="Discharge"
         )
     )
 
@@ -79,25 +81,27 @@ def fill_cutting_and_heating_chain(
     )
 
     # Create Petri Net of Heating
-    furnace_heating_state = open_hearth_furnace.process_state_handler.create_state_for_parallel_input_and_output_stream_with_storage(
+    furnace_heating_state = roller_hearth_furnace.process_state_handler.create_state_for_parallel_input_and_output_stream_with_storage(
         process_state_name="Heating"
     )
-    idle_furnace = open_hearth_furnace.process_state_handler.create_idle_process_state(
-        process_state_name="Idle"
+    idle_furnace = (
+        roller_hearth_furnace.process_state_handler.create_idle_process_state(
+            process_state_name="Idle"
+        )
     )
 
-    activate_step_1_2 = open_hearth_furnace.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
+    activate_step_1_2 = roller_hearth_furnace.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
         start_process_state=furnace_heating_state,
         end_process_state=idle_furnace,
     )
-    open_hearth_furnace.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+    roller_hearth_furnace.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
         process_state_switch=activate_step_1_2
     )
-    deactivate_step_1_2 = open_hearth_furnace.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
+    deactivate_step_1_2 = roller_hearth_furnace.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
         start_process_state=idle_furnace,
         end_process_state=furnace_heating_state,
     )
-    open_hearth_furnace.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
+    roller_hearth_furnace.process_state_handler.process_state_switch_selector_handler.create_single_choice_selector(
         process_state_switch=deactivate_step_1_2
     )
 
@@ -116,7 +120,7 @@ def fill_cutting_and_heating_chain(
     cut_steel_stream = process_chain.stream_handler.create_batch_stream(
         batch_stream_static_data=BatchStreamStaticData(
             start_process_step_name=coil_cutter.name,
-            end_process_step_name=open_hearth_furnace.name,
+            end_process_step_name=roller_hearth_furnace.name,
             commodity=cold_blank,
             maximum_batch_mass_value=0.006,
             delay=datetime.timedelta(seconds=5),
@@ -124,7 +128,7 @@ def fill_cutting_and_heating_chain(
     )
     heated_blank_stream = process_chain.stream_handler.create_continuous_stream(
         continuous_stream_static_data=ContinuousStreamStaticData(
-            start_process_step_name=open_hearth_furnace.name,
+            start_process_step_name=roller_hearth_furnace.name,
             end_process_step_name=sink.name,
             commodity=hot_blank,
             maximum_operation_rate=0.5267,
@@ -159,7 +163,7 @@ def fill_cutting_and_heating_chain(
         main_input_stream=steel_strip_stream,
         main_output_stream=cut_steel_stream,
     )
-    open_hearth_furnace.create_main_mass_balance(
+    roller_hearth_furnace.create_main_mass_balance(
         input_to_output_conversion_factor=1,
         main_input_stream=cut_steel_stream,
         main_output_stream=heated_blank_stream,
@@ -170,7 +174,7 @@ def fill_cutting_and_heating_chain(
     coil_cutter.process_state_handler.process_step_data.main_mass_balance.create_storage(
         current_storage_level=0
     )
-    open_hearth_furnace.process_state_handler.process_step_data.main_mass_balance.create_storage(
+    roller_hearth_furnace.process_state_handler.process_step_data.main_mass_balance.create_storage(
         current_storage_level=0
     )
 

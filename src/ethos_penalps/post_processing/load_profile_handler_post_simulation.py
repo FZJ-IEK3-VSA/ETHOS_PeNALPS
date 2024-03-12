@@ -235,7 +235,7 @@ class LoadProfileCollectionPostProcessing:
             stream_load_profile_entry_collection = (
                 StreamLoadProfileEntryCollectionResampled(object_name=stream_name)
             )
-            logger.info("Start post processing stream_name: %s", stream_name)
+            logger.debug("Start post processing stream_name: %s", stream_name)
             for (
                 load_type_uuid,
                 list_of_load_profile_entries,
@@ -243,7 +243,7 @@ class LoadProfileCollectionPostProcessing:
                 load_type = stream_load_profile_collections.load_type_dict[
                     load_type_uuid
                 ]
-                logger.info("Start to create load profile meta data: %s", stream_name)
+                logger.debug("Start to create load profile meta data: %s", stream_name)
                 load_profile_meta_data = self.load_profile_entry_post_processor.create_load_profile_meta_data(
                     object_name=stream_name,
                     list_of_load_profile_entries=list_of_load_profile_entries,
@@ -256,7 +256,7 @@ class LoadProfileCollectionPostProcessing:
                         load_type=load_type,
                         list_of_load_profile_entry_meta_data=load_profile_meta_data,
                     )
-                    logger.info("Start resampling stream_name: %s", stream_name)
+                    logger.debug("Start resampling stream_name: %s", stream_name)
                     resampled_load_profile_meta_data = self.load_profile_entry_post_processor.resample_load_profile_meta_data(
                         load_profile_meta_data=load_profile_meta_data,
                         start_date=self.report_generator_options.carpet_plot_options.start_date,

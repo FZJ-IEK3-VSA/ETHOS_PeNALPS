@@ -36,6 +36,7 @@ order_generator = NOrderGenerator(
     mass_per_order=0.00065,
     production_deadline=end_date,
     number_of_orders=4,
+    time_span_between_order=datetime.timedelta(minutes=5),
 )
 
 order_collection = order_generator.create_n_order_collection()
@@ -123,7 +124,7 @@ enterprise.create_post_simulation_report(
     start_date=start_date,
     end_date=end_date,
     x_axis_time_delta=datetime.timedelta(hours=1),
-    resample_frequency="5min",
+    resample_frequency="1min",
     gantt_chart_end_date=end_date,
     gantt_chart_start_date=start_date,
 )

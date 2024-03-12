@@ -89,6 +89,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     ) -> CarpetPlotMatrix | CarpetPlotMatrixEmpty:
         """Converts a list of load profiles into a CarpetPlotMatrix
         which is used to create carpet plots.
+
             1. The list of load profiles is homogenized
             2. The list of load profiles is converted into a data frame
             3. The data frame and meta information about the list

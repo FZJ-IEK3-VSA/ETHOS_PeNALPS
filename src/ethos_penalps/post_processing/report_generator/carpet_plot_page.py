@@ -15,7 +15,7 @@ from ethos_penalps.post_processing.post_processed_data_handler import (
 from ethos_penalps.post_processing.report_generator.report_options import (
     ReportGeneratorOptions,
 )
-from ethos_penalps.post_processing.tikz_visualizations.carpet_plot_load_profile_generator import (
+from ethos_penalps.post_processing.time_series_visualizations.carpet_plot_load_profile_generator import (
     CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.time_series_visualizations.gantt_chart import (
@@ -201,7 +201,7 @@ class CarpetPlotPageGenerator:
                             )
 
                             figure_caption = (
-                                "Process state: "
+                                "Process Step: "
                                 + str(process_step_name)
                                 + "Load type: "
                                 + str(load_type.name)

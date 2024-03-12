@@ -32,5 +32,4 @@ dependencies:
   - conda-forge::jsonpickle
   - conda-forge::pdf2image
   - conda-forge::pytest>7.0 
-  - conda-forge::pytest-dependency
   - conda-forge::pytest-xdist
