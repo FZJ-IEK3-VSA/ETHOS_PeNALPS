@@ -44,7 +44,16 @@ jobs:
             echo "LS Done"
             mamba install -n test_env ethos_penalps pytest pytest-xdist
             echo "Installation done"
-            conda list -n test_env -e      
+            conda list -n test_env -e
+            $PENALPS_STRING = conda list -n test_env ethos-penalps -e | Out-String
+            echo "The penalps string is"
+            echo $PENALPS_STRING
+            echo "Start to extract the version"
+            $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos-penalps-penalpslps=(\d+\.\d+\.\d+)=').Groups[1].Value 
+            "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
+            echo "Print the extracted version"
+            echo $PENALPS_VERSION
+            echo "Terminate get penalps version"
         - name: get_penalps_version
           shell: pwsh
           id: penalps-version
@@ -52,7 +61,7 @@ jobs:
           run: |
               $PENALPS_STRING = conda list -n test_env ethos-penalps -e | Out-String
               echo "The penalps string is"
-              echo  $PENALPS_STRING
+              echo $PENALPS_STRING
               echo "Start to extract the version"
               $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos-penalps-penalpslps=(\d+\.\d+\.\d+)=').Groups[1].Value 
               "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
