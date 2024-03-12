@@ -32,6 +32,11 @@ jobs:
         matrix:
           os: ["ubuntu-latest","ubuntu-20.04", "macos-latest","macos-13","macos-12", "macos-11","windows-latest","windows-2019"]
       steps:
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            miniforge-version: latest
+            channels: conda-forge
+            activate-environment: test_env
         - name: Install Penalps
           shell: pwsh
           run: |
@@ -54,11 +59,6 @@ jobs:
             repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
             path: './ETHOS_PENALPS'
             ref: ${{ steps.penalps-version.outputs.PENALPS_VERSION }}      
-        - uses: conda-incubator/setup-miniconda@v3
-          with:
-            miniforge-version: latest
-            channels: conda-forge
-            activate-environment: test_env
         - name: Run tests
           shell: pwsh
           run: |
