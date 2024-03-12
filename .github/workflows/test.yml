@@ -42,7 +42,7 @@ jobs:
           run: |
             ls
             echo "LS Done"
-            mamba install -n test_env ethos_penalps pytest
+            mamba install -n test_env ethos_penalps pytest pytest-xdist
             echo "Installation done"
             conda list -n test_env        
         - name: get_penalps_version
@@ -63,7 +63,7 @@ jobs:
           shell: pwsh
           run: |
             echo "start pytest"
-            conda run -n test_env pytest
+            conda run -n test_env pytest -n auto
             echo "Pytest done"
         
         
@@ -97,7 +97,7 @@ jobs:
             conda list --name penalps_env
             echo "libaries printed"
             echo "start pytest"
-            conda run --name penalps_env pytest
+            conda run --name penalps_env pytest -n auto
             echo "Pytest done"
             echo "run examples"
         - name: Run examples
