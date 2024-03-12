@@ -193,9 +193,6 @@ class ListOfLoadProfileEntryAnalyzer:
         list_of_load_profile_meta_data: (
             ListOfLoadProfileEntryMetaData | EmptyLoadProfileMetadata
         ),
-        list_of_load_profile_meta_data: (
-            ListOfLoadProfileEntryMetaData | EmptyLoadProfileMetadata
-        ),
         object_name: str,
     ):
 
@@ -379,32 +376,6 @@ class LoadProfileMetaDataCreator(ListOfLoadProfileEntryAnalyzer):
             LoadProfileMetaData | EmptyLoadProfileMetadata: _description_
         """
 
-        # Inverts the list
-    ) -> ListOfLoadProfileMetaData:
-        """Homogenizes and adjusts the time step length of the load profile entry list.
-        It applies the following checks, conversions and additions:
-            - Checks if the load profiles are ordered in temporal occurrence.
-            - Adds 0 demand load profiles if there are gaps between load profiles.
-            - Adds an empty load profile entry form the start date to
-                the first start date of a load profile entry. If the start date
-                is earlier than the first load profile entry the start date is
-                ignored.
-            - Adds an empty load profile entry from the latest profile entry
-                to the end time provided. If the end time is earlier than the
-                latest load profile entry the end time is ignored.
-            - Resamples Load profiles to the resample frequency provided.
-
-        Args:
-            list_of_load_profile_entries (list[LoadProfileEntry]): _description_
-            start_date_time_series (datetime.datetime): _description_
-            end_date_time_series (datetime.datetime): _description_
-            object_name (str): _description_
-            object_type (str): _description_
-
-        Returns:
-            LoadProfileMetaData | EmptyLoadProfileMetadata: _description_
-        """
-
         load_profile_meta_data: LoadProfileMetaData | EmptyLoadProfileMetadata
         if list_of_load_profile_entries:
             # Inverts the list
@@ -481,11 +452,6 @@ class LoadProfileMetaDataCreator(ListOfLoadProfileEntryAnalyzer):
     def invert_list(self, list_to_invert: list):
         return list_to_invert[::-1]
 
-        return list_of_load_profile_meta_data
-
-    def invert_list(self, list_to_invert: list):
-        return list_to_invert[::-1]
-
     def fill_from_date_to_start(
         self,
         list_of_load_profile_meta_data: ListOfLoadProfileEntryMetaData,
@@ -501,24 +467,18 @@ class LoadProfileMetaDataCreator(ListOfLoadProfileEntryAnalyzer):
         ):
             new_first_load_profile = LoadProfileEntry(
                 load_type=list_of_load_profile_meta_data.load_type,
-                load_type=list_of_load_profile_meta_data.load_type,
                 start_time=start_date,
                 end_time=first_entry.start_time,
                 energy_quantity=energy_quantity_at_start,
                 energy_unit=list_of_load_profile_meta_data.energy_unit,
-                energy_unit=list_of_load_profile_meta_data.energy_unit,
                 average_power_consumption=power_value_to_fill,
                 power_unit=list_of_load_profile_meta_data.power_unit,
             )
-            list_of_load_profile_meta_data.list_of_load_profiles.insert(
-                0, new_first_load_profile
-                power_unit=list_of_load_profile_meta_data.power_unit,
-            )
+
             list_of_load_profile_meta_data.list_of_load_profiles.insert(
                 0, new_first_load_profile
             )
 
-        return list_of_load_profile_meta_data
         return list_of_load_profile_meta_data
 
     def fill_to_end_date(
@@ -535,11 +495,9 @@ class LoadProfileMetaDataCreator(ListOfLoadProfileEntryAnalyzer):
         ):
             new_first_load_profile = LoadProfileEntry(
                 load_type=list_of_load_profile_meta_data.load_type,
-                load_type=list_of_load_profile_meta_data.load_type,
                 start_time=last_entry.end_time,
                 end_time=end_date,
                 energy_quantity=energy_quantity_at_start,
-                energy_unit=list_of_load_profile_meta_data.energy_unit,
                 energy_unit=list_of_load_profile_meta_data.energy_unit,
                 average_power_consumption=power_value_to_fill,
                 power_unit=list_of_load_profile_meta_data.power_unit,
