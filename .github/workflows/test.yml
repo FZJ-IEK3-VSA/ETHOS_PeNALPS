@@ -51,10 +51,14 @@ jobs:
           # use ethos-penalps instead of ethos_penalps for looup due to diffrent formatting in conda list output
           run: |
               $PENALPS_STRING = conda list -e -n test_env ethos-penalps | Out-String
-              echo The penalps string is $PENALPS_STRING
+              echo "The penalps string is"
+              echo  $PENALPS_STRING
+              echo "Start to extract the version"
               $PENALPS_VERSION = [regex]::Match($PENALPS_STRING, 'ethos-penalps=(\d+\.\d+\.\d+)=').Groups[1].Value 
-              echo "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
+              "PENALPS_VERSION=$PENALPS_VERSION" >> $GITHUB_OUTPUT
+              echo "Print the extracted version"
               echo $PENALPS_VERSION
+              echo "Terminate get penalps version"
         - name: Checkout to penalps repository
           uses: actions/checkout@v4
           with:
@@ -65,6 +69,8 @@ jobs:
         - name: Run tests
           shell: pwsh
           run: |
+            echo "The checkout ethos_penalps version was:"
+            echo ${{ steps.penalps-version.outputs.PENALPS_VERSION }}  
             echo "start pytest"
             conda run -n test_env pytest -n auto
             echo "Pytest done"
