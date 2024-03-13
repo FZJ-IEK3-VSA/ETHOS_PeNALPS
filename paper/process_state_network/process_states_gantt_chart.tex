@@ -1,0 +1,143 @@
+\documentclass[tikz]{standalone}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{etoolbox}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary {arrows.meta,automata,positioning,fit,calc,matrix,math}
+
+\definecolor{process_step_background}{HTML}{FFFAF0}
+\definecolor{intermediate_fill_colour}{HTML}{949698}
+
+
+%Three side rectangle
+\tikzset{
+    rect/.style n args={4}{
+        draw=none,
+        rectangle,
+        append after command={
+            \pgfextra{%
+                \pgfkeysgetvalue{/pgf/outer xsep}{\oxsep}
+                \pgfkeysgetvalue{/pgf/outer ysep}{\oysep}
+                \def\arg@one{#1}
+                \def\arg@two{#2}
+                \def\arg@three{#3}
+                \def\arg@four{#4}
+                \begin{pgfinterruptpath}
+                    \ifx\\#1\\\else
+                        \draw[draw,#1] ([xshift=-\oxsep,yshift=+\pgflinewidth]\tikzlastnode.south east) edge ([xshift=-\oxsep,yshift=0\ifx\arg@two\@empty-\pgflinewidth\fi]\tikzlastnode.north east);
+                    \fi\ifx\\#2\\\else
+                        \draw[draw,#2] ([xshift=-\pgflinewidth,yshift=-\oysep]\tikzlastnode.north east) edge ([xshift=0\ifx\arg@three\@empty+\pgflinewidth\fi,yshift=-\oysep]\tikzlastnode.north west);
+                    \fi\ifx\\#3\\\else
+                        \draw[draw,#3] ([xshift=\oxsep,yshift=0-\pgflinewidth]\tikzlastnode.north west) edge ([xshift=\oxsep,yshift=0\ifx\arg@four\@empty+\pgflinewidth\fi]\tikzlastnode.south west);
+                    \fi\ifx\\#4\\\else
+                        \draw[draw,#4] ([xshift=0+\pgflinewidth,yshift=\oysep]\tikzlastnode.south west) edge ([xshift=0\ifx\arg@one\@empty-\pgflinewidth\fi,yshift=\oysep]\tikzlastnode.south east);
+                    \fi
+                \end{pgfinterruptpath}
+            }
+        }
+    },
+    rect'/.style n args={4}{
+        rectangle,
+        append after command={
+            \pgfextra{%
+                \pgfkeysgetvalue{/pgf/outer xsep}{\oxsep}
+                \pgfkeysgetvalue{/pgf/outer ysep}{\oysep}
+                \begin{pgfinterruptpath}
+                    \ifx\\#1\\\else
+                        \draw[draw,#1] ([xshift=-\oxsep,yshift=0]\tikzlastnode.south east) edge ([xshift=-\oxsep,yshift=0]\tikzlastnode.north east);
+                    \fi\ifx\\#2\\\else
+                        \draw[draw,#2] ([xshift=-\pgflinewidth,yshift=-\oysep]\tikzlastnode.north east) edge ([xshift=0+\pgflinewidth,yshift=-\oysep]\tikzlastnode.north west);
+                    \fi\ifx\\#3\\\else
+                        \draw[draw,#3] ([xshift=\oxsep,yshift=0-\pgflinewidth]\tikzlastnode.north west) edge ([xshift=\oxsep,yshift=0+\pgflinewidth]\tikzlastnode.south west);
+                    \fi\ifx\\#4\\\else
+                        \draw[draw,#4] ([xshift=0+\pgflinewidth,yshift=\oysep]\tikzlastnode.south west) edge ([xshift=0-\pgflinewidth,yshift=\oysep]\tikzlastnode.south east);
+                    \fi
+                \end{pgfinterruptpath}
+            }
+        }
+    },
+    dontshortenme/.style={
+        shorten >=0pt,
+        shorten <=0pt
+    },
+    rect''/.style n args={4}{
+        draw=none,
+        rectangle,
+        append after command={
+            \pgfextra{%
+                \pgfkeysgetvalue{/pgf/outer xsep}{\oxsep}
+                \pgfkeysgetvalue{/pgf/outer ysep}{\oysep}
+                \def\my@path{\path[shorten >=\pgflinewidth,shorten <=\pgflinewidth] ([xshift=-\oxsep]\tikzlastnode.south east) edge}
+                \def\arg@{#1}
+                \ifx\arg@\@empty
+                    \def\arg@{draw=none}
+                \fi
+                \eappto\my@path{[\arg@] }
+                \appto\my@path{ ([xshift=-\oxsep]\tikzlastnode.north east)
+                                          ([yshift=-\oysep]\tikzlastnode.north east) edge }
+                \def\arg@{#2}
+                \ifx\arg@\@empty
+                    \def\arg@{draw=none}
+                \fi
+                \eappto\my@path{[\arg@] }
+                \appto\my@path{ ([yshift=-\oysep]\tikzlastnode.north west)
+                                          ([xshift=\oxsep] \tikzlastnode.north west) edge }
+                \def\arg@{#3}
+                \ifx\arg@\@empty
+                    \def\arg@{draw=none}
+                \fi
+                \eappto\my@path{[\arg@] }
+                \appto\my@path{ ([xshift=\oxsep]\tikzlastnode.south west)
+                                          ([yshift=\oysep] \tikzlastnode.south west) edge }
+                \def\arg@{#4}
+                \ifx\arg@\@empty
+                    \def\arg@{draw=none}
+                \fi
+                \eappto\my@path{[\arg@] }
+                \appto\my@path{ ([yshift=\oysep]\tikzlastnode.south east);}
+                \begin{pgfinterruptpath}
+                    \my@path
+                \end{pgfinterruptpath}
+            }
+        }
+    }
+}
+
+
+\tikzstyle{path_1_highlighter} =[dashed]
+\tikzstyle{process_step_node} =[fill=process_step_background,rounded corners]
+\tikzstyle{intermediate_state} = [fill=intermediate_fill_colour,rounded corners,state,rectangle]
+\begin{document}
+\begin{tikzpicture}[->,auto,node distance=0cm,on grid,semithick]
+
+
+
+
+
+    \node[state,rectangle,style={fill=yellow},align=center,minimum height=1cm](idle_process_state){Idle State};
+    \node[state,rectangle,style={fill=green},right=of idle_process_state.east,align=center,minimum height=1cm](input_process_state){Input State \\(Charging)};
+    \node[state,rectangle,style={fill=gray},right=of input_process_state.east,align=center,minimum height=1cm](mixing_state){Intermediate State \\(Mixing)};
+    \node[state,rectangle,style={fill=gray},right=of mixing_state.east,align=center,minimum height=1cm](cooking_state){Intermediate State \\(Cooking)};
+    \node[state,rectangle,style={fill=gray},right=of cooking_state.east,align=center,minimum height=1cm](cooling_state){Intermediate State \\(Cooling)};
+    \node[state,rectangle,style={fill=red},right=of cooling_state.east,align=center,minimum height=1cm](output_state){Output State \\(Discharging)};
+    % \node[state,rectangle,style={fill=red},left=of mixing_state.west](output_state){Output State};
+    % \node[state,rectangle,style={fill=gray},left=of output_state.west](intermediate_state_output_input){Intermediate State};
+    % \node[state,rectangle,style={fill=green},left=of intermediate_state_output_input.west](input_state){Input State};
+    % \node[state,rectangle,style={fill=gray},left=of input_state.west](intermediate_state_input_idle){Intermediate State};
+    % \node[state,rectangle,style={fill=yellow},left=of intermediate_state_input_idle.west](idle_state_2){Idle State};
+
+    \node[below= of output_state.south east](inv_right){};
+    \node[below= of idle_process_state.south west](inv_left){};
+
+
+
+    \draw[thick] (inv_left.south west) ->  (inv_right.south east)[yshift=-1cm] node[midway]{Time};
+
+
+
+
+
+\end{tikzpicture}
+\end{document}

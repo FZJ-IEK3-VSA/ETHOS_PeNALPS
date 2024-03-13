@@ -1,0 +1,58 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "cSpell.words": [
+        "acyclical",
+        "autoapi",
+        "autodoc",
+        "autosummary",
+        "bibtex",
+        "Carastar",
+        "cbar",
+        "CHOCOTECH",
+        "cmap",
+        "dataclasses",
+        "datetimerange",
+        "docstrings",
+        "figwidth",
+        "Ginter",
+        "graphviz",
+        "jsonpickle",
+        "Korzeniowska",
+        "maxdepth",
+        "Miniforge",
+        "minorticks",
+        "numpy",
+        "numref",
+        "openpyxl",
+        "penalps",
+        "pydantic",
+        "pytest",
+        "pytestmark",
+        "seaborn",
+        "sqlalchemy",
+        "targetname",
+        "timedelta",
+        "typeguard",
+        "Wojdalski",
+        "workalendar",
+        "xdist",
+        "xticklabels",
+        "ylabel"
+    ],
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestPath": "C:\\Users\\Julian\\mambaforge",
+    "pylint.args": [
+        "--disable=W0611, W0719, C0114, C0115, W0105, C0116, C0123,C0301",
+        "--max-line-length=120"
+    ],
+    "flake8.args": [
+        "--max-line-length=120    ",
+        "--ignore=F401, W503,E501"
+    ],
+}
