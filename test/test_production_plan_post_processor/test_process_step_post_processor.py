@@ -1,7 +1,9 @@
 import datetime
 
-from cutting_and_heating_chain import fill_cutting_and_heating_chain
-from forming_quenching_and_triming_chain import (
+from test.test_production_plan_post_processor.cutting_and_heating_chain import (
+    fill_cutting_and_heating_chain,
+)
+from test.test_production_plan_post_processor.forming_quenching_and_triming_chain import (
     fill_forming_quenching_and_trimming_chain,
 )
 
@@ -137,6 +139,3 @@ def test_production_plan_post_processor():
             earliest_start_date=earliest_process_step_time,
             latest_end_date=latest_process_step_time,
         )
-
-        print(process_step.name)
-        print(throughput)

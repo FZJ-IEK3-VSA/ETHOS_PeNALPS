@@ -51,20 +51,6 @@ class EmptyMetaDataInformation:
     object_type: str
 
 
-@dataclass
-class LoadProfileDataFrameMetaInformation(DataClassJsonMixin):
-    name: str
-    object_type: str
-    data_frame: pandas.DataFrame
-    first_start_time: datetime.datetime
-    last_end_time: datetime.datetime
-    load_type: LoadType
-    power_unit: str
-    energy_unit: str
-    maximum_energy: float
-    maximum_average_power: float
-
-
 @dataclass()
 class ProductEnergyData(DataClassJsonMixin):
     product_commodity: Commodity
@@ -92,6 +78,20 @@ class LoadProfileEntry(DataClassJsonMixin):
     energy_unit: str
     average_power_consumption: float
     power_unit: str
+
+    def _adjust_power_unit(
+        self, new_power_value: float, new_power_unit: str
+    ) -> "LoadProfileEntry":
+        load_profile_entry = LoadProfileEntry(
+            load_type=self.load_type,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            energy_quantity=self.energy_quantity,
+            energy_unit=self.energy_unit,
+            power_unit=new_power_unit,
+            average_power_consumption=new_power_value,
+        )
+        return load_profile_entry
 
 
 class LoopCounter:
@@ -288,19 +288,51 @@ class ProcessStateEnergyData:
         return self.dict_of_loads
 
 
-@dataclass(kw_only=True)
-class ListLoadProfileMetaDataEmpty:
-    object_name: str
+@dataclass
+class EmptyLoadProfileMetadata:
+    name: str
+    object_type: str
 
 
-@dataclass(kw_only=True)
-class ListOfLoadProfileMetaData(ListLoadProfileMetaDataEmpty):
+@dataclass
+class ListOfLoadProfileEntryMetaData:
+    name: str
+    object_type: str
     list_of_load_profiles: list[LoadProfileEntry]
+    load_type: LoadType
+    power_unit: str
+    energy_unit: str
+
+
+@dataclass
+class LoadProfileMetaData(DataClassJsonMixin):
+    name: str
+    object_type: str
+    list_of_load_profiles: list[LoadProfileEntry]
+    data_frame: pandas.DataFrame
+    first_start_time: datetime.datetime
+    last_end_time: datetime.datetime
+    load_type: LoadType
+    power_unit: str
+    energy_unit: str
+    maximum_energy: float
+    maximum_power: float
+    total_energy: float
+
+
+@dataclass(kw_only=True)
+class LoadProfileMetaDataResampled:
+    name: str
+    object_type: str
+    list_of_load_profiles: list[LoadProfileEntry]
+    data_frame: pandas.DataFrame
     power_unit: str
     energy_unit: str
     total_energy: float
     maximum_power: float
     load_type: LoadType
+    time_step: datetime.timedelta
+    resample_frequency: str
 
 
 @dataclass(kw_only=True)

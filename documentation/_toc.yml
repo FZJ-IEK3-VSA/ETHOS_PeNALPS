@@ -11,17 +11,18 @@ parts:
   - caption: Tutorial
     maxdepth: 3
     chapters:
-      - file: ethos_penalps_tutorial/overview.md
-      - file: ethos_penalps_tutorial/single_cooker_process_chain.md
-      - file: ethos_penalps_tutorial/add_more_states.md
-      - file: ethos_penalps_tutorial/add_more_chains.md
-      - file: ethos_penalps_tutorial/connect_two_process_steps_exclusively.md
-      - file: ethos_penalps_tutorial/connect_three_or_more_process_steps.md
+      - file: ethos_penalps_tutorial/0_overview.md
+      - file: ethos_penalps_tutorial/1_single_cooker_process_chain.md
+      - file: ethos_penalps_tutorial/2_add_more_states.md
+      - file: ethos_penalps_tutorial/3_add_more_cookers_for_parallel_operations.md
+      - file: ethos_penalps_tutorial/4_connect_two_process_steps_exclusively.md
+      - file: ethos_penalps_tutorial/5_connect_three_or_more_process_steps.md
   - caption: Basic Articles
     maxdepth: 3
     chapters:
       - file: ethos_penalps_articles/simulation_workflow.md
-      - file: ethos_penalps_articles/model_description.md
+      - file: ethos_penalps_articles/model_topology.md
+
   - caption: API
     chapters:
       - file: autoapi/ethos_penalps/index.rst

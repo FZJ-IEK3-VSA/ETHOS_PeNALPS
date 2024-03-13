@@ -95,10 +95,10 @@ class CarpetPlotOptions:
         x_axis_time_delta: datetime.timedelta,
         resample_frequency: str,
         end_date: datetime.datetime,
-        start_date: datetime.datetime | None,
+        start_date: datetime.datetime,
         number_of_columns: int = 2,
     ):
-        self.start_date: datetime.datetime | None = start_date
+        self.start_date: datetime.datetime = start_date
         self.end_date: datetime.datetime = end_date
         self.x_axis_time_delta: datetime.timedelta = x_axis_time_delta
         self.resample_frequency: str = resample_frequency

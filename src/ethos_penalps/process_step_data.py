@@ -1,7 +1,7 @@
 import datetime
 
 from ethos_penalps.data_classes import Commodity
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.mass_balance import MassBalance
 from ethos_penalps.simulation_data.container_simulation_data import (
     CurrentProductionStateData,
@@ -22,7 +22,7 @@ class ProcessStepData:
         process_step_name: str,
         stream_handler: StreamHandler,
         time_data: TimeData,
-        load_profile_handler: LoadProfileHandler,
+        load_profile_handler: LoadProfileHandlerSimulation,
     ) -> None:
         self.process_step_name: str = process_step_name
         self.stream_handler: StreamHandler = stream_handler
@@ -31,7 +31,7 @@ class ProcessStepData:
             ProductionProcessStateContainer()
         )
         self.main_mass_balance: MassBalance
-        self.load_profile_handler: LoadProfileHandler = load_profile_handler
+        self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
 
     def restore_time_data(self, new_time_data: TimeData):
         self.time_data.last_idle_time = new_time_data.last_idle_time

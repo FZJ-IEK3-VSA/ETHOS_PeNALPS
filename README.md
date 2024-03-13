@@ -24,8 +24,14 @@ The [HTML documentation provides a tutorial](https://ethospenalps.readthedocs.io
 # Installation
 
 ## Requirements
-The installation process uses a Conda-based Python package manager. We highly recommend using (Micro-)Mamba instead of Anaconda. The recommended way to use Mamba on your system is to install the Miniforge distribution. They offer installers for Windows, Linux and OS X. Have a look at the [Mamba installation guide](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) for further details. In the following commands mamba and conda are exchangeable if you prefer to use conda or mamba. 
+The installation process uses a Conda-based Python package manager. We highly recommend using Mamba instead of Anaconda. The recommended way to use Mamba on your system is to install the Miniforge distribution. They offer installers for Windows, Linux and OS X. Have a look at the [Mamba installation guide](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) for further details. If you prefer to stick to Anaconda you should install the [libmamba solver which is a lot faster than the classic conda solver](https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community). Otherwise the installation of ETHOS.PeNALPS might take very long or does not succeed at all.  
 
+```
+conda install -n base conda-libmamba-solver
+conda config --set solver libmamba
+```
+
+Please note that the installation time of the solver can be very long if you have installed a lot of other packages into you conda base environment. In the following the commands mamba and conda are exchangeable if you prefer to use conda.
 
 ## Installation via conda-forge
 The simplest way ist to install ETHOS.PeNALPS into a fresh environment from conda-forge with:

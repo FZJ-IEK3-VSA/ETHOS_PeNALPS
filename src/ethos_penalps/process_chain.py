@@ -10,7 +10,7 @@ from ethos_penalps.data_classes import (
     ProcessChainIdentifier,
 )
 from ethos_penalps.utilities.debugging_information import DebuggingInformationLogger
-from ethos_penalps.load_profile_calculator import LoadProfileHandler
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
     DownstreamValidationOrder,
@@ -58,7 +58,7 @@ class ProcessChain:
         self,
         process_chain_identifier: ProcessChainIdentifier,
         production_plan: ProductionPlan,
-        load_profile_handler: LoadProfileHandler,
+        load_profile_handler: LoadProfileHandlerSimulation,
         time_data: TimeData = TimeData(),
         location: str = "",
     ) -> None:
@@ -68,9 +68,11 @@ class ProcessChain:
         self.stream_handler: StreamHandler = StreamHandler()
         self.sink: Sink | ProcessChainStorage
         self.location: str = location
-        self.load_profile_handler: LoadProfileHandler = LoadProfileHandler()
+        self.load_profile_handler: LoadProfileHandlerSimulation = (
+            LoadProfileHandlerSimulation()
+        )
         self.production_plan: ProductionPlan = production_plan
-        self.load_profile_handler: LoadProfileHandler = load_profile_handler
+        self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
         self.debugging_information_logger = DebuggingInformationLogger()
         self.source: Source | ProcessChainStorage
 
@@ -278,7 +280,6 @@ class ProcessChain:
                     )
             LoopCounter.loop_number = LoopCounter.loop_number + 1
 
-        self.load_profile_handler.load_profile_collection.convert_stream_energy_dict_to_data_frame()
         logger.info("Creation of production plan is terminated")
 
     def get_node_from_node_operation(

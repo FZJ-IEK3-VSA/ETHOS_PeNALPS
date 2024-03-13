@@ -16,7 +16,7 @@ logger = PeNALPSLogger.get_human_readable_logger(logging.INFO)
 # Enterprise structure
 
 # Set simulation time data
-start_date = datetime.datetime(2022, 1, 2, hour=22, minute=30)
+start_date = datetime.datetime(2022, 1, 2, hour=23)
 end_date = datetime.datetime(2022, 1, 3)
 time_data = TimeData(
     global_start_date=start_date,
@@ -203,7 +203,7 @@ enterprise.create_post_simulation_report(
     start_date=start_date,
     end_date=end_date,
     x_axis_time_delta=datetime.timedelta(hours=1),
-    resample_frequency="5min",
+    resample_frequency="1min",
     gantt_chart_end_date=end_date,
     gantt_chart_start_date=start_date,
 )

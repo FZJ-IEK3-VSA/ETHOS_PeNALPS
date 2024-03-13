@@ -1,9 +1,15 @@
 import datetime
 import logging
 
-from cutting_and_packaging_chain import fill_cutting_and_packaging_chain
-from toffee_preparation_chain_1 import fill_toffee_preparation_chain_1
-from toffee_preparation_chain_2 import fill_toffee_preparation_chain_2
+from test.test_toffee_production.cutting_and_packaging_chain import (
+    fill_cutting_and_packaging_chain,
+)
+from test.test_toffee_production.toffee_preparation_chain_1 import (
+    fill_toffee_preparation_chain_1,
+)
+from test.test_toffee_production.toffee_preparation_chain_2 import (
+    fill_toffee_preparation_chain_2,
+)
 
 from ethos_penalps.data_classes import Commodity, LoadType
 from ethos_penalps.enterprise import Enterprise

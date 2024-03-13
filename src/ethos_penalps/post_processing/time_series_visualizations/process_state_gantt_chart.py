@@ -14,7 +14,7 @@ import proplot
 from matplotlib import cm
 
 from ethos_penalps.data_classes import (
-    LoadProfileDataFrameMetaInformation,
+    LoadProfileMetaData,
     ProcessStepDataFrameMetaInformation,
 )
 from ethos_penalps.post_processing.time_series_visualizations.stream_gantt_chart import (
