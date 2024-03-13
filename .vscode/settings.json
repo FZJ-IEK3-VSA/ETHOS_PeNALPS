@@ -3,6 +3,7 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "cSpell.words": [
+        "acyclical",
         "autoapi",
         "autodoc",
         "autosummary",

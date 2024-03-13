@@ -21,7 +21,8 @@ parts:
     maxdepth: 3
     chapters:
       - file: ethos_penalps_articles/simulation_workflow.md
-      - file: ethos_penalps_articles/model_description.md
+      - file: ethos_penalps_articles/model_topology.md
+
   - caption: API
     chapters:
       - file: autoapi/ethos_penalps/index.rst
