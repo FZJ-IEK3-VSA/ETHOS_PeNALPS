@@ -32,7 +32,7 @@ bibliography: citavi.bib
 
 # Summary
 ETHOS.PeNALPS (Petri Net Agent-based Load Profile Simulator) is a Python library for
-simulating the load profiles of industrial manufacturing processes for arbitrary energy carriers. It is part of [ETHOS (Energy Transformation Pathway Optimization Suite)](https://go.fzj.de/ethos_suite). Load profiles are energy demand time series. Processes that can be simulated using ETHOS.PeNALPS include, for example, steel, paper, and industrial food production.
+simulating the load profiles of industrial manufacturing processes for arbitrary energy carriers. It is part of [ETHOS (Energy Transformation Pathway Optimization Suite)](https://go.fzj.de/ethos_suite). Load profiles are energy demand time series. It can model the fluctuations of industrial processes that are caused logistic dependencies of machines and state based activity of machines. If the model Processes that can be simulated using ETHOS.PeNALPS include, for example, steel, paper, and industrial food production. If the load profile can be modelled in a sufficient detail depends on the process, the available input data and the required temporal resolution.
 
 Figure \ref{fig:Main Component Overview} shows the main conceptual objects of ETHOS.PeNALPS which are: 
 
@@ -46,14 +46,14 @@ The model of the material flow simulation is created by users based on generic s
 ![The main components of ETHOS.PeNALPS are the generic models objects, material flow simulation, production plan and load profiles.\label{fig:Main Component Overview}](main_component_overview.png){width=100%}
 
 # Statement of Need
-Load profiles are of particular interest for assessing energy demand fluctuations in energy system modeling and design. For industrial processes, load profiles are often not available for open research due to:
+Long term energy system models are an important tool to investigate how real energy systems could and should develop. However, creating long term energy system models with a high spatial resolution, temporal resolution at a high level of data and model transparency remains a challenge.~\cite[S.~12]{Prina.2020} One of the challenges is to obtain suitable energy demand data for the industrial sector for the relevant time horizon. Some data for industrial sectors is available for e.g. for the german industrial sector in 2015 ~\cite[S.~5--6]{Priesmann.2021}. But the the industrial sector and thus its load profiles is going to change to due to decarbonization efforts. Also for a lot of regions such data is missing entirely. One approach to overcome this lack of data is to model the load profile of the industrial sector bottom-up from the load profiles of processes that constitute it. Load profiles of these processes are often not available due load profiles are often not available for open research due to:
 
 - Efforts by enterprises to protect commercial secrets;
 - Missing measurements; 
 -	Unstructured energy data collection in enterprises;
 -	Novelty of the industrial processes and their currently missing implementation.
 
-ETHOS.PeNALPS can provide these missing load profiles via simulation.
+ETHOS.PeNALPS is an open source tool that can provide these missing load profiles via simulation. A main advantage of ETHOS.PeNALPS is that the tool and its source code are distributed under an open source license. Other tools are shown must be bought  is a plethora of other Tools and methods which are shown
 
 # Method
 
