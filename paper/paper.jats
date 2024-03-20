@@ -105,16 +105,20 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="summary">
   <title>Summary</title>
   <p>ETHOS.PeNALPS (Petri Net Agent-based Load Profile Simulator) is a
-  Python library for simulating the load profiles of industrial
+  Python library designed to simulate the load profiles of industrial
   manufacturing processes for arbitrary energy carriers. It is part of
+  the
   <ext-link ext-link-type="uri" xlink:href="https://go.fzj.de/ethos_suite">ETHOS
   (Energy Transformation Pathway Optimization Suite)</ext-link>. Load
-  profiles are energy demand time series. Processes that can be
-  simulated using ETHOS.PeNALPS include, for example, steel, paper, and
-  industrial food production.</p>
+  profiles are time series of energy demand. The library models the
+  material flow of industrial processes and the activity of individual
+  machines during production. ETHOS.PeNALPS is capable of simulating
+  processes such as steel, paper, and industrial food production.
+  ETHOS.PeNALPS is able to model non-cyclic industrial production
+  networks.</p>
   <p>Figure
   <xref alt="[fig:Main Component Overview]" rid="figU003AMainU0020ComponentU0020Overview">[fig:Main Component Overview]</xref>
-  shows the main conceptual objects of ETHOS.PeNALPS which are:</p>
+  shows the main conceptual objects of ETHOS.PeNALPS, which are:</p>
   <list list-type="bullet">
     <list-item>
       <p>Generic model objects</p>
@@ -129,53 +133,88 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <p>Result load profiles</p>
     </list-item>
   </list>
-  <p>The model of the material flow simulation is created by users based
-  on generic simulation objects. After the material flow simulation is
-  completed, a set of production orders is passed to the model to start
-  the simulation. The simulation generates a production plan that tracks
-  the activity of each node to fulfill the requested set of orders.
-  Based on the activity in the production plan, the load profiles are
-  created for each node in therein.</p>
+  <p>The user creates the process model based on generic simulation
+  objects. Once the user completes process model, the model receives a
+  set of production orders to initiate the simulation. The simulation
+  generates a production plan that tracks the activity of each node to
+  fulfill the requested set of orders. Load profiles are then created
+  based on the activity in the production plan. The process steps’s load
+  profiles are modeled using a Petri Net with an extensible number of
+  states that determine their activity and energy demand during
+  production.</p>
   <fig>
     <caption><p>The main components of ETHOS.PeNALPS are the generic
-    models objects, material flow simulation, production plan and load
+    model objects, material flow simulation, production plan and load
     profiles.<styled-content id="figU003AMainU0020ComponentU0020Overview"></styled-content></p></caption>
     <graphic mimetype="image" mime-subtype="png" xlink:href="media/main_component_overview.png" />
   </fig>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of Need</title>
-  <p>Load profiles are of particular interest for assessing energy
-  demand fluctuations in energy system modeling and design. For
-  industrial processes, load profiles are often not available for open
-  research due to:</p>
+  <p>Energy system models are tools that provide guidance on future
+  energy systems
+  (<xref alt="Prina et al., 2020, p. 1" rid="ref-Prina.2020" ref-type="bibr">Prina
+  et al., 2020, p. 1</xref>). However, building long-term models with
+  high spatial and temporal resolution and transparent input data
+  remains a challenge
+  (<xref alt="Prina et al., 2020, p. 12" rid="ref-Prina.2020" ref-type="bibr">Prina
+  et al., 2020, p. 12</xref>). For instance, historical load profiles
+  for the German industrial sector in 2015 are
+  available(<xref alt="Priesmann et al., 2021, pp. 5–6" rid="ref-Priesmann.2021" ref-type="bibr">Priesmann
+  et al., 2021, pp. 5–6</xref>), while load profiles for other regions
+  are not currently available. Moreover, decarbonization efforts will
+  cause changes in the industrial sector and its load profiles. To
+  address the lack of sectoral load profiles for the industry, Boßmann
+  and Stafell
+  (<xref alt="2015, p. 1321" rid="ref-Bomann.2015" ref-type="bibr">2015,
+  p. 1321</xref>) demonstrated the use of a bottom-up approach to create
+  load profiles . Therefore, it is necessary to obtain load profiles of
+  the industrial processes that are part of the industrial sector.
+  However, these profiles are often unavailable for open research due
+  to:</p>
   <list list-type="bullet">
     <list-item>
-      <p>Efforts by enterprises to protect commercial secrets;</p>
+      <p>Companies’ efforts to protect commercial secrets;</p>
     </list-item>
     <list-item>
       <p>Missing measurements;</p>
     </list-item>
     <list-item>
-      <p>Unstructured energy data collection in enterprises;</p>
+      <p>Unstructured collection of energy data in companies;</p>
     </list-item>
     <list-item>
-      <p>Novelty of the industrial processes and their currently missing
+      <p>Novelty of the industrial processes and their current lack of
       implementation.</p>
     </list-item>
   </list>
-  <p>ETHOS.PeNALPS can provide these missing load profiles via
-  simulation.</p>
+  <p>ETHOS.PeNALPS can support the creation of an energy system model by
+  providing load profiles for industrial processes. While many
+  industrial processes and their load profiles have been previously
+  simulated, most have not published load profiles and simulation
+  implementation under an open source license. This creates a research
+  gap, despite similar work having already been done.</p>
+  <p>The suitability of load profiles simulated by ETHOS.PeNALPS for an
+  energy system model depends on the available input data, the type of
+  process being modeled, and the required temporal resolution. These
+  three aspects are interdependent, making it impossible to make a
+  static selection of industrial processes that can be provided for all
+  energy system models. At lower temporal resolutions, effects may occur
+  that cannot be modeled under the assumptions of a deterministic Petri
+  Net of machine state and average energy consumption per state.
+  Additionally, the temporal resolution of energy system models is
+  evolving. In 2020, a temporal resolution of one hour was considered
+  high for long-term energy system models
+  (<xref alt="Prina et al., 2020, p. 10" rid="ref-Prina.2020" ref-type="bibr">Prina
+  et al., 2020, p. 10</xref>). Currently, studies may require load
+  profiles with a resolution as low as one minute [xxx].</p>
 </sec>
 <sec id="method">
   <title>Method</title>
-  <p>ETHOS.PeNALPS is capable of modeling noncyclical industrial
-  production networks. The simulation is created from generic objects,
-  which are shown in Figure
+  <p>The simulation is generated from generic objects, as shown in
+  Figure
   <xref alt="[fig:Main Component Overview]" rid="figU003AMainU0020ComponentU0020Overview">[fig:Main Component Overview]</xref>.
-  The most important components are the generic nodes that handle and
-  create the material requests as agents. The generic node types
-  are:</p>
+  The main components are the generic nodes that create and manage
+  material requests as agents. These nodes include:</p>
   <list list-type="bullet">
     <list-item>
       <p>Source</p>
@@ -190,138 +229,97 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <p>Storage</p>
     </list-item>
   </list>
-  <p>These nodes are connected by streams that determine the direction
-  of the material flow in the simulation. Sequentially-dependent nodes
-  and streams are combined in so-called process chains. Multiple or
-  single process chains are integrated into a network level. Multiple
-  chains in a single network level model the parallel operation of
-  similar equipment. Multiple network levels can be used to model
-  network features of the industrial process.</p>
-  <p>A single network level starts with a source and ends with a sink,
-  which determines the start and end points of the material within that
-  level. To connect two network levels, the source of one network level
-  and the sink of another are replaced by a shared storage.</p>
-  <p>Each of the nodes acts as an agent that handles material
-  requests.</p>
+  <p>Streams connect these nodes and determine the direction of the
+  material flow in the simulation. Process chains combine
+  sequentially-dependent nodes and streams. These process chains,
+  whether multiple or single, are integrated into a network level. A
+  single network level model can include multiple chains to represent
+  the parallel operation of similar equipment. Multiple network levels
+  can be used to model successive production stages of the industrial
+  process.</p>
+  <p>A network level consists of a source and a sink, which determine
+  the start and end points of the material within that level. To connect
+  two network levels, a shared storage is used to replace the source of
+  one network level and the sink of another.</p>
+  <p>Each node functions as an agent that manages material requests.</p>
   <list list-type="bullet">
     <list-item>
-      <p>Sources only provide materials and sinks only request them.</p>
+      <p>Sources only provide materials, while sinks only request
+      them.</p>
     </list-item>
     <list-item>
       <p>Process steps and storages provide and request materials.</p>
     </list-item>
   </list>
-  <p>To initiate the simulation, the first request is created in the
-  sink from the production order. These requests are are then passed to
-  the upstream until they reach the source of the network. Within a
-  chain, a request can be adapted if it can be fulfilled in time. The
-  adaptation shifts the request to an earlier time, so that the deadline
-  is always met.</p>
-  <p>The behavior of a process step during the fulfillment of a request
-  is determined by a sequence of states that are stored in a petri net.
-  A petri net is a state transition system which consists of places,
-  transitions, and arcs
+  <p>The simulation is initiated by creating the first request in the
+  sink from the production order. Requests are then passed upstream
+  until they reach the source of the network level. If a request cannot
+  be fulfilled in time, it can be modified within a chain to shift the
+  request to an earlier time and ensure that the deadline is always
+  met.</p>
+  <p>The behavior of a process step during request fulfillment is
+  determined by a sequence of states that are stored in a Petri Net,
+  which is a state transition system consisting of places, transitions,
+  and arcs
   (<xref alt="Peterson, 1977" rid="ref-Peterson.1977" ref-type="bibr">Peterson,
   1977</xref>). The states can be as simple as on or off switches or
-  constitute a complex network of states during production. The
-  combination of a petri net and process step agent is the main novelty
-  of the tool and thus provides its name.</p>
-</sec>
-<sec id="example-toffee-production">
-  <title>Example: Toffee Production</title>
-  <p>The ETHOS.PeNALPS workflow is demonstrated based on the example of
-  a simplified toffee production process, which is described by
-  Korovessi and Linninger
-  (<xref alt="2005, pp. 31–32" rid="ref-Korovessi.2005" ref-type="bibr">2005,
-  pp. 31–32</xref>). During the process, the raw toffee materials are
-  mixed, cooked, and cooled in a toffee machine. The cooled toffee is
-  then cut and packaged in two-subsequential machines. The corresponding
-  model is depicted in Figure
-  <xref alt="[fig:Graphical Abstract]" rid="figU003AGraphicalU0020Abstract">[fig:Graphical Abstract]</xref>.
-  The energy values are taken from similar machines from
-  (<xref alt="Wojdalski et al., 2015" rid="ref-Wojdalski.2015" ref-type="bibr">Wojdalski
-  et al., 2015</xref>) and should be interpreted as an non validated
-  showcase example. The nodes in the material flow simulation are (a)
-  first named by their generic name and its specific name in the example
-  in brackets. It is assumed that the process consists of two toffee
-  machines that operate in parallel. The toffee produced is cut and
-  packaged by two sequentially-ordered machines. The activity of the
-  machines and streams is tracked in the production plan (b), which is
-  partially shown in the figure. Based on the states of the process
-  steps and streams, load profiles (c) are calculated using specific
-  energy demands.</p>
-  <fig>
-    <caption><p>Demonstration of the functional principle of
-    ETHOS.PeNALPS using the example of toffee production. It contains
-    the main components (a) material flow simulation the production plan
-    (b) and the load profiles (c)
-    <styled-content id="figU003AGraphicalU0020Abstract"></styled-content></p></caption>
-    <graphic mimetype="image" mime-subtype="png" xlink:href="media/Graphical_Abstract.png" />
-  </fig>
-  <p>The simulation is begun by passing a set of orders for packed
-  toffee to the packaged toffee sink. It then generates requests for the
-  upstream node, which is the packaging machine. This in turn triggers a
-  chain of upstream requests until it reaches the source.</p>
-  <p>While fulfilling the request, a process node switches a cycle
-  through its petri net. Figure
-  <xref alt="[fig:Process State network]" rid="figU003AProcessU0020StateU0020network">[fig:Process State network]</xref>
-  displays an example petri net for the toffee machine. The places of
-  the petri net are the machine states of the modeled machine. There are
-  four different kinds of states:</p>
-  <list list-type="bullet">
-    <list-item>
-      <p>Idle state (yellow), which is the start and end point</p>
-    </list-item>
-    <list-item>
-      <p>Input state (green), determines the activity of the input
-      stream</p>
-    </list-item>
-    <list-item>
-      <p>Output state (red), determines the activity of the output
-      stream</p>
-    </list-item>
-    <list-item>
-      <p>Intermediate state (gray), resembles a specific task or phase
-      of the production</p>
-    </list-item>
-  </list>
-  <p>They are ordered by temporal occurrence during production. To
-  fulfill a request for an output stream, the process step switches over
-  a full cycle from idle state to idle state. Each active state during
-  the switch cycle is tracked in the production plan, which simulates
-  the machine’s activity. Even though the states are stored in the
-  correct forward temporal order, the internal switches occur in the
-  opposite temporal direction. This is useful because the output request
-  that is passed to the process step only provides the required time
-  frame for the output state.</p>
-  <fig>
-    <caption><p>This figure shows the petri net of the example toffee
-    machine and how it determines the activity of the machine in the
-    production
-    plan.<styled-content id="figU003AProcessU0020StateU0020network"></styled-content></p></caption>
-    <graphic mimetype="image" mime-subtype="png" xlink:href="media/process_state_network_activity.png" />
-  </fig>
-  <p>The packaging and cutting machine only have one state apart from
-  their idle state, which are termed “Cutting” and “Packaging”,
-  respectively. Each state can be associated with a specific energy
-  demand that causes an energy demand during the activity of the
-  respective state. Thus the sequential activity of the states can be
-  used to model the energy demand fluctuations in the load profile.
-  Furthermore, an energy demand can also be attributed to a stream to
-  model a conveyor belt or pump, for instance.</p>
+  constitute a complex network of states during production. The main
+  method novelty is the combination of these subsimulations for each
+  process step to model a complete industrial manufacturing process.</p>
+  <p>The
+  <ext-link ext-link-type="uri" xlink:href="www.ethospenalps.readthedocs.io/">documentation
+  of ETHOS.PeNALPS</ext-link> provides an example of a toffee production
+  process to illustrate the method.</p>
 </sec>
 <sec id="other-tools-and-methods">
   <title>Other Tools and Methods</title>
-  <p>To overcome the lack of industrial load profiles, simulation tools
-  and methods have been developed. However, most of these are not open
-  source or are a method rather than a reusable tool.</p>
-  <p>Kohl et al.
-  (<xref alt="2014" rid="ref-Kohl.2014" ref-type="bibr">2014</xref>)
-  proposed using a material flow simulation created by the commercial
-  tool Plant Simulation to simulate the load profiles of the
-  manufacturing processes. Measured load profiles were then allocated to
-  the internal machine states using the observer pattern.</p>
-  <p>Binderbauer et al.
+  <p>A lot of previous work has been done to simulate the energy
+  features of industrial processes. But none of the work distributed an
+  implementation oft their work. This section will first deal with</p>
+  <p>Stold(<xref alt="2019, p. 69" rid="ref-Stoldt.2019" ref-type="bibr">2019,
+  p. 69</xref>) identified at least 15 dissertations or similar
+  publications which conducted material flow simulations with integrated
+  energy consideration. Furthermore Stoldt et al. identified 8 reviews
+  which analyze these types of simulations with different foci
+  (<xref alt="Stoldt, 2019, p. 69" rid="ref-Stoldt.2019" ref-type="bibr">Stoldt,
+  2019, p. 69</xref>).</p>
+  <p>Due to the amount of publications mostly reviews willBut none of
+  implementation is open source.
+  (<xref alt="Garwood et al., 2018, p. 909" rid="ref-Garwood.2018" ref-type="bibr">Garwood
+  et al., 2018, p. 909</xref>) investigates which tools can be used for
+  manufacturing process simulation, for Building Energy Models and a
+  holistic simulation of both domains. Garwood et al. identified the
+  following commercial tools which can be used to model manufacturing
+  processes DELMIA
+  (<xref alt="2023" rid="ref-DassaultSystemes.2023" ref-type="bibr">2023</xref>),
+  FlexSim
+  (<xref alt="21.12.2023" rid="ref-FlexSim.21.12.2023" ref-type="bibr">21.12.2023</xref>),
+  Plant Simulation
+  (<xref alt="15.03.2024" rid="ref-SiemensDigitalIndustriesSoftware.15.03.2024" ref-type="bibr">15.03.2024</xref>),
+  Simio
+  (<xref alt="19.03.2024" rid="ref-LLC.19.03.2024" ref-type="bibr">19.03.2024</xref>),
+  SIMUL8
+  (<xref alt="19.03.2024" rid="ref-Simul8SimulationSoftware.19.03.2024" ref-type="bibr">19.03.2024</xref>)
+  and WITNESS
+  (<xref alt="19.03.2024" rid="ref-LannerGroupLimited.19.03.2024" ref-type="bibr">19.03.2024</xref>).
+  Still it is noted that the software does not model energy usage
+  directly be default or does so only with
+  limitations(<xref alt="Garwood et al., 2018, p. 903" rid="ref-Garwood.2018" ref-type="bibr">Garwood
+  et al., 2018, p. 903</xref>). Still a lot of the simulations that use
+  the aforementioned software model the load profiles of the
+  manufacturing process.</p>
+  <p>One example is Kohl et al.
+  (<xref alt="2014" rid="ref-Kohl.2014" ref-type="bibr">2014</xref>) who
+  has created an extension for the software
+  (<xref alt="15.03.2024" rid="ref-SiemensDigitalIndustriesSoftware.15.03.2024" ref-type="bibr">15.03.2024</xref>)
+  which maps measured load profiles to process states of the
+  manufacturing equipment. So load profiles of the whole process can be
+  obtained. The software Modelica Buildings Library
+  (<xref alt="15.03.2024" rid="ref-ModelicaAssociationInternationalBuildingPerformanceSimulationAssociation.15.03.2024" ref-type="bibr">15.03.2024</xref>)
+  models buildings and machines. But the machines modelling focus lays
+  on fluid systems and controllers rather than actual production
+  processes.</p>
+  <p>One example for another standalone software is Binderbauer et al.
   (<xref alt="2022" rid="ref-Binderbauer.2022" ref-type="bibr">2022</xref>)
   published a study on the “Ganymede” software, which also uses a
   material flow simulation to simulate load profiles. The material flow
@@ -332,7 +330,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   to obtain for many machines, especially as machine-readable data.</p>
   <p>Li et al.
   (<xref alt="2022" rid="ref-Li.2022" ref-type="bibr">2022</xref>)
-  implemented a petri net to forecast the energy demand of individual
+  implemented a Petri Net to forecast the energy demand of individual
   machines in real time. This approach lacks a method to coordinate the
   activity of multiple machines that are connected in a network.</p>
   <p>Dock et al.
@@ -367,12 +365,18 @@ a Creative Commons Attribution 4.0 International License (CC BY
   flexibility for some appliances. The source code and appliance load
   profiles used have also not been published.</p>
 </sec>
+<sec id="summary-and-conclusion">
+  <title>Summary and Conclusion</title>
+  <p>ETHOS.PeNALPS is a tool which can be used to model load profiles of
+  industrial manufacturing processes. Therefore it models the material
+  flow o</p>
+</sec>
 <sec id="authors-contribution">
   <title>Authors Contribution</title>
   <p><bold>Julian Belina</bold>: Software, Writing, Visualization,
-  Methodology.<bold>Noah Pflugradt</bold>: Conceptualization,
-  Methodology, Supervision, Writing - Review &amp; Editing.<bold>Detlef
-  Stolten</bold>: Conceptualization, Phd Supervision, Resources, Funding
+  Methodology. <bold>Noah Pflugradt</bold>: Conceptualization,
+  Methodology, Supervision, Writing - Review &amp; Editing. <bold>Detlef
+  Stolten</bold>: Conceptualization, PhD Supervision, Resources, Funding
   acquisition.</p>
 </sec>
 </body>
@@ -409,6 +413,16 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage>1333</lpage>
     </element-citation>
   </ref>
+  <ref id="ref-DassaultSystemes.2023">
+    <element-citation>
+      <person-group person-group-type="author">
+        <string-name>Dassault Systèmes</string-name>
+      </person-group>
+      <article-title>DELMIA</article-title>
+      <year iso-8601-date="2023">2023</year>
+      <uri>https://www.3ds.com/products/delmia</uri>
+    </element-citation>
+  </ref>
   <ref id="ref-Dock.2021">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
@@ -430,6 +444,33 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage>280</lpage>
     </element-citation>
   </ref>
+  <ref id="ref-FlexSim.21.12.2023">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>FlexSim Software Products</surname><given-names>Inc</given-names></name>
+      </person-group>
+      <article-title>FlexSim</article-title>
+      <uri>https://www.flexsim.com/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-Garwood.2018">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Garwood</surname><given-names>Tom Lloyd</given-names></name>
+        <name><surname>Hughes</surname><given-names>Ben Richard</given-names></name>
+        <name><surname>Oates</surname><given-names>Michael R.</given-names></name>
+        <name><surname>O’Connor</surname><given-names>Dominic</given-names></name>
+        <name><surname>Hughes</surname><given-names>Ruby</given-names></name>
+      </person-group>
+      <article-title>A review of energy simulation tools for the manufacturing sector</article-title>
+      <source>Renewable and Sustainable Energy Reviews</source>
+      <year iso-8601-date="2018">2018</year>
+      <volume>81</volume>
+      <pub-id pub-id-type="doi">10.1016/j.rser.2017.08.063</pub-id>
+      <fpage>895</fpage>
+      <lpage>911</lpage>
+    </element-citation>
+  </ref>
   <ref id="ref-Kohl.2014">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
@@ -446,17 +487,13 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage>522</lpage>
     </element-citation>
   </ref>
-  <ref id="ref-Korovessi.2005">
-    <element-citation publication-type="book">
+  <ref id="ref-LannerGroupLimited.19.03.2024">
+    <element-citation>
       <person-group person-group-type="author">
-        <name><surname>Korovessi</surname><given-names>Ekaterini</given-names></name>
-        <name><surname>Linninger</surname><given-names>Andreas A.</given-names></name>
+        <string-name>Lanner Group Limited</string-name>
       </person-group>
-      <source>Batch processes</source>
-      <publisher-name>CRC Press</publisher-name>
-      <year iso-8601-date="2005">2005</year>
-      <isbn>9780429135545</isbn>
-      <pub-id pub-id-type="doi">10.1201/9781420028164</pub-id>
+      <article-title>WITNESS simulation modeling software</article-title>
+      <uri>https://www.lanner.com/en-gb/technology/witness-simulation-software.html</uri>
     </element-citation>
   </ref>
   <ref id="ref-Li.2022">
@@ -479,6 +516,24 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage></lpage>
     </element-citation>
   </ref>
+  <ref id="ref-LLC.19.03.2024">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>LLC</surname><given-names>Simio</given-names></name>
+      </person-group>
+      <article-title>Manufacturing simulation and scheduling software | simio</article-title>
+      <uri>https://www.simio.com/applications/manufacturing-simulation-software/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-ModelicaAssociationInternationalBuildingPerformanceSimulationAssociation.15.03.2024">
+    <element-citation>
+      <person-group person-group-type="author">
+        <string-name>Modelica Association, International Building Performance Simulation Association</string-name>
+      </person-group>
+      <article-title>Modelica buildings library</article-title>
+      <uri>https://simulationresearch.lbl.gov/modelica/</uri>
+    </element-citation>
+  </ref>
   <ref id="ref-Peterson.1977">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
@@ -493,6 +548,42 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <pub-id pub-id-type="doi">10.1145/356698.356702</pub-id>
       <fpage>223</fpage>
       <lpage>252</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Priesmann.2021">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Priesmann</surname><given-names>Jan</given-names></name>
+        <name><surname>Nolting</surname><given-names>Lars</given-names></name>
+        <name><surname>Kockel</surname><given-names>Christina</given-names></name>
+        <name><surname>Praktiknjo</surname><given-names>Aaron</given-names></name>
+      </person-group>
+      <article-title>Time series of useful energy consumption patterns for energy system modeling</article-title>
+      <source>Scientific data</source>
+      <year iso-8601-date="2021">2021</year>
+      <volume>8</volume>
+      <issue>1</issue>
+      <pub-id pub-id-type="doi">10.1038/s41597-021-00907-w</pub-id>
+      <fpage>148</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Prina.2020">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Prina</surname><given-names>Matteo Giacomo</given-names></name>
+        <name><surname>Manzolini</surname><given-names>Giampaolo</given-names></name>
+        <name><surname>Moser</surname><given-names>David</given-names></name>
+        <name><surname>Nastasi</surname><given-names>Benedetto</given-names></name>
+        <name><surname>Sparber</surname><given-names>Wolfram</given-names></name>
+      </person-group>
+      <article-title>Classification and challenges of bottom-up energy system models - a review</article-title>
+      <source>Renewable and Sustainable Energy Reviews</source>
+      <year iso-8601-date="2020">2020</year>
+      <volume>129</volume>
+      <pub-id pub-id-type="doi">10.1016/j.rser.2020.109917</pub-id>
+      <fpage>109917</fpage>
+      <lpage></lpage>
     </element-citation>
   </ref>
   <ref id="ref-Sandhaas.2022">
@@ -512,27 +603,34 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage>29</lpage>
     </element-citation>
   </ref>
-  <ref id="ref-Wojdalski.2015">
-    <element-citation publication-type="article-journal">
+  <ref id="ref-SiemensDigitalIndustriesSoftware.15.03.2024">
+    <element-citation>
       <person-group person-group-type="author">
-        <name><surname>Wojdalski</surname><given-names>Janusz</given-names></name>
-        <name><surname>Grochowicz</surname><given-names>Józef</given-names></name>
-        <name><surname>Dróżdż</surname><given-names>Bogdan</given-names></name>
-        <name><surname>Bartoszewska</surname><given-names>Katarzyna</given-names></name>
-        <name><surname>Zdanowska</surname><given-names>Paulina</given-names></name>
-        <name><surname>Kupczyk</surname><given-names>Adam</given-names></name>
-        <name><surname>Ekielski</surname><given-names>Adam</given-names></name>
-        <name><surname>Florczak</surname><given-names>Iwona</given-names></name>
-        <name><surname>Hasny</surname><given-names>Aleksandra</given-names></name>
-        <name><surname>Wójcik</surname><given-names>Grażyna</given-names></name>
+        <string-name>Siemens Digital Industries Software</string-name>
       </person-group>
-      <article-title>Energy efficiency of a confectionery plant – case study</article-title>
-      <source>Journal of Food Engineering</source>
-      <year iso-8601-date="2015">2015</year>
-      <volume>146</volume>
-      <pub-id pub-id-type="doi">10.1016/j.jfoodeng.2014.08.019</pub-id>
-      <fpage>182</fpage>
-      <lpage>191</lpage>
+      <article-title>Plant simulation software | siemens software</article-title>
+      <uri>https://plm.sw.siemens.com/en-US/tecnomatix/products/plant-simulation-software/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-Simul8SimulationSoftware.19.03.2024">
+    <element-citation>
+      <person-group person-group-type="author">
+        <string-name>Simul8 Simulation Software</string-name>
+      </person-group>
+      <article-title>Simul8 | fast, intuitive simulation software for desktop and web</article-title>
+      <uri>https://www.simul8.com/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-Stoldt.2019">
+    <element-citation publication-type="thesis">
+      <person-group person-group-type="author">
+        <name><surname>Stoldt</surname><given-names>Johannes</given-names></name>
+      </person-group>
+      <article-title>Gestaltungsmethodik für simulationsstudien in umplanungsprojekten zur energieeffizienzsteigerung in fabriken</article-title>
+      <publisher-name>Universitätsverlag Chemnitz; Technische Universität Chemnitz</publisher-name>
+      <publisher-loc>Chemnitz</publisher-loc>
+      <year iso-8601-date="2019">2019</year>
+      <pub-id pub-id-type="doi">343579</pub-id>
     </element-citation>
   </ref>
 </ref-list>
