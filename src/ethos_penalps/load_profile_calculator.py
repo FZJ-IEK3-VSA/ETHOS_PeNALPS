@@ -40,18 +40,23 @@ class StreamLoadProfileEntryCollection:
     """Summarizes the load profile simulation results of a stream during
     the simulation."""
 
-    # Name of the stream
     object_name: str
-    # Dict of all load types for which load entries are available
-    # The key is a string of the uuid of the load type. The Value is the
-    # load type itself.
+    """Name of the stream
+    """
+
     load_type_dict: dict[str, LoadType] = field(default_factory=dict)
-    # The dictionary contains all load of profile entries for all load types
-    # of the stream. The first key is the string of the uuid of the load type.
-    # The value is the list of all load profile entries for the load type.
+    """Dict of all load types for which load entries are available
+    The key is a string of the uuid of the load type. The Value is the
+    load type itself.
+    """
     dict_of_load_entry_lists: dict[str, list[LoadProfileEntry]] = field(
         default_factory=dict
     )
+    """The dictionary contains all load of profile entries for all load types
+    of the stream. The first key is the string of the uuid of the load type.
+    The value is the list of all load profile entries for the load type.
+
+    """
 
     def add_load_profile(
         self,
@@ -77,18 +82,21 @@ class ProcessStepLoadProfileEntryCollection:
     """Summarizes the load profile simulation results of a process step during
     the simulation."""
 
-    # Name of the process step
     object_name: str
-    # Dict of all load types for which load entries are available
-    # The key is a string of the uuid of the load type. The Value is the
-    # load type itself.
+    """Name of the process step
+    """
     load_type_dict: dict[str, LoadType] = field(default_factory=dict)
-    # The dictionary contains all load of profile entries for all load types
-    # of the stream. The first key is the string of the uuid of the load type.
-    # The value is the list of all load profile entries for the load type.
+    """Dict of all load types for which load entries are available
+    The key is a string of the uuid of the load type. The Value is the
+    load type itself.
+    """
     dict_of_load_entry_lists: dict[str, list[LoadProfileEntry]] = field(
         default_factory=dict
     )
+    """The dictionary contains all load of profile entries for all load types
+    of the stream. The first key is the string of the uuid of the load type.
+    The value is the list of all load profile entries for the load type.
+    """
 
     def add_load_profiles(
         self,
@@ -131,11 +139,12 @@ class LoadProfileCollection:
     during the simulation.
     """
 
-    # Contains the load profile data for all streams
-    # The key is the stream name
     dict_stream_load_profile_collections: dict[
         str, StreamLoadProfileEntryCollection
     ] = field(default_factory=dict)
+    """Contains the load profile data for all streams
+    The key is the stream name
+    """
     # Contains the load profile data for all streams
     # The key is the process step
     dict_process_step_load_profile_collections: dict[

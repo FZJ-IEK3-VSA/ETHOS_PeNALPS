@@ -48,7 +48,8 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessState(ABC):
-    """This class represents a state in  process step. The states primary"""
+    """This class represents a state in the Petri net ofa process step. It models
+    a type of activity of the ProcessStep"""
 
     def __init__(
         self,
@@ -70,6 +71,14 @@ class ProcessState(ABC):
     def _create_process_step_production_plan_entry(
         self, process_state_state: ProcessStateData
     ) -> ProcessStepProductionPlanEntry:
+        """Creates ProcessStepProductionPlanEntry
+
+        Args:
+            process_state_state (ProcessStateData): _description_
+
+        Returns:
+            ProcessStepProductionPlanEntry: _description_
+        """
         entry = ProcessStepProductionPlanEntry(
             process_step_name=self.process_step_name,
             process_state_name=self.process_state_name,
@@ -78,7 +87,10 @@ class ProcessState(ABC):
             duration=str(process_state_state.end_time - process_state_state.start_time),
             process_state_type=str(type(self)),
         )
-        logger.debug(entry)
+        logger.debug(
+            "The following ProcessStepProductionPlanEntry has been created: %s",
+            str(entry),
+        )
         return entry
 
     def create_process_state_energy_data_based_on_stream_mass(
@@ -113,6 +125,13 @@ class ProcessState(ABC):
 
 
 class OutputStreamProvidingState(ProcessState, ABC):
+    """During the activity of this state  a
+
+    Args:
+        ProcessState (_type_): _description_
+        ABC (_type_): _description_
+    """
+
     def __init__(
         self,
         process_state_name: str,

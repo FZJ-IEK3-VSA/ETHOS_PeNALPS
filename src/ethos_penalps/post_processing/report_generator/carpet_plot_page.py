@@ -5,10 +5,6 @@ import matplotlib.pyplot
 import pandas
 
 from ethos_penalps.data_classes import CarpetPlotMatrix, CarpetPlotMatrixEmpty, LoadType
-from ethos_penalps.post_processing.load_profile_entry_post_processor import (
-    LoadProfileEntryPostProcessor,
-)
-from ethos_penalps.post_processing.network_analyzer import NetworkAnalyzer
 from ethos_penalps.post_processing.post_processed_data_handler import (
     PostProcessSimulationDataHandler,
 )
@@ -18,9 +14,6 @@ from ethos_penalps.post_processing.report_generator.report_options import (
 from ethos_penalps.post_processing.time_series_visualizations.carpet_plot_load_profile_generator import (
     CarpetPlotLoadProfileGenerator,
 )
-from ethos_penalps.post_processing.time_series_visualizations.gantt_chart import (
-    GanttChartGenerator,
-)
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
@@ -29,12 +22,22 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class CarpetPlotPageGenerator:
+    """Is used to generate carpet plots from the simulation and post simulation data."""
+
     def __init__(
         self,
         production_plan: ProductionPlan,
         report_directory: str,
         post_process_simulation_data_handler: PostProcessSimulationDataHandler,
     ) -> None:
+        """
+
+        Args:
+            production_plan (ProductionPlan): Contains the unprocessed simulation data.
+            report_directory (str): Path to the report folder.
+            post_process_simulation_data_handler (PostProcessSimulationDataHandler): Contains
+                the post processed simulation data.
+        """
         self.production_plan: ProductionPlan = production_plan
         self.report_directory: str = report_directory
         self.post_process_simulation_data_handler: PostProcessSimulationDataHandler = (
@@ -44,6 +47,16 @@ class CarpetPlotPageGenerator:
     def create_carpet_plot_page(
         self, report_generator_options: ReportGeneratorOptions
     ) -> datapane.Group:
+        """Creates the carpet plot page of the result report.
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): Contains
+                the options to adjust the appearance of the report.
+
+        Returns:
+            datapane.Group: DataPane object that represents the carpet plot page of the
+                report.
+        """
         if report_generator_options.carpet_plot_options.create_all is True:
             logger.info("Start generation of load profile carpet plot page")
 

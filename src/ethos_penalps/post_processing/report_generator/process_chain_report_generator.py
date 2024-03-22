@@ -1,19 +1,14 @@
 import datetime
-import multiprocessing
 import os
 import traceback
 import warnings
-import webbrowser
-from dataclasses import dataclass
 from pathlib import Path
 
 import datapane as dp
 import matplotlib
 import matplotlib.pyplot
-import numpy as np
 import pandas as pd
-from reportlab.graphics import renderPM
-from svglib.svglib import svg2rlg
+
 
 from ethos_penalps.data_classes import CurrentProcessNode, LoopCounter
 from ethos_penalps.utilities.debugging_information import (
@@ -50,6 +45,8 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ReportGeneratorProcessChain:
+    """Creates a report from single process chain. Is still in development."""
+
     def __init__(
         self,
         production_plan: ProductionPlan,

@@ -8,6 +8,10 @@ from ethos_penalps.stream_handler import StreamHandler
 
 
 class PreSimulationReport:
+    """Creates a report about the model before the simulation which
+    can be used to analyze if the model is set up as expected.
+    """
+
     def __init__(
         self,
         process_node_dict: dict[str, ProcessNode],
@@ -15,6 +19,14 @@ class PreSimulationReport:
         enterprise_name: str,
         report_directory: str,
     ) -> None:
+        """
+
+        Args:
+            process_node_dict (dict[str, ProcessNode]): Contains the unprocessed simulation results.
+            stream_handler (StreamHandler): Contains all streams of the model.
+            enterprise_name (str): Name of the modeled enterprise.
+            report_directory (str): Path to the report output directory.
+        """
         self.graph_visualization = GraphVisualization(
             process_node_dict=process_node_dict,
             stream_handler=stream_handler,

@@ -47,36 +47,6 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def __init__(self) -> None:
         pass
 
-    def convert_lpg_load_profile_to_carpet_plot(
-        self,
-        list_of_load_profile_entries: list[LoadProfileEntry],
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
-        object_name: str,
-        x_axis_time_period_timedelta: datetime.timedelta = datetime.timedelta(weeks=1),
-        resample_frequency: str = "1min",
-    ) -> matplotlib.figure.Figure | None:
-        carpet_plot_load_profile_matrix = (
-            self.convert_lpg_load_profile_to_data_frame_matrix(
-                list_of_load_profile_entries=list_of_load_profile_entries,
-                start_date_time_series=start_date,
-                end_date_time_series=end_date,
-                x_axis_time_period_timedelta=x_axis_time_period_timedelta,
-                resample_frequency=resample_frequency,
-                object_name=object_name,
-            )
-        )
-        if type(carpet_plot_load_profile_matrix) is CarpetPlotMatrixEmpty:
-            logger.debug("No load profile to plot for object: %s", object_name)
-            figure = None
-        elif type(carpet_plot_load_profile_matrix) is CarpetPlotMatrix:
-            figure = self.plot_load_profile_carpet_from_data_frame_matrix(
-                carpet_plot_load_profile_matrix=carpet_plot_load_profile_matrix,
-            )
-        else:
-            raise Exception("Unexpected datatype")
-        return figure
-
     def convert_lpg_load_profile_to_data_frame_matrix(
         self,
         list_of_load_profile_entries: list[LoadProfileEntry],
@@ -181,6 +151,14 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         return carpet_plot_matrix
 
     def invert_list(self, list_to_invert: list):
+        """Inverts the input list.
+
+        Args:
+            list_to_invert (list): List to be inverted.
+
+        Returns:
+            _type_: Inverted list.
+        """
         return list_to_invert[::-1]
 
     def convert_load_profile_meta_data_to_carpet_plot_matrix(
@@ -302,6 +280,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def get_energy_amount_from_data_frame(
         self, load_profile_data_frame: pandas.DataFrame
     ) -> float:
+        """Return the total energy from the data frame.
+
+        Args:
+            load_profile_data_frame (pandas.DataFrame): Data frame that
+                is created from a list of LoadProfileEntry.
+
+        Returns:
+            float: Value of the total energy amount.
+        """
         energy_amount = load_profile_data_frame["energy_quantity"].sum()
         return energy_amount
 
@@ -309,6 +296,19 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         self,
         carpet_plot_matrix: CarpetPlotMatrix,
     ) -> float:
+        """Returns the energy amount of the CarpetPlotMatrix
+        that is calculated from the power entries.
+
+        Args:
+            carpet_plot_matrix (CarpetPlotMatrix): Contains the power
+                values which should be plotted using a carpet plot.
+                Also contains additional meta information about the power
+                values.
+
+
+        Returns:
+            float: Total energy amount.
+        """
         carpet_plot_matrix_data_frame = carpet_plot_matrix.data_frame
         period_length = pandas.to_timedelta(carpet_plot_matrix.resample_frequency)
         period_length_seconds = period_length.total_seconds()
@@ -328,6 +328,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def get_common_load_type(
         self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
     ) -> LoadType:
+        """Returns the common load type of the list of carpet plot matrices.
+
+        Args:
+            list_of_carpet_plot_matrices (list[CarpetPlotMatrix]): List of
+                carpet plot matrices objects.
+
+        Returns:
+            LoadType: The common Load type of the LoadProfileMatrices.
+        """
 
         list_of_load_types = []
         for carpet_plot_matrix in list_of_carpet_plot_matrices:
@@ -344,6 +353,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def get_common_energy_unit_string(
         self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
     ) -> str:
+        """Returns the common energy unit string from all carpet plot matrices.
+
+        Args:
+            list_of_carpet_plot_matrices (list[CarpetPlotMatrix]): List of carpet plot
+                matrices.
+
+        Returns:
+            str: Energy unit string that can be parsed by Pint.
+        """
 
         list_of_energy_units = []
         for carpet_plot_matrix in list_of_carpet_plot_matrices:
@@ -360,6 +378,18 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def convert_power_unit_of_list_of_carpet_plot_matrix(
         self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
     ) -> tuple[str, list[CarpetPlotMatrix]]:
+        """Converts the power unit and power entries of a list
+        CarpetPlotMatrices.
+
+        Args:
+            list_of_carpet_plot_matrices (list[CarpetPlotMatrix]): List of
+                CarpetPlotMatrices to be converted.
+
+        Returns:
+            tuple[str, list[CarpetPlotMatrix]]: First tuple entry is the
+                common power unit. The second entry is the list of converted
+                CarpetPlotMatrices.
+        """
         list_of_power_units = []
         for carpet_plot_matrix in list_of_carpet_plot_matrices:
             list_of_power_units.append(carpet_plot_matrix.power_unit)
@@ -388,10 +418,10 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
 
         Args:
             list_of_carpet_plot_matrices (list[CarpetPlotMatrix]): _description_
-            combined_matrix_name (str): _description_
+            combined_matrix_name (str): The new object name for the CarpetPlotMatrix
 
         Returns:
-            CarpetPlotMatrix: _description_
+            CarpetPlotMatrix: Combined CarpetPlotMatrix from the input matrices.
         """
 
         common_power_unit, converted_list_of_carpet_plot_matrices = (
@@ -443,6 +473,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def compress_power_of_carpet_plot_matrix_if_necessary(
         self, carpet_plot_load_profile_matrix: CarpetPlotMatrix
     ) -> CarpetPlotMatrix:
+        """Checks if the Power Unit of the maximum power value is
+            too big or too small and converts the matrix if necessary.
+
+        Args:
+            carpet_plot_load_profile_matrix (CarpetPlotMatrix): _description_
+
+        Returns:
+            CarpetPlotMatrix: Converted CarpetPlotMatrix
+        """
         maximum_power = carpet_plot_load_profile_matrix.data_frame.max().max()
         power_unit = carpet_plot_load_profile_matrix.power_unit
         if maximum_power > 1000 or maximum_power < 1:
@@ -469,6 +508,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         carpet_plot_load_profile_matrix: CarpetPlotMatrix,
         target_power_unit: pint.Unit,
     ) -> CarpetPlotMatrix:
+        """Converts the power values of the CarpetPlotMatrix to a target unit.
+
+        Args:
+            carpet_plot_load_profile_matrix (CarpetPlotMatrix): CarpetPlotMatrix to be converted.
+            target_power_unit (pint.Unit): The target power unit for the conversion.
+
+        Returns:
+            CarpetPlotMatrix: Converted CarpetPlotMatrix
+        """
         comparison_quantity = (
             1 * Units.get_unit(unit_string=carpet_plot_load_profile_matrix.power_unit)
         ) / (1 * target_power_unit)
@@ -486,10 +534,11 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         """Create load profile carpet plot from CarpetPlotMatrix object
 
         Args:
-            carpet_plot_load_profile_matrix (CarpetPlotMatrix): _description_
+            carpet_plot_load_profile_matrix (CarpetPlotMatrix): The CarpetPlotMatrix
+                to be plotted.
 
         Returns:
-            matplotlib.figure.Figure: _description_
+            matplotlib.figure.Figure: The plotted seaborn figure.
         """
 
         # Create figure

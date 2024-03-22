@@ -21,11 +21,21 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class DataFramePageGenerator:
+    """Creates a page which contains the production plan data frames."""
+
     def __init__(
         self,
         production_plan: ProductionPlan,
         post_process_simulation_data_handler: PostProcessSimulationDataHandler,
     ) -> None:
+        """
+
+        Args:
+            production_plan (ProductionPlan): Contains the unprocessed
+                simulation results.
+            post_process_simulation_data_handler (PostProcessSimulationDataHandler): Contains
+            the processed simulation results.
+        """
         self.production_plan: ProductionPlan = production_plan
         self.post_process_simulation_data_handler: PostProcessSimulationDataHandler = (
             post_process_simulation_data_handler
@@ -34,6 +44,17 @@ class DataFramePageGenerator:
     def create_stream_state_data_frame_selector(
         self, report_generator_options: ReportGeneratorOptions
     ) -> datapane.Select | None:
+        """
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): Is an object
+                that contains the parameters to adjust the report
+                appearance.
+
+        Returns:
+            datapane.Select | None: DataPane object of the stream data frames
+            in the production plan.
+        """
         stream_state_block_list = []
         if (
             report_generator_options.production_plan_data_frame.include_stream_data_frames
@@ -115,6 +136,17 @@ class DataFramePageGenerator:
     def create_process_state_data_frame_selector(
         self, report_generator_options: ReportGeneratorOptions
     ) -> datapane.Select | datapane.Group | None:
+        """
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): Is an object
+                that contains the parameters to adjust the report
+                appearance.
+
+        Returns:
+            datapane.Select | None: DataPane object of the process state data frames
+            in the production plan.
+        """
         process_state_block_list = []
         if (
             report_generator_options.production_plan_data_frame.include_process_step_data_frames
@@ -153,6 +185,17 @@ class DataFramePageGenerator:
     def create_storage_state_data_frame_page(
         self, report_generator_options: ReportGeneratorOptions
     ) -> datapane.Select | datapane.Group | None:
+        """
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): Is an object
+                that contains the parameters to adjust the report
+                appearance.
+
+        Returns:
+            datapane.Select | None: DataPane object of the storage frames
+            in the production plan.
+        """
         logger.info("Start generation storage state data frame page")
         storage_state_block_list = []
         if (
@@ -191,6 +234,17 @@ class DataFramePageGenerator:
     def create_data_frame_page(
         self, report_generator_options: ReportGeneratorOptions
     ) -> datapane.Group:
+        """_summary_
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): Is an object
+                that contains the parameters to adjust the report
+                appearance.
+
+        Returns:
+            datapane.Select | None: Creates the production plan data frame page
+                of the report.
+        """
         logger.info("Create generate production plan data page")
         data_frame_block_list = []
         process_state_data_frame_selector = (
