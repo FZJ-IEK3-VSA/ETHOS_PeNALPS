@@ -24,10 +24,13 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class GraphVizTableCreator:
+    """Creates a table in graphviz"""
+
     def __init__(self) -> None:
         self.table_string: str = ""
 
     def add_row(self, list_of_columns: list[str]):
+
         html_str = "{ "
         for column_entry in list_of_columns:
             html_str = html_str + column_entry + "|"
@@ -55,6 +58,8 @@ class GraphVizTableCreator:
 
 
 class GraphVisualization:
+    """Creates an enterprise graph for an ill defined model"""
+
     def __init__(
         self,
         process_node_dict: dict[str, ProcessNode],
@@ -84,6 +89,15 @@ class GraphVisualization:
         process_step: ProcessStep,
         color="black",
     ):
+        """Creates a node Cluster for process step. A cluster is required
+        to display the process states within the process step.
+
+        Args:
+            enterprise_cluster (graphviz.graphs.Digraph): graphviz container which is
+                used to create the final figure
+            process_step (ProcessStep): Process step which should included in the graph
+            color (str, optional): Color of the process step. Defaults to "black".
+        """
         if not process_step.process_state_handler.process_state_dictionary:
             logger.debug(
                 "Process Step: %s does not contain any process states",
@@ -134,6 +148,14 @@ class GraphVisualization:
         source: Source | ProcessChainStorage,
         color: str,
     ):
+        """Creates graphviz node for the source
+
+        Args:
+            enterprise_cluster (graphviz.graphs.Digraph): The enterprise cluster
+                which build the final figure.
+            source (Source | ProcessChainStorage): Source that should be included.
+            color (str): Color of the source in the figure.
+        """
         enterprise_cluster.node(name=source.name, color=color)
 
     def create_sink_node(
@@ -142,11 +164,26 @@ class GraphVisualization:
         sink: Sink | ProcessChainStorage,
         color: str,
     ):
+        """Creates graphviz node for the sink
+
+        Args:
+            enterprise_cluster (graphviz.graphs.Digraph): The enterprise cluster
+                which build the final figure.
+            sink (Sink | ProcessChainStorage): Sink that should be included.
+            color (str): Color of the sink in the figure.
+        """
+
         enterprise_cluster.node(name=sink.name, color=color)
 
     def add_stream(
         self, stream: ContinuousStream | BatchStream, edge_colour: str = "black"
     ):
+        """Creates an edge that connects two nodes.
+
+        Args:
+            stream (ContinuousStream | BatchStream): Stream that should be displayed
+            edge_colour (str, optional): Display color of the stream. Defaults to "black".
+        """
         upstream_node_name = stream.get_upstream_node_name()
         downstream_node_name = stream.get_downstream_node_name()
 
@@ -199,13 +236,37 @@ class GraphVisualization:
         stream_state_table_creator: GraphVizTableCreator | None = None,
         node_operation_table_creator: GraphVizTableCreator | None = None,
         production_order_table_creator: GraphVizTableCreator | None = None,
-        starting_node_output_branch_data_table_creator: GraphVizTableCreator
-        | None = None,
+        starting_node_output_branch_data_table_creator: (
+            GraphVizTableCreator | None
+        ) = None,
         current_node_operation_name: str | None = None,
         active_stream_name: str | None = None,
         graph_directory: str | None = None,
         file_name: str | None = None,
     ):
+        """Creates the enterprise graph
+
+        Args:
+            show_graph_after_creation (bool, optional): Determines if the graph should be displayed
+                after creation. Defaults to True.
+            stream_state_table_creator (GraphVizTableCreator | None, optional):
+                Objects that can be used to add a table with additional information about the stream
+                . Defaults to None.
+            node_operation_table_creator (GraphVizTableCreator | None, optional):
+                Object that can be used to create a table with additional information
+                about the current node operation. Defaults to None.
+            production_order_table_creator (GraphVizTableCreator | None, optional): Object that
+                creates a table with additional information about the current order . Defaults to None.
+            starting_node_output_branch_data_table_creator (GraphVizTableCreator  |  None, optional): Object
+                that created a table about the output branch data. Defaults to None.
+            current_node_operation_name (str | None, optional): Name of the current node operation
+                . Defaults to None.
+            active_stream_name (str | None, optional): Name of the active stream
+                that should be displayed in a different color. Defaults to None.
+            graph_directory (str | None, optional): Storage directory for the graph. Defaults to None.
+            file_name (str | None, optional): Filename of the graph. Defaults to None.
+
+        """
         logger.debug("Creation of enterprise structure starts")
 
         if not self.process_node_dict:

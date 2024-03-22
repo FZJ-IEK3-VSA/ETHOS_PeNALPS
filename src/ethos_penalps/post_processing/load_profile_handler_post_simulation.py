@@ -35,18 +35,20 @@ class StreamLoadProfileEntryCollectionResampled:
     """Summarizes the load profile simulation results of a stream during
     the simulation."""
 
-    # Name of the stream
     object_name: str
-    # Dict of all load types for which load entries are available
-    # The key is a string of the uuid of the load type. The Value is the
-    # load type itself.
+    """Name of the stream
+    """
     load_type_dict: dict[str, LoadType] = field(default_factory=dict)
-    # The dictionary contains all load of profile entries for all load types
-    # of the stream. The first key is the string of the uuid of the load type.
-    # The value is the list of all load profile entries for the load type.
+    """Dict of all load types that are used for the stream. The key is a uuid
+    string of the load type. The Value is the load type itself.
+    """
     dict_of_load_entry_meta_data_resampled: dict[str, LoadProfileMetaDataResampled] = (
         field(default_factory=dict)
     )
+    """The dictionary contains all load of profile entries for all load types
+    of the stream. The key is the uuid string of the load type. The value is
+    the list of all load profile entries for the load type.
+    """
     dict_of_load_entry_meta_data: dict[str, LoadProfileMetaData] = field(
         default_factory=dict
     )
@@ -115,18 +117,20 @@ class ProcessStepLoadProfileEntryCollectionResampled:
     """Summarizes the load profile simulation results of a process step during
     the simulation."""
 
-    # Name of the process step
     object_name: str
-    # Dict of all load types for which load entries are available
-    # The key is a string of the uuid of the load type. The Value is the
-    # load type itself.
+    """Name of the process step
+    """
     load_type_dict: dict[str, LoadType] = field(default_factory=dict)
-    # The dictionary contains all load of profile entries for all load types
-    # of the stream. The first key is the string of the uuid of the load type.
-    # The value is the list of all load profile entries for the load type.
+    """Dict of all load types that are used for the process step. The key is a uuid
+    string of the load type. The Value is the load type itself.
+    """
     dict_of_load_entry_meta_data_resampled: dict[str, LoadProfileMetaDataResampled] = (
         field(default_factory=dict)
     )
+    """# The dictionary contains all load of profile entries for all load types
+    # of the stream. The first key is the string of the uuid of the load type.
+    # The value is the list of all load profile entries for the load type.
+    """
     dict_of_load_entry_meta_data: dict[str, LoadProfileMetaData] = field(
         default_factory=dict
     )
@@ -191,11 +195,20 @@ class ProcessStepLoadProfileEntryCollectionResampled:
 
 
 class LoadProfileCollectionPostProcessing:
+    """Contains all post processed load profiles."""
+
     def __init__(
         self,
         load_profile_collection: LoadProfileCollection,
         report_options: ReportGeneratorOptions,
     ) -> None:
+        """
+        Args:
+            load_profile_collection (LoadProfileCollection): LoadProfileCollection
+                that contains all unprocessed simulation results.
+            report_options (ReportGeneratorOptions): Object that contains
+                modification options for the report.
+        """
         self.load_profile_collection: LoadProfileCollection = load_profile_collection
         self.report_generator_options: ReportGeneratorOptions = report_options
         self.load_profile_entry_post_processor = LoadProfileEntryPostProcessor()
@@ -211,6 +224,11 @@ class LoadProfileCollectionPostProcessing:
         ] = {}
 
     def start_post_processing(self):
+        """Starts the post processing of the streams and process steps.
+        The most important modifications are the resampling and extraction
+        of meta data of the simulation results. This meta data are e.g.
+        maximum power demand and total energy demand.
+        """
         dict_stream_load_profile_collections: dict[
             str, StreamLoadProfileEntryCollectionResampled
         ] = self.resample_stream_load_profiles()
@@ -227,6 +245,15 @@ class LoadProfileCollectionPostProcessing:
     def resample_stream_load_profiles(
         self,
     ) -> dict[str, StreamLoadProfileEntryCollectionResampled]:
+        """Post processes the stream simulation results. The most
+        important modifications are the resampling and extraction
+        of meta data of the simulation results. This meta data are e.g.
+        maximum power demand and total energy demand.
+
+        Returns:
+            dict[str, StreamLoadProfileEntryCollectionResampled]: Collection of
+                post processed stream simulation results.
+        """
         dict_of_resampled_load_profile_meta_data = {}
         for (
             stream_name,
@@ -293,6 +320,16 @@ class LoadProfileCollectionPostProcessing:
     def resample_process_step_load_profiles(
         self,
     ) -> dict[str, ProcessStepLoadProfileEntryCollectionResampled]:
+        """Post processes the process step simulation results. The most
+        important modifications are the resampling and extraction
+        of meta data of the simulation results. This meta data are e.g.
+        maximum power demand and total energy demand.
+
+        Returns:
+            dict[str, ProcessStepLoadProfileEntryCollectionResampled]: Collection of
+                post processed process step simulation results.
+        """
+
         dict_of_resampled_load_profile_meta_data = {}
 
         for (

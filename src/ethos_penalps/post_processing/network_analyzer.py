@@ -27,6 +27,8 @@ from ethos_penalps.post_processing.post_processed_data_handler import (
 
 
 class NetworkAnalyzer:
+    """Sorts the nodes and streams according to the material flow direction.
+    """
     def __init__(self, list_of_network_level: list[NetworkLevel]) -> None:
         self.list_of_network_level: list[NetworkLevel] = list_of_network_level
 

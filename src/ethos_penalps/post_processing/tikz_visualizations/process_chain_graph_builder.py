@@ -66,16 +66,25 @@ document_postamble = r"""\end{tikzpicture}
 
 
 def get_new_uuid() -> str:
+    """Creates a uuid string
+
+    Returns:
+        str: uuid string
+    """
     return str(uuid.uuid4())
 
 
 @dataclass
 class Direction:
+    """Edge direction option"""
+
     right: bool
 
 
 @dataclass(kw_only=True)
 class EdgeOptions:
+    """All options for edges"""
+
     edge_style: str
     start_node_name: str
     target_node_name: str
@@ -83,6 +92,8 @@ class EdgeOptions:
 
 @dataclass
 class ForwardEdge:
+    """Represents a forward edge"""
+
     start_node_name: str
     target_node_name: str
     edge_style: str = "->"
@@ -90,6 +101,8 @@ class ForwardEdge:
 
 @dataclass
 class BackwardEdge:
+    """Represents a Backwards edge"""
+
     start_node_name: str
     target_node_name: str
     edge_style: str = "<-"

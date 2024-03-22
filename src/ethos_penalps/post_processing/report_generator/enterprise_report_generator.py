@@ -67,6 +67,8 @@ matplotlib.pyplot.rcParams.update({"figure.max_open_warning": 0})
 
 
 class EnterpriseReportGenerator:
+    """Creates a report for the simulation results of the complete Enterprise."""
+
     def __init__(
         self,
         production_plan: ProductionPlan,
@@ -77,6 +79,16 @@ class EnterpriseReportGenerator:
         post_process_simulation_data_handler: PostProcessSimulationDataHandler,
         # production_order_dict: dict[float, ProductionOrder],
     ) -> None:
+        """
+
+        Args:
+            production_plan (ProductionPlan): Contains the unprocessed simulation results.
+            enterprise_name (str): Name of the simulated Enterprise. Is used in figures.
+            list_of_network_level (list[NetworkLevel]): A list of all NetworkLevel of the
+                Enterprise.
+            post_process_simulation_data_handler (PostProcessSimulationDataHandler): Contains
+                the post processed simulation results.
+        """
         self.production_plan: ProductionPlan = production_plan
         self.group_list: list[datapane.Group] = []
         self.list_of_network_level: list[NetworkLevel] = list_of_network_level
@@ -98,6 +110,11 @@ class EnterpriseReportGenerator:
         )
 
     def add_output_directory(self, output_directory: str | None):
+        """Manually adds a path to the report output directory.
+
+        Args:
+            output_directory (str | None): Path to the report output directory.
+        """
         if isinstance(output_directory, str):
             Path(output_directory).mkdir(exist_ok=True)
             self.report_directory = output_directory
@@ -107,7 +124,9 @@ class EnterpriseReportGenerator:
         appearance can be influenced using the report generator options.
 
         Args:
-            report_generator_options (ReportGeneratorOptions): _description_
+            report_generator_options (ReportGeneratorOptions): Is an object
+                that contains the parameters to adjust the report
+                appearance.
         """
         logger.info("Generation of report starts")
         LoopCounter.loop_number = "Report_creation"
@@ -162,7 +181,6 @@ class EnterpriseReportGenerator:
         # Create Data Frame Page
         gantt_chart_page_generator = GanttChartPageGenerator(
             production_plan=self.production_plan,
-            network_analyzer=self.network_analyzer,
             report_directory=self.report_directory,
             result_selector=self.result_selector,
         )

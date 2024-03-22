@@ -33,7 +33,6 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.utilities.units import Units
 
 logger = PeNALPSLogger.get_logger_without_handler()
-logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ListOfLoadProfileEntryAnalyzer:
@@ -100,6 +99,15 @@ class ListOfLoadProfileEntryAnalyzer:
     def _get_first_start_time(
         self, analysis_data_frame: pandas.DataFrame
     ) -> datetime.datetime:
+        """Returns the first start time of the analysis data frame.
+
+        Args:
+            analysis_data_frame (pandas.DataFrame): Is build from a list of
+            LoadProfileEntry.
+
+        Returns:
+            datetime.datetime: First start time of the analysis data frame.
+        """
 
         assert pandas.api.types.is_datetime64_dtype(
             analysis_data_frame.loc[:, "start_time"]
@@ -112,6 +120,15 @@ class ListOfLoadProfileEntryAnalyzer:
     def _get_last_end_time(
         self, analysis_data_frame: pandas.DataFrame
     ) -> datetime.datetime:
+        """Returns the last end time of the analysis data frame.
+
+        Args:
+            analysis_data_frame (pandas.DataFrame): Is build from a list of
+            LoadProfileEntry.
+
+        Returns:
+            datetime.datetime: Last end time of the analysis data frame.
+        """
 
         end_time_numpy = analysis_data_frame.loc[:, "end_time"].max()
         end_time = end_time_numpy.to_pydatetime()
@@ -120,6 +137,17 @@ class ListOfLoadProfileEntryAnalyzer:
     def _get_maximum_energy_quantity(
         self, analysis_data_frame: pandas.DataFrame
     ) -> float:
+        """Returns the value of the biggest energy quantity in the analysis
+        data frame.
+
+        Args:
+            analysis_data_frame (pandas.DataFrame): Is build from a list of
+            LoadProfileEntry.
+
+        Returns:
+            float: Value of the biggest energy quantity in the analysis
+            data frame.
+        """
 
         max_energy_quantity_array = analysis_data_frame.loc[:, "energy_quantity"].max()
         max_energy_quantity = float(max_energy_quantity_array)

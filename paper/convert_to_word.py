@@ -1,3 +1,0 @@
-import pypandoc
-
-pypandoc.co

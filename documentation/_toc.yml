@@ -21,6 +21,7 @@ parts:
   - caption: Basic Articles
     maxdepth: 3
     chapters:
+      - file: examples/toffee_example.md
       - file: ethos_penalps_articles/simulation_workflow.md
       - file: ethos_penalps_articles/model_topology.md
       - file: ethos_penalps_articles/roadmap.md
@@ -32,7 +33,7 @@ parts:
   - caption: Examples
     chapters:
       - file: examples/b_pillar_example.md
-      - file: examples/toffee_example.md
+      
   - caption: Bibliography
     chapters:
       - file: ethos_penalps_articles/bibliography.md
