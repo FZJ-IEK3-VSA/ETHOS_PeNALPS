@@ -1,7 +1,6 @@
 import datetime
 import numbers
 import warnings
-import uuid
 from dataclasses import dataclass, field, fields
 from typing import Optional
 
@@ -34,12 +33,25 @@ class Commodity(DataClassJsonMixin):
 
 @dataclass(frozen=True, eq=True, slots=True)
 class LoadType(DataClassJsonMixin):
+    """Represents an energy carrier like electricity or natural
+    gas that should be considered during the simulation.
+    """
+
     name: str
+    """Name of energy load type
+    """
     uuid: str = field(default_factory=get_new_uuid)
+    """Unique identifier to distinguish load types.
+    """
 
 
 @dataclass(frozen=True, eq=True)
 class ProcessStateData(DataClassJsonMixin):
+    """Intermediate simulation data that represents
+    a discrete state of the process step during the
+    discrete event simulation.
+    """
+
     process_state_name: str
     start_time: datetime.datetime
     end_time: datetime.datetime
@@ -47,6 +59,12 @@ class ProcessStateData(DataClassJsonMixin):
 
 @dataclass
 class EmptyMetaDataInformation:
+    """Represents a simulation results like a list of LoadProfileEntry
+    or a list BatchStreamProductionPlanEntry that did not create a
+    single entry during the simulation. This data is used to prevent
+    analysis on this non existent data.
+    """
+
     name: str
     object_type: str
 

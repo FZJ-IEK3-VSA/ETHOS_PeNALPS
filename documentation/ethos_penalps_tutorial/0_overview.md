@@ -1,8 +1,6 @@
 # Tutorial Overview
 
-This section gives an overview how to create simple ethos_penalps models and how to increase the complexity of the models.
-
-To setup an ETHOS.PeNALPS model the following object types must be instantiated
+This section gives an overview how to install ETHOS.PeNALPS and how to create models with increasing complexity. First you have to [install ETHOS.PeNALPS](0_1_installation.md). Then to setup an ETHOS.PeNALPS model the following object types must be instantiated:
 
 1. Initialize Time Data
 2. Setup All Commodities

@@ -1,6 +1,6 @@
 # Add More States
 
-The energy relevant behavior of the cooker [of the previous example](single_cooker_process_chain.md) can be modeled in greater detail by adding more states to the petri net of the cooker. Instead of modeling a single cooking phase two phases are implemented. The first one is the heating phase which uses the maximum power of the cooker to reach the boiling temperature. The second phase uses less power and only holds the target temperature. Additionally, a cleaning phase is added after the discharge phase. 
+The energy relevant behavior of the cooker [of the previous example](1_single_cooker_process_chain.md) can be modeled in greater detail by adding more states to the petri net of the cooker. Instead of modeling a single cooking phase two phases are implemented. The first one is the heating phase which uses the maximum power of the cooker to reach the boiling temperature. The second phase uses less power and only holds the target temperature. Additionally, a cleaning phase is added after the discharge phase. 
 
 ```
 idle_state = process_step.process_state_handler.create_idle_process_state(

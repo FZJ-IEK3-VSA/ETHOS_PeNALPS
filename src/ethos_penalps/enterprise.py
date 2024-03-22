@@ -1,11 +1,8 @@
 import datetime
-import uuid
 import numbers
-from dataclasses import dataclass
 
 import cloudpickle
 
-from ethos_penalps.data_classes import Commodity, ProcessChainIdentifier, get_new_uuid
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.network_level import NetworkLevel
 from ethos_penalps.post_processing.report_generator.enterprise_report_generator import (
@@ -102,6 +99,33 @@ class Enterprise:
         )
         with open(result_path, "wb") as file:
             cloudpickle.dump(network_level.main_sink, file, protocol=None)
+
+    def pickle_dump_production_plan(
+        self,
+        file_name: str = "production_plan",
+        subdirectory_name: str = "production_plan",
+        add_time_stamp_to_filename: bool = True,
+    ):
+        """Stores a pickle file of the production plan.
+
+        Args:
+            file_name (str, optional): _description_. Defaults to "production_plan".
+            subdirectory_name (str, optional): _description_. Defaults to "production_plan".
+            add_time_stamp_to_filename (bool, optional): _description_. Defaults to True.
+        """
+        result_path_generator = ResultPathGenerator()
+        result_path = result_path_generator.create_path_to_file_relative_to_main_file(
+            file_name=file_name,
+            subdirectory_name=subdirectory_name,
+            add_time_stamp_to_filename=add_time_stamp_to_filename,
+            file_extension=".pckl",
+        )
+        with open(result_path, "wb") as file:
+            cloudpickle.dump(self.production_plan, file, protocol=None)
+
+    def pickle_load_production_plan(self, path_to_pickle_file: str):
+        with open(path_to_pickle_file, "rb") as input_file:
+            self.production_plan = cloudpickle.load(input_file)
 
     def create_network_level(self) -> NetworkLevel:
         """Creates an instance of a network level which is the next container

@@ -14,6 +14,13 @@ def create_line_subplot(
     load_profile_data_frame_meta_information: LoadProfileMetaData,
     include_legend: bool,
 ):
+    """Creates a line plot from the load profiles.
+
+    Args:
+        current_axes (_type_): _description_
+        load_profile_data_frame_meta_information (LoadProfileMetaData): _description_
+        include_legend (bool): _description_
+    """
     load_profile_data_frame = load_profile_data_frame_meta_information.data_frame
     # Calculate time difference for each stream
 

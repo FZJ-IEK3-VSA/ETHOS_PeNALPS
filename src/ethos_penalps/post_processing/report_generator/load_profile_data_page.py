@@ -14,19 +14,33 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class LoadProfileDataPageGenerator:
-    """Create the datapane"""
+    """Create the report page that contains all load profiles."""
 
     def __init__(
         self,
         production_plan: ProductionPlan,
         post_process_simulation_data_handler: PostProcessSimulationDataHandler,
     ) -> None:
+        """
+
+        Args:
+            production_plan (ProductionPlan): Contains the unprocessed simulation data.
+            report_directory (str): Path to the report folder.
+            post_process_simulation_data_handler (PostProcessSimulationDataHandler): Contains
+                the post processed simulation data.
+        """
         self.production_plan: ProductionPlan = production_plan
         self.post_process_simulation_data_handler: PostProcessSimulationDataHandler = (
             post_process_simulation_data_handler
         )
 
     def create_stream_group_or_select(self) -> datapane.Group | datapane.Select:
+        """Create the group of load profile page that contains the stream load profiles.
+
+        Returns:
+            datapane.Group | datapane.Select:  DataPane object that represents the
+            stream load profiles of the load profile page of the report.
+        """
         logger.info("Start generation of load profile data page")
 
         dict_stream_load_profile_collections = (
@@ -112,6 +126,12 @@ class LoadProfileDataPageGenerator:
     def create_process_state_load_profile_group(
         self,
     ) -> datapane.Group | datapane.Select:
+        """Create the group of load profile page that contains the process step load profiles.
+
+        Returns:
+            datapane.Group | datapane.Select:  DataPane object that represents the
+            process step load profiles of the load profile page of the report.
+        """
         process_step_selector_list = []
         dict_process_step_load_profile_collections = (
             self.post_process_simulation_data_handler.load_profile_collection_post_processing.dict_process_step_load_profile_collections
@@ -203,6 +223,12 @@ class LoadProfileDataPageGenerator:
         return process_step_group
 
     def create_load_profile_data_page(self) -> datapane.Group:
+        """Create the load profile page that contains all load profiles of the simulation.
+
+        Returns:
+            datapane.Group | datapane.Select:  DataPane object that represents all
+            of load profiles.
+        """
         logger.info("Create generate load profile data page")
         stream_group = self.create_stream_group_or_select()
         process_state_group = self.create_process_state_load_profile_group()
