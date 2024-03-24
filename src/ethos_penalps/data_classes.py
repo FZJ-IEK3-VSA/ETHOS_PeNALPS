@@ -71,6 +71,11 @@ class EmptyMetaDataInformation:
 
 @dataclass()
 class ProductEnergyData(DataClassJsonMixin):
+    """Summarizes the specific energy demand that is
+    required for an end product. It considers previous
+    energy demand and conversion factors from previous
+    steps."""
+
     product_commodity: Commodity
     specific_energy_demand: float
     load_type: LoadType
@@ -80,6 +85,10 @@ class ProductEnergyData(DataClassJsonMixin):
 
 @dataclass(frozen=True, eq=True, unsafe_hash=True)
 class StreamLoadEnergyData(DataClassJsonMixin):
+    """Summarizes the energy data that is required
+    to converts a stream state to a LoadProfileEntry.
+    """
+
     stream_name: str
     specific_energy_demand: float
     load_type: LoadType
@@ -89,6 +98,11 @@ class StreamLoadEnergyData(DataClassJsonMixin):
 
 @dataclass(slots=True, frozen=True)
 class LoadProfileEntry(DataClassJsonMixin):
+    """Represents the energy demand of
+    stream or process step in the given time
+    period.
+    """
+
     load_type: LoadType
     start_time: datetime.datetime
     end_time: datetime.datetime
@@ -100,6 +114,16 @@ class LoadProfileEntry(DataClassJsonMixin):
     def _adjust_power_unit(
         self, new_power_value: float, new_power_unit: str
     ) -> "LoadProfileEntry":
+        """Converts the power quantity to a
+        new value and unit.
+
+        Args:
+            new_power_value (float): New power value.
+            new_power_unit (str): New power unit string.
+
+        Returns:
+            LoadProfileEntry: Converted load profile entry.
+        """
         load_profile_entry = LoadProfileEntry(
             load_type=self.load_type,
             start_time=self.start_time,
@@ -113,11 +137,19 @@ class LoadProfileEntry(DataClassJsonMixin):
 
 
 class LoopCounter:
+    """Counts the iterations within a ProcessChain
+    during the simulation.
+    """
+
     loop_number: float | str = "Loop has not started"
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
 class ProcessStepProductionPlanEntry(DataClassJsonMixin):
+    """Summarizes the activity of a process step in
+    a discrete time period.
+    """
+
     process_step_name: str
     process_state_name: str
     start_time: datetime.datetime
@@ -128,6 +160,10 @@ class ProcessStepProductionPlanEntry(DataClassJsonMixin):
 
 @dataclass(frozen=True, slots=True)
 class StorageProductionPlanEntry(DataClassJsonMixin):
+    """Represents the storage level in a discrete
+    time period.
+    """
+
     process_step_name: str
     start_time: datetime.datetime
     end_time: datetime.datetime
@@ -139,12 +175,21 @@ class StorageProductionPlanEntry(DataClassJsonMixin):
 
 @dataclass(frozen=True, eq=True, slots=True)
 class StateConnector:
+    """Represents the connection between
+    two states of the petri net in a ProcessStep.
+    """
+
     start_state_name: str
     end_state_name: str
 
 
 @dataclass
 class ProcessStepDataFrameMetaInformation:
+    """Provides the simulation results of a
+    ProcessStep and additional meta information
+    about this data and the.
+    """
+
     data_frame: pandas.DataFrame
     process_step_name: str
     list_of_process_state_names: list[str]
@@ -154,6 +199,11 @@ class ProcessStepDataFrameMetaInformation:
 
 @dataclass
 class StorageDataFrameMetaInformation:
+    """Provides the simulation results of
+    a stream and additional meta information
+    about this data and the.
+    """
+
     data_frame: pandas.DataFrame
     process_step_name: str
     commodity: Commodity
@@ -164,35 +214,57 @@ class StorageDataFrameMetaInformation:
 
 @dataclass
 class CurrentProcessNode:
+    """Tracks the current active node
+    during the simulation."""
+
     node_name: str = "Node not set yet"
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class OutputBranchIdentifier:
+    """Is used to identify and distinguish output branches.
+    An output branch represents a request for an output stream
+    that is fulfilled by a ProcessStep.
+    """
+
     branch_number: float
     global_unique_identifier: Optional[str] = field(default_factory=get_new_uuid)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class TemporalBranchIdentifier:
+    """Identifies an instance of the same input stream state
+    that is required to fulfill an output stream.
+    """
+
     branch_number: float
     global_unique_identifier: Optional[str] = field(default_factory=get_new_uuid)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class StreamBranchIdentifier:
+    """Is used to identify one of multiple
+    input stream that is required to fulfill an output stream.
+    Multiple input streams are still in development."""
+
     stream_name: str
     global_unique_identifier: Optional[str] = field(default_factory=get_new_uuid)
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class OutputInputBranchConnector:
+    """Stores the connection between an input and output
+    branch.
+    """
+
     input_branch_identifier: TemporalBranchIdentifier
     output_branch_identifier: OutputBranchIdentifier
 
 
 @dataclass(frozen=True, eq=True, slots=True)
 class StaticTimePeriod:
+    """Constitutes a discrete time period."""
+
     start_time: datetime.datetime
     end_time: datetime.datetime
     uuid: OutputBranchIdentifier
@@ -203,6 +275,10 @@ class StaticTimePeriod:
 
 @dataclass(frozen=True, slots=True, eq=True)
 class ProcessChainIdentifier:
+    """Is used to identify and distinguish
+    multiple process chains.
+    """
+
     chain_number: int
     chain_name: str
     unique_identifier: str = get_new_uuid()
@@ -210,6 +286,9 @@ class ProcessChainIdentifier:
 
 @dataclass
 class ProductionOrder:
+    """Represents an Order for a product
+    that should be produced during the simulation."""
+
     production_target: float
     production_deadline: datetime.datetime
     order_number: float
@@ -219,12 +298,26 @@ class ProductionOrder:
 
 
 class OrderCollection:
+    """Combines multiple order that should be passed
+    to a sink.
+    """
+
     def __init__(
         self,
         target_mass: float,
         commodity: Commodity,
         order_data_frame: pandas.DataFrame | None = None,
     ) -> None:
+        """
+
+        Args:
+            target_mass (float): Total mass of all orders
+            commodity (Commodity): Commodity of all orders.
+                All orders must have the same commodity
+            order_data_frame (pandas.DataFrame | None, optional):
+                The data frame is created from a list of ProductionOrder
+                Defaults to None.
+        """
         self.target_mass: float = target_mass
         self.commodity: Commodity = commodity
         if order_data_frame is None:
@@ -242,12 +335,23 @@ class OrderCollection:
         self.order_number_column_name: str = "order_number"
 
     def sort_orders_by_deadline(self, ascending: bool = True):
+        """Sorts the orders in the data frame by their deadline.
+
+        Args:
+            ascending (bool, optional): Determines the order direction. Defaults to True.
+        """
         self.order_data_frame.sort_values(
             self.deadline_column_name, inplace=True, ascending=ascending
         )
         self.order_data_frame.reset_index(inplace=True, drop=True)
 
     def append_order_collection(self, order_collection: "OrderCollection"):
+        """Appends another Order collection to the current collection.
+
+        Args:
+            order_collection (OrderCollection): New collection that should
+                be appended.
+        """
         if self.commodity != order_collection.commodity:
             warnings.warn("Tried to append order collection with different commodity.")
         self.order_data_frame = pandas.concat(
@@ -259,6 +363,9 @@ class OrderCollection:
 
 @dataclass(kw_only=True)
 class ProcessStateEnergyLoadData(DataClassJsonMixin):
+    """Combines the energy data that is required to create
+    a LoadProfileEntry from a process State entry"""
+
     process_state_name: str
     process_step_name: str
     specific_energy_demand: float
@@ -269,11 +376,19 @@ class ProcessStateEnergyLoadData(DataClassJsonMixin):
 
 @dataclass(kw_only=True)
 class ProcessStateEnergyLoadDataBasedOnStreamMass(ProcessStateEnergyLoadData):
+    """Appends the stream name that provides the mass that is the basis
+    to create a lod profile from the process state.
+    """
+
     stream_name: str
 
 
 @dataclass
 class ProductionOrderMetadata(DataClassJsonMixin):
+    """Provides the orders of a sink and additional
+    meta information about it.
+    """
+
     data_frame: pandas.DataFrame
     list_of_aggregated_production_order: list[list[numbers.Number]]
     list_of_unique_deadlines: list[datetime.datetime]
@@ -285,6 +400,10 @@ class ProductionOrderMetadata(DataClassJsonMixin):
 
 @dataclass
 class ProcessStateEnergyData:
+    """Combines the ProcessStateEnergyLoadData for each
+    LoadType of a process step.
+    """
+
     process_step_name: str
     process_state_name: str
     dict_of_loads: dict[str, LoadType] = field(default_factory=dict)
@@ -295,6 +414,13 @@ class ProcessStateEnergyData:
     def add_process_state_energy_load_data(
         self, process_state_energy_load_data: ProcessStateEnergyLoadData
     ):
+        """Adds the ProcessStateEnergyLoadData for a specific LoadType.
+
+        Args:
+            process_state_energy_load_data (ProcessStateEnergyLoadData): Provides
+                the information that is required to determine the energy demand
+                of a process sate for a specific LoadType.
+        """
         self.dict_of_loads[process_state_energy_load_data.load_type.uuid] = (
             process_state_energy_load_data.load_type
         )
@@ -303,17 +429,31 @@ class ProcessStateEnergyData:
         )
 
     def get_dict_of_loads(self) -> dict[str, LoadType]:
+        """Returns a dictionary that contains all LoadTypes
+        that are consumed by a ProcessState-.
+        Returns:
+            dict[str, LoadType]: Dictionary that contains all LoadTypes
+        that are consumed by a ProcessState.
+        """
         return self.dict_of_loads
 
 
 @dataclass
 class EmptyLoadProfileMetadata:
+    """Represents that no load profiles for a LoadType
+    of an Object have been created during a simulation run.
+    """
+
     name: str
     object_type: str
 
 
 @dataclass
 class ListOfLoadProfileEntryMetaData:
+    """Provides a list of LoadProfileEntry and
+    some summarized information about this list.
+    """
+
     name: str
     object_type: str
     list_of_load_profiles: list[LoadProfileEntry]
@@ -324,6 +464,11 @@ class ListOfLoadProfileEntryMetaData:
 
 @dataclass
 class LoadProfileMetaData(DataClassJsonMixin):
+    """Provides a data frame of LoadProfile and the
+    list of list of LoadProfileEntry that was used to create it.
+
+    """
+
     name: str
     object_type: str
     list_of_load_profiles: list[LoadProfileEntry]
