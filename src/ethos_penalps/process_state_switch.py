@@ -15,10 +15,20 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessStateSwitch(ABC):
+    """A ProcessState switch models the transition within a
+    Petri it net. It defines which states are connected by an arc
+    and when a transition occurs.
+    """
+
     state_connector: StateConnector
     process_step_data: ProcessStepData
 
     def calculate_next_event_time_backward(self) -> datetime.datetime:
+        """Determines the switch time to the next state.
+        Returns:
+            datetime.datetime: Time when a switch occurs from the 
+                end state to the start state.
+        """
         raise NotImplementedError
 
 

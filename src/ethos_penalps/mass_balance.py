@@ -409,8 +409,9 @@ class MassBalance:
         self,
         current_storage_level: numbers.Number = 0,
         minimum_storage_level_at_start_time_of_production_branch: numbers.Number = 0,
-        maximum_storage_level_at_start_time_of_production_branch: numbers.Number
-        | None = None,
+        maximum_storage_level_at_start_time_of_production_branch: (
+            numbers.Number | None
+        ) = None,
     ) -> Storage:
         """Each process step requires a storage currently.
         Currently storage level must be 0 at start
@@ -497,7 +498,7 @@ class MassBalance:
         )
         return missing_net_stream_mass
 
-    def check_if_production_branch_is_fulfilled(self):
+    def check_if_production_branch_is_fulfilled(self) -> bool:
         self.determine_missing_mass_for_output_stream()
         missing_mass = self.determine_missing_mass_for_output_stream()
         error_limit = 0

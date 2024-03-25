@@ -152,7 +152,8 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="statement-of-need">
   <title>Statement of Need</title>
   <p>Energy system models are tools that provide guidance on future
-  energy systems
+  energy systems, which are currently undergoing significant changes to
+  due global efforts to reduce dependence on fossil fuels.
   (<xref alt="Prina et al., 2020, p. 1" rid="ref-Prina.2020" ref-type="bibr">Prina
   et al., 2020, p. 1</xref>). However, building long-term models with
   high spatial and temporal resolution and transparent input data
@@ -167,11 +168,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
   profiles of future scenarios. To address the lack of sectoral load
   profiles for the industry, Boßmann and Stafell
   (<xref alt="2015, p. 1321" rid="ref-Bomann.2015" ref-type="bibr">2015,
-  p. 1321</xref>) demonstrated the use of a bottom-up approach to create
-  load profiles. Therefore, it is necessary to obtain load profiles of
-  the industrial processes that are part of the industrial sector.
-  However, these profiles are often unavailable for open research due
-  to:</p>
+  p. 1321</xref>) demonstrated the use of a bottom-up approach.
+  Therefore, it is necessary to obtain load profiles of the industrial
+  processes that are part of the industrial sector. However, these
+  profiles are often unavailable for open research due to:</p>
   <list list-type="bullet">
     <list-item>
       <p>Companies’ efforts to protect commercial secrets;</p>
@@ -191,21 +191,24 @@ a Creative Commons Attribution 4.0 International License (CC BY
   providing load profiles for industrial processes. While many
   industrial processes and their load profiles have been previously
   simulated, most have not published load profiles and simulation
-  implementation under an open-source license. This creates a research
+  implementations under an open-source license. This creates a research
   gap, despite similar work having already been done.</p>
-  <p>The suitability of load profiles simulated by ETHOS.PeNALPS for an
-  energy system model depends on the available input data, the type of
-  process being modeled, and the required temporal resolutions. These
-  three aspects are interdependent, making it impossible to make a
-  static selection of industrial processes that can be provided for all
-  energy system models. At lower temporal resolutions, effects may occur
-  that cannot be modeled under the assumptions of a deterministic Petri
-  net of machine state and average energy consumption per state.
-  Additionally, the temporal resolution of energy system models is
-  evolving. In 2020, a temporal resolution of one hour was considered
-  high for long-term energy system models
-  (<xref alt="Prina et al., 2020, p. 10" rid="ref-Prina.2020" ref-type="bibr">Prina
-  et al., 2020, p. 10</xref>). Currently, studies may require load
+  <p>ETHOS.PeNALPS provides modeling capabilities to simulate load
+  profiles of individual production equipment and the logistics between
+  them in a network. Fluctuations of individual production equipment are
+  modeled using a deterministic Petri net of states. The level of detail
+  and temporal resolution of the load profile model depends on the
+  production process features, the level of detail in the process
+  description, and the available input data. To ensure the suitability
+  of a simulated load profile for each energy system model, it is
+  necessary to evaluate its temporal resolution. At lower temporal
+  resolutions, effects may occur that cannot be modeled using a
+  deterministic Petri net of machine states and average energy
+  consumption per state. Furthermore, the temporal resolution of energy
+  system models is constantly evolving. According to Prina et al.
+  (<xref alt="2020, p. 10" rid="ref-Prina.2020" ref-type="bibr">2020, p.
+  10</xref>), a temporal resolution of one hour is considered high for
+  long-term energy system models. Currently, studies may require load
   profiles with a resolution as low as one minute
   (<xref alt="Omoyele et al., 2024, pp. 12–13" rid="ref-Omoyele.2024" ref-type="bibr">Omoyele
   et al., 2024, pp. 12–13</xref>).</p>
@@ -364,11 +367,13 @@ a Creative Commons Attribution 4.0 International License (CC BY
   and discrete event simulation. However, information about licensing
   and distribution is not available. Rippel et al.
   (<xref alt="2017" rid="ref-Rippel.2017" ref-type="bibr">2017</xref>)
-  developed the “μ-ProPlAn framework”, but information about the
-  licensing and distribution is not available. Binderbauer et al.
+  developed the “μ-ProPlAn framework”. Rippel
+  (<xref alt="25.03.2024" rid="ref-Rippel.25.03.2024" ref-type="bibr">25.03.2024</xref>)
+  stated via e-mail that the software has not been published and is no
+  longer executable due to a lack of maintenance. Binderbauer et al.
   (<xref alt="2022" rid="ref-Binderbauer.2022" ref-type="bibr">2022</xref>)
-  published “Ganymede”, a software that simulates load profiles, but no
-  information about its licensing and distribution is also not
+  published a software called “Ganymede” that simulates load profiles.
+  However, information about its licensing and distribution is not
   available.</p>
 </sec>
 <sec id="authors-contribution">
@@ -445,7 +450,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Filippov</surname><given-names>A.</given-names></name>
       </person-group>
       <article-title>From system dynamics and discrete event to practical agent based modeling: Reasons, techniques, tools</article-title>
-      <source>Proceedings of international conference of the system dynamics society,</source>
+      <source>International conference of the system dynamics society.</source>
       <year iso-8601-date="2004">2004</year>
     </element-citation>
   </ref>
@@ -576,6 +581,17 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <year iso-8601-date="2017">2017</year>
       <fpage>79</fpage>
       <lpage>88</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-Rippel.25.03.2024">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Rippel</surname><given-names>Daniel</given-names></name>
+      </person-group>
+      <article-title>M-ProPlAn: E-mail</article-title>
+      <person-group person-group-type="editor">
+        <name><surname>Belina</surname><given-names>Julian</given-names></name>
+      </person-group>
     </element-citation>
   </ref>
   <ref id="ref-RockwellAutomation.17.02.2024">

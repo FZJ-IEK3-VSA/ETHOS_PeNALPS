@@ -26,6 +26,10 @@ from ethos_penalps.utilities.general_functions import (
 
 @dataclass
 class SplittedOrderCollection:
+    """Represents a set of orders that has been splitted
+    among multiple ProcessChains
+    """
+
     stream_name: str
     commodity: Commodity
     process_chain_identifier: ProcessChainIdentifier
@@ -34,6 +38,11 @@ class SplittedOrderCollection:
     current_order_number: int = 0
 
     def check_if_order_are_empty(self):
+        """Raises an error if an order is empty.
+
+        Raises:
+            MisconfigurationError: Is raised if the order is empty.
+        """
         if self.order_data_frame.empty:
             raise MisconfigurationError(
                 "A splitted order of chain: "
@@ -42,6 +51,14 @@ class SplittedOrderCollection:
             )
 
     def get_order_by_order_number(self, order_number: int) -> ProductionOrder:
+        """Returns an order based on the order number.
+
+        Args:
+            order_number (int): Number that identifies the order.
+
+        Returns:
+            ProductionOrder: Order for a product oder intermediate product.
+        """
         order_data_frame_row = self.order_data_frame.iloc[order_number]
         production_order = ProductionOrder(
             production_target=order_data_frame_row.loc["production_target"],
@@ -56,6 +73,12 @@ class SplittedOrderCollection:
         return production_order
 
     def update_order(self, produced_mass: numbers.Number):
+        """Updates the mass that is already produced.
+
+        Args:
+            produced_mass (numbers.Number): The additional mass that has been
+                produced and should be added to the order.
+        """
         self.order_data_frame.at[self.current_order_number, "produced_mass"] = (
             self.order_data_frame.at[self.current_order_number, "produced_mass"]
             + produced_mass
@@ -63,12 +86,23 @@ class SplittedOrderCollection:
 
 
 class OrderDistributor:
+    """Distributes the orders among multiple ProcessChains."""
+
     def __init__(
         self,
         stream_handler: StreamHandler,
         production_order_collection: OrderCollection,
         node_name: str,
     ) -> None:
+        """
+
+        Args:
+            stream_handler (StreamHandler): Container for all streams
+                connected the sink to the process chains.
+            production_order_collection (OrderCollection): Set of orders
+                that should be delivered to the sink.
+            node_name (str): Name of the sink that should receive the orders.
+        """
         self.node_name: str = node_name
         self.dict_of_stream_names: dict[ProcessChainIdentifier, str] = {}
         self.stream_handler: StreamHandler = stream_handler
@@ -80,12 +114,24 @@ class OrderDistributor:
         self.current_splitted_order: SplittedOrderCollection
 
     def update_order_collection(self, new_order_collection: OrderCollection):
+        """Adds new orders to the current set of orders.
+
+        Args:
+            new_order_collection (OrderCollection): The set of orders
+                that should be added to the current one.
+        """
         self.order_collection.append_order_collection(new_order_collection)
         self.split_production_order_dict()
 
     def set_current_splitted_order_by_chain_identifier(
         self, process_chain_identifier: ProcessChainIdentifier
     ):
+        """Activates the set of splitted orders for a new process chain.
+
+        Args:
+            process_chain_identifier (ProcessChainIdentifier): The process chain
+                that should that is simulated next.
+        """
         self.current_splitted_order = self.dict_of_splitted_order[
             process_chain_identifier
         ]
@@ -93,9 +139,20 @@ class OrderDistributor:
     def get_current_splitted_order(
         self,
     ) -> SplittedOrderCollection:
+        """Returns the set of orders that is currently simulated.
+
+        Returns:
+            SplittedOrderCollection: Current set of orders.
+        """
         return self.current_splitted_order
 
     def check_if_there_are_sufficient_order_for_distribution(self):
+        """Checks if there are sufficient orders for each process chain.
+        Each process chain requires at least one order.
+
+        Raises:
+            MisconfigurationError: Raises in error if there are too few order.
+        """
         if len(self.order_collection.order_data_frame) < len(
             self.dict_of_splitted_order
         ):
@@ -104,6 +161,10 @@ class OrderDistributor:
             )
 
     def split_production_order_dict(self):
+        """Splits the current set of order among the process chains
+        of this NetworkLevel. Currently it is no supported to connect
+        a mix of batch and continuous streams to the sink.
+        """
         number_of_streams = len(self.dict_of_stream_names)
         list_of_all_streams = []
 
@@ -207,6 +268,19 @@ class OrderDistributor:
         order_data_frame: pandas.DataFrame,
         total_operation_rate_of_streams: numbers.Number,
     ) -> pandas.DataFrame:
+        """Aggregates a set of orders in case there are only
+        continuous streams connected to the sink.
+
+        Args:
+            order_data_frame (pandas.DataFrame): DataFrame of orders that
+                should be aggregated.
+            total_operation_rate_of_streams (numbers.Number): The combined operation
+                rate of all continuous streams that are connected to the sink.
+
+
+        Returns:
+            pandas.DataFrame: Aggregated data frame of orders.
+        """
         intermediate_data_frame = order_data_frame.copy()
         intermediate_data_frame.sort_values(
             by="production_deadline", ascending=False, inplace=True
@@ -320,6 +394,20 @@ class OrderDistributor:
         input_order_data_frame: pandas.DataFrame,
         order_target_mass: numbers.Number,
     ) -> pandas.DataFrame:
+        """Aggregates a set of orders in case there are only
+        batch streams connected to the sink.
+
+        Args:
+            input_order_data_frame (pandas.DataFrame): DataFrame of orders that
+                should be aggregated.
+            order_target_mass (numbers.Number): The combined operation
+                rate of all continuous streams that are connected to the sink.
+
+
+        Returns:
+            pandas.DataFrame: Aggregated data frame of orders.
+        """
+
         input_order_data_frame = input_order_data_frame.copy()
         input_order_data_frame.sort_values(
             by="production_deadline", ascending=False, inplace=True
@@ -438,24 +526,53 @@ class OrderDistributor:
         return output_data_frame
 
     def get_current_production_order(self) -> ProductionOrder:
+        """Returns the current production order.
+
+        Returns:
+            ProductionOrder: Active production order.
+        """
         return self.current_splitted_order.get_order_by_order_number(
             self.current_splitted_order.current_order_number
         )
 
     def update_production_order(self, produced_mass: numbers.Number):
+        """Updates the production order mass that has been produced.
+
+        Args:
+            produced_mass (numbers.Number): New mass that has been produced
+                to fulfill the current order.
+        """
         self.current_splitted_order.update_order(produced_mass=produced_mass)
 
     def get_current_stream_name(self) -> str:
+        """Returns the stream name of the active ProcessChain.
+
+        Returns:
+            str: Stream name of the active process chain.
+        """
         return self.current_splitted_order.stream_name
 
     def add_stream_name(
         self, stream_name: str, process_chain_identifier: ProcessChainIdentifier
     ):
+        """Adds a stream name that connects the sink to a process chain.
+
+        Args:
+            stream_name (str): Name of a stream that connects the sink to a process chain.
+            process_chain_identifier (ProcessChainIdentifier): Identifies the respective
+                ProcessChain.
+        """
         self.dict_of_stream_names[process_chain_identifier] = stream_name
 
     def check_if_current_order_is_fulfilled(
         self,
     ) -> bool:
+        """Determines if enough mass has been produced to fulfill the current order.
+
+
+        Returns:
+            bool: Is True if sufficient mass is provided.
+        """
         current_order = self.get_current_production_order()
         remaining_mass = current_order.production_target - current_order.produced_mass
 
@@ -471,11 +588,17 @@ class OrderDistributor:
         return production_order_is_fulfilled
 
     def update_current_order_number(self):
+        """Increments order number of the active order."""
         self.current_splitted_order.current_order_number = (
             self.current_splitted_order.current_order_number + 1
         )
 
     def check_if_process_chain_orders_are_satisfied(self) -> bool:
+        """Determines if all orders for a process chain are fulfilled.
+
+        Returns:
+            bool: Returns True if all orders for a ProcessChain are fulfilled.
+        """
         process_chain_orders_are_satisfied = (
             self.current_splitted_order.current_order_number
             >= self.current_splitted_order.order_data_frame.shape[0]
@@ -485,5 +608,16 @@ class OrderDistributor:
     def get_stream_name_chain_identifier(
         self, process_chain_identifier: ProcessChainIdentifier
     ) -> str:
+        """Returns the stream name of the stream that connects the sink to a specific
+        process chain.
+
+        Args:
+            process_chain_identifier (ProcessChainIdentifier): The process chain
+                for which the stream name should be returned.
+
+        Returns:
+            str: Stream name of the stream that connects the sink to a specific
+        process chain.
+        """
         stream_name = self.dict_of_stream_names[process_chain_identifier]
         return stream_name

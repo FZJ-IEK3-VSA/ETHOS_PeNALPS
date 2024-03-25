@@ -20,7 +20,7 @@ class TimeData:
         """
         Args:
             global_start_date (datetime.datetime, optional): _description_. Defaults to datetime.datetime(2021, 1, 1).
-            global_end_date (datetime.datetime, optional): _description_. Defaults to datetime.datetime(2022, 1, 1).
+            global_end_date (datetime.datetime, optional): The global end date . Defaults to datetime.datetime(2022, 1, 1).
         """
         self.global_start_date: datetime.datetime = global_start_date
         self.global_end_date: datetime.datetime = global_end_date

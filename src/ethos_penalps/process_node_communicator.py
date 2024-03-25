@@ -43,12 +43,19 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessNodeCommunicator:
-    """A OutputBranch is based on an output_stream_state. The purpose of a production branch is
-    to keep track at what time which kind of inputs are required to provide the output stream which is requested by this Production Branch.
-    It should also check for coherence with possible previous production Branches.
+    """The ProcessNodeCommunicator manages the communication of the ProcessStep.
 
-    The core functionality of the branch is to call the generation of the respective input stream state.
-    When the node operation comes from a downstream node the method
+    It creates and reacts to the following communication types:
+
+        - UpstreamNewProductionOrder:
+            Requests a new output stream state from the target node
+        - DownstreamValidationOrder
+            Affirms that an output stream will be provided as requested.
+        - DownstreamAdaptionOrder
+            Requests an adaption of the previously requested stream.
+        - UpstreamAdaptionOrder
+            Affirms the adaption of the previously requested stream.
+
     """
 
     def __init__(
@@ -56,6 +63,15 @@ class ProcessNodeCommunicator:
         production_plan: ProductionPlan,
         process_state_handler: ProcessStateHandler,
     ) -> None:
+        """
+
+        Args:
+            production_plan (ProductionPlan): Is used to store all the activity of the
+                process step and its input stream during simulation. The ProductionPlan
+                instance is shared amon all nodes.
+            process_state_handler (ProcessStateHandler): Is a container class that is used
+                to store all ContinuosStreams and BatchStreams.
+        """
         self.output_stream_state: ContinuousStreamState | BatchStreamState
         self.production_plan: ProductionPlan = production_plan
         self.process_state_handler: ProcessStateHandler = process_state_handler
@@ -67,6 +83,8 @@ class ProcessNodeCommunicator:
         )
 
     def check_if_temporal_branches_are_fulfilled(self):
+        """Checks is all requests for input streams have been validated. This
+        is  a check for a faulty simulation."""
         all_temporal_branch_are_fulfilled = True
 
         output_branch_data = (
@@ -92,6 +110,12 @@ class ProcessNodeCommunicator:
             )
 
     def check_if_stream_branch_is_fulfilled(self) -> bool:
+        """Check if all different streams have been requested and can be provided
+        as requested. This method is still in development.
+
+        Returns:
+            bool: Returns True if all Streams can be provided as requested.
+        """
         input_stream_providing_state = (
             self.process_state_handler.get_input_stream_providing_state()
         )
@@ -105,7 +129,13 @@ class ProcessNodeCommunicator:
         )
         return stream_branch_if_fulfilled
 
-    def check_if_production_branch_is_fulfilled(self):
+    def check_if_production_branch_is_fulfilled(self) -> bool:
+        """Determines if enough input streams have been requested to provide
+        the requested OutputStreamState
+
+        Returns:
+            bool: Returns true if enough input stream states have been requested.
+        """
         input_stream_providing_state = (
             self.process_state_handler.get_input_stream_providing_state()
         )
@@ -120,12 +150,17 @@ class ProcessNodeCommunicator:
         return production_branch_if_fulfilled
 
     def complete_stream_branch(self):
+        """Confirms that a stream branch is fulfilled."""
         self.process_state_handler.process_step_data.state_data_container.complete_stream_branch()
 
     def complete_temporal_branch(self):
+        """Confirms that a temporal branch is fulfilled."""
         self.process_state_navigator.process_state_handler.process_step_data.state_data_container.complete_temporal_branch()
 
     def complete_output_branch(self):
+        """Prepares the simulation data for the next output stream request,
+        when all necessary input streams are requested.
+        """
         self.process_state_navigator.process_state_handler.process_step_data.state_data_container.complete_output_branch()
         self.process_state_handler.switch_to_idle_state()
         self.process_state_navigator.create_process_state_entries()
@@ -142,17 +177,18 @@ class ProcessNodeCommunicator:
         The current temporal branch is reset and the process states are set to harmonize the
         input and output stream state. After successful harmonization an UpstreamAdaptionOrder is created.
 
-        :param downstream_adaption_operation: The DownstreamAdaptionOrder contains information about
-            a possible input stream state. This order is created when the input stream state requested in a
-            UpstreamNewProductionOrder can not provided by the upstream order.
-        :type downstream_adaption_operation: DownstreamAdaptionOrder
-        :param next_node_name: Name of the upstream node. It is required to create the next UpstreamAdaptionOrder
-        :type next_node_name: str
-        :param starting_node_name: Name of the current node.
-        :type starting_node_name: str
-        :return: _description_
-        :rtype: UpstreamAdaptionOrder
+        Args:
+            downstream_adaption_operation (DownstreamAdaptionOrder):  The DownstreamAdaptionOrder contains information about
+                a possible input stream state. This order is created when the input stream state requested in a
+                UpstreamNewProductionOrder can not provided by the upstream order.
+            next_node_name (str): Name of the upstream node. It is required to create the next UpstreamAdaptionOrder
+            starting_node_name (str): Name of the current node.
+
+        Returns:
+            UpstreamAdaptionOrder: The next Order that confirms the adaption of the previously
+                requested output stream.
         """
+
         logger.debug("Start to process downstream adaption order")
 
         starting_node_output_branch_data = (
@@ -181,15 +217,26 @@ class ProcessNodeCommunicator:
         upstream_node_name: str,
         downstream_node_name: str,
     ) -> DownstreamValidationOrder | UpstreamNewProductionOrder:
-        """Validates that the required input for the current temporal branch can be provided
+        """Checks if further input streams must be requested to fulfill the request of the output streams
+        that was passed to this node.
 
-        :param downstream_validation_operation: _description_
-        :type downstream_validation_operation: DownstreamValidationOrder
+        Args:
+            downstream_validation_operation (DownstreamValidationOrder): The incoming DownstreamValidationOrder
+                from the Upstream Node.
+            upstream_node_name (str): Name of the UpstreamNode.
+            downstream_node_name (str): Name of the DownstreamNode.
+
+        Returns:
+            DownstreamValidationOrder | UpstreamNewProductionOrder: The next order is either the
+                a DownstreamValidationOrder or a UpstreamNewProductionOrder. The DownstreamValidationOrder
+                is passed Downstream, when enough input stream states have been requested. A UpstreamNewProductionOrder
+                is passed Upstream if further input streams are required.
         """
         self.process_state_navigator.validate_temporal_branch()
         self.check_if_temporal_branches_are_fulfilled()
 
         stream_branch_is_fulfilled = self.check_if_stream_branch_is_fulfilled()
+        output_operation: DownstreamValidationOrder | UpstreamNewProductionOrder
         if stream_branch_is_fulfilled:
             self.complete_stream_branch()
             production_branch_is_fulfilled = (
@@ -217,33 +264,36 @@ class ProcessNodeCommunicator:
 
         return output_operation
 
-    def validate_stream_branch(self):
-        self.process_state_navigator.process_state_handler.process_step_data.state_data_container.complete_stream_branch()
-
     def process_upstream_new_production_operation(
         self,
         starting_node_name: str,
         upstream_node_name: str,
         downstream_node_name: str,
         upstream_production_order: UpstreamNewProductionOrder,
-    ) -> UpstreamNewProductionOrder | DownstreamAdaptionOrder:
+    ) -> (
+        UpstreamNewProductionOrder | DownstreamAdaptionOrder | DownstreamValidationOrder
+    ):
         """Determines if the current node can provide the requested output stream.
         If the required state can be provided the required input is requested by a new
         UpstreamNewProductionOrder. If the requested state can not be provided an adaption
         of the output stream is requested by the creation of a UpstreamNewProductionOrder.
         Initializes the production branch.
 
-        :param starting_node_name: The name of the current node to which this branch belongs.
-        :type starting_node_name: str
-        :param upstream_node_name: _description_
-        :type upstream_node_name: str
-        :param downstream_node_name: _description_
-        :type downstream_node_name: str
-        :param upstream_production_order: _description_
-        :type upstream_production_order: UpstreamNewProductionOrder
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: UpstreamNewProductionOrder | DownstreamAdaptionOrder
+        Args:
+            starting_node_name (str): Current process step name
+            upstream_node_name: (str): Name of the upstream node
+            downstream_node_name: (str): Name of the downstream node.
+            upstream_production_order: (UpstreamNewProductionOrder): Input order that triggered
+                the call of this method.
+
+
+        Returns:
+            UpstreamNewProductionOrder | DownstreamAdaptionOrder | DownstreamValidationOrder: The next
+            order is either a UpstreamNewProductionOrder, DownstreamAdaptionOrder or a DownstreamValidationOrder.
+            The UpstreamNewProductionOrder is created if an additional input stream is required. The
+            DownstreamAdaptionOrder is created if the requested output stream must be shifted. The
+            DownstreamValidationOrder is requested if the output stream can be provided from the internal
+            storage.
         """
 
         if not isinstance(upstream_production_order, UpstreamNewProductionOrder):
@@ -263,6 +313,11 @@ class ProcessNodeCommunicator:
             self.process_state_navigator.determine_if_output_stream_requires_adaption()
         )
 
+        new_production_order: (
+            UpstreamNewProductionOrder
+            | DownstreamAdaptionOrder
+            | DownstreamValidationOrder
+        )
         if output_stream_adaption_decider.adaption_is_necessary is True:
             logger.debug("Adaption of output stream is necessary")
 
@@ -307,14 +362,18 @@ class ProcessNodeCommunicator:
     ) -> UpstreamNewProductionOrder | DownstreamValidationOrder:
         """Determines the required input stream to an output stream which has been adapted before.
 
-        :param starting_node_name: _description_
-        :type starting_node_name: str
-        :param upstream_node_name: _description_
-        :type upstream_node_name: str
-        :param upstream_adaption_operation: _description_
-        :type upstream_adaption_operation: UpstreamAdaptionOrder
-        :return: _description_
-        :rtype: UpstreamNewProductionOrder
+        Args:
+            starting_node_name (str): Name of the current node.
+            upstream_node_name (str): Name of the upstream node that receives the new order.
+            upstream_adaption_operation (UpstreamAdaptionOrder): The input order
+                that causes the new output order.
+
+        Returns:
+            UpstreamNewProductionOrder | DownstreamValidationOrder: This methods either creates
+                either a UpstreamNewProductionOrder or a DownstreamValidationOrder. The UpstreamNewProductionOrder
+                is created if an additional input stream is required. The DownstreamValidationOrder is created if
+                a sufficient input streams have been requested to provide the output stream state.
+
         """
 
         output_stream_providing_state = (
@@ -323,7 +382,7 @@ class ProcessNodeCommunicator:
         storage_can_be_supplied_directly = (
             output_stream_providing_state.check_if_storage_can_supply_output_directly()
         )
-
+        new_production_order: DownstreamValidationOrder | UpstreamNewProductionOrder
         if storage_can_be_supplied_directly is True:
             self.process_state_navigator.provide_output_stream_from_storage()
             self.process_state_navigator.validate_temporal_branch_without_input_stream()
@@ -356,19 +415,19 @@ class ProcessNodeCommunicator:
         down_stream_node_name: str,
         upstream_production_order: UpstreamNewProductionOrder,
     ) -> DownstreamAdaptionOrder:
-        """Creates a DownStreamAdaptionOrder based on the new output_stream_state
+        """Creates a DownStreamAdaptionOrder that adapts of the output stream
+        state that was requested from the downstream node.
 
+        Args:
+            starting_node_name (str): Name of the current node.
+            down_stream_node_name (str): Name of the downstream node that receives the new
+                order.
+            upstream_production_order (UpstreamNewProductionOrder): The incoming order.
 
-        :param starting_node_name: _description_
-        :type starting_node_name: str
-        :param down_stream_node_name: _description_
-        :type down_stream_node_name: str
-        :param current_temporal_branch: _description_
-        :type current_temporal_branch: TemporalBranch
-        :param upstream_production_order: _description_
-        :type upstream_production_order: UpstreamNewProductionOrder
-        :return: _description_
-        :rtype: DownstreamAdaptionOrder
+        Returns:
+            DownstreamAdaptionOrder: Order that adapts of the output stream
+        state that was requested from the downstream node.
+
         """
 
         state_data = (
@@ -393,6 +452,20 @@ class ProcessNodeCommunicator:
         starting_node_name: str,
         input_upstream_production_order: UpstreamNewProductionOrder,
     ) -> UpstreamNewProductionOrder:
+        """Creates an UpstreamNewProduction order that requests an output stream of the
+        upstream node.
+
+        Args:
+            next_node_name (str): Name of the upstream node, that receives the upstream
+                order.
+            starting_node_name (str): Name of the current node.
+            input_upstream_production_order (UpstreamNewProductionOrder): Order that
+                requested the current output stream.
+
+        Returns:
+            UpstreamNewProductionOrder: Order that requests an output stream of the
+        upstream node.
+        """
         input_stream_state = (
             self.process_state_navigator.determine_input_stream_from_output_stream()
         )
@@ -450,6 +523,19 @@ class ProcessNodeCommunicator:
         starting_node_name: str,
         input_production_order: UpstreamNewProductionOrder | DownstreamValidationOrder,
     ) -> DownstreamValidationOrder:
+        """Creates a DownstreamValidationOrder to signal that the requested output stream
+        can be provided as requested.
+
+        Args:
+            downstream_node_name (str): Name of the DownStreamNode.
+            starting_node_name (str): Name of the starting Node.
+            input_production_order (UpstreamNewProductionOrder | DownstreamValidationOrder): Incoming
+                order to the ProcessNode.
+
+        Returns:
+            DownstreamValidationOrder: DownstreamValidationOrder to signal that the requested output stream
+        can be provided as requested
+        """
         self.complete_output_branch()
         complete_branch_data = (
             self.process_state_handler.process_step_data.state_data_container.get_complete_branch_data()
@@ -477,5 +563,7 @@ class ProcessNodeCommunicator:
 
 
 class EmptyProductionBranch:
+    """Represents an empty ProductionBranch and the beginning of a new output stream request"""
+
     def __init__(self) -> None:
         pass

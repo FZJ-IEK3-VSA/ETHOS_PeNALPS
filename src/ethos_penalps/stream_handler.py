@@ -157,7 +157,7 @@ class StreamHandler:
         """Returns a stream based on the name as a key.
 
         Args:
-            stream_name (str): Name of stream to be returned
+            stream_name (str): Name of stream to be returned.
 
 
         Returns:
