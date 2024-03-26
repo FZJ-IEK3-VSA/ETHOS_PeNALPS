@@ -6,23 +6,25 @@ from sqlalchemy import MetaData, create_engine, inspect
 
 
 class DataBaseInteractions:
-    def __init__(self, path_to_database: str) -> None:
-        """_summary_
+    """This class provides functionality to read and write data from
+    sqlite databases.
+    """
 
-        :param path_to_database: Is the path to the database file.It musst end with .db
-        :type path_to_database: str
+    def __init__(self, path_to_database: str) -> None:
+        """
+
+        Args:
+            path_to_database (str): Is the path to the database file.It must end with .db
         """
         self.path_to_database = r"sqlite:///" + path_to_database
 
     def write_to_database(self, data_frame: pd.DataFrame, table_name: str):
         """Writes data frame to an sqlite3 database. If the database does not exist it creates it.
 
-        :param data_frame: _description_
-        :type data_frame: pd.DataFrame
-        :param table_name: _description_
-        :type table_name: str
+        Args:
+            data_frame (pd.DataFrame): _description_
+            table_name (str): _description_
         """
-
         engine = create_engine(self.path_to_database)
 
         data_frame.to_sql(table_name, engine)

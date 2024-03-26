@@ -28,15 +28,27 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class GanttChartPageGenerator:
+    """Creates the GanttChart Page of the report."""
+
     def __init__(
         self,
         production_plan: ProductionPlan,
-        network_analyzer: NetworkAnalyzer,
         result_selector: ResultSelector,
         report_directory: str,
     ) -> None:
+        """
+
+        Args:
+            production_plan (ProductionPlan): Contains the unprocessed
+                simulation results.
+            result_selector (ResultSelector): Object that contains
+                the simulation in a structure that resembles the
+                material flow simulation.
+            report_directory (str): Path to the
+                report directory. If set to None a folder relative
+                to the main file is created. Defaults to None.
+        """
         self.production_plan: ProductionPlan = production_plan
-        self.network_analyzer: NetworkAnalyzer = network_analyzer
         self.result_selector: ResultSelector = result_selector
         self.report_directory: str = report_directory
 
@@ -46,10 +58,13 @@ class GanttChartPageGenerator:
         """Create Gantt Charts for all Network Level.
 
         Args:
-            report_generator_options (ReportGeneratorOptions): _description_
+            report_generator_options (ReportGeneratorOptions): Is an object
+                that contains the parameters to adjust the report
+                appearance.
 
         Returns:
-            datapane.Group: _description_
+            datapane.Group: DataPane object that represents the Gantt chart page of the
+                report.
         """
         figure_list = []
         if report_generator_options.full_process_gantt_chart.create_gantt_chart is True:

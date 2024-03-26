@@ -30,9 +30,17 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 @dataclass
 class OutputStreamAdaptionDecider:
+    """Tracks if the an output stream required adaption."""
+
     def __init__(
         self, original_stream_state: ContinuousStreamState | BatchStreamState
     ) -> None:
+        """
+
+        Args:
+            original_stream_state (ContinuousStreamState | BatchStreamState): The original
+                requested output_stream_state that is checked if adaption is required.
+        """
         self.original_stream_state: ContinuousStreamState | BatchStreamState = (
             original_stream_state
         )
@@ -44,16 +52,22 @@ class OutputStreamAdaptionDecider:
     def add_adapted_state(
         self, adapted_state: ContinuousStreamState | BatchStreamState
     ):
+        """This method is called if an adaptation was necessary.
+
+        Args:
+            adapted_state (ContinuousStreamState | BatchStreamState): The adapted
+                output stream state.
+        """
         self.adapted_stream_state = adapted_state
         self.adaption_is_necessary: bool = True
 
 
 class ProcessStateNetworkNavigator:
     """
-    An input branch is created to determine the required input stream
-    to provide an output stream that is requested. It also
-    - determines if multiple input streams are required to provide the requested output stream state
-    - handles conflicts if the input stream can not be provided from the upstream process step as requested
+    The ProcessStateNetworkNavigator is the interface to the Petri net of the
+    ProcessStep Agent. Depending on the received communication a different path
+    path in the Petri net is triggered. The navigator can also just check the state
+    of the simulation data to request adaptations.
     """
 
     def __init__(
@@ -61,12 +75,13 @@ class ProcessStateNetworkNavigator:
         production_plan: ProductionPlan,
         process_state_handler: ProcessStateHandler,
     ) -> None:
-        """_summary_
+        """
 
-        :param production_plan: _description_
-        :type production_plan: ProductionPlan
-        :param process_state_handler: _description_
-        :type process_state_handler: ProcessStateHandler
+        Args:
+            production_plan (ProductionPlan): Stores the simulation data
+                of the petri net and the input stream.
+            process_state_handler (ProcessStateHandler): Stores all instances
+                the streams that are connected to this process step.
         """
         self.process_state_handler: ProcessStateHandler = process_state_handler
         # This copy can be used to restore the state of the process state handler
@@ -88,8 +103,9 @@ class ProcessStateNetworkNavigator:
         Also tests for a maximum mass provided in a single stream. Cuts the stream to maximum mass if
         more mass is requested.
 
-        :return: _description_
-        :rtype: OutputStreamAdaptionDecider
+        Returns:
+            OutputStreamAdaptionDecider: Contains the output stream state and a bool flag
+                that tracks if it has been adapted.
         """
         logger.debug("Determine if output stream requires adaption has been called")
 
@@ -132,6 +148,7 @@ class ProcessStateNetworkNavigator:
         return output_stream_adaption_decider
 
     def store_current_simulation_data(self):
+        """Stores the current simulation data so it can be restored at a later point of the simulation."""
         self.time_data_at_start = (
             self.process_state_handler.process_step_data.time_data.create_self_copy()
         )
@@ -148,9 +165,10 @@ class ProcessStateNetworkNavigator:
         """Checks if the output stream must be shifted because the process step is not available yet.
         If a shift is necessary the state is shifted to the earliest available date
 
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: _type_
+
+        Returns:
+            OutputStreamAdaptionDecider: Contains the output stream state and a bool flag
+                that tracks if it has been adapted.
         """
 
         earliest_output_stream_end_time = (
@@ -235,11 +253,12 @@ class ProcessStateNetworkNavigator:
         """Determines the time when process state shift must be initiated to shift into the process state providing state
         in time. This is necessary to shift over pre output stream providing states
 
-        :param stream_end_time: Output stream end time
-        :type stream_end_time: datetime.datetime
-        :raises Exception: Stream end time must be before idle time.
-        :return: Initiation date for process state shift from idle to output stream providing state
-        :rtype: datetime.datetime
+        Args:
+            stream_end_time (datetime.datetime): The end_time of the output stream.
+
+
+        Returns:
+            datetime.datetime: Initiation date for process state shift from idle to output stream providing state
         """
 
         earliest_output_stream_end_time = (
@@ -267,6 +286,12 @@ class ProcessStateNetworkNavigator:
     def determine_input_stream_from_output_stream(
         self,
     ) -> ContinuousStreamState | BatchStreamState:
+        """Determines the required input stream from the output stream.
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The new input stream
+                that is requested to provide mass for the output stream state.
+        """
         state_data = (
             self.process_state_handler.process_step_data.state_data_container.get_pre_production_state_data()
         )
@@ -346,17 +371,17 @@ class ProcessStateNetworkNavigator:
         self,
         new_input_stream_state: ContinuousStreamState | BatchStreamState,
     ) -> ContinuousStreamState | BatchStreamState:
-        """Reacts to an adaption of the input stream that was requested by this branch
+        """Is called if an adapation for in input stream is requested.
+        It updates the requested input stream state and the duration of the
+        input state.
 
-        :param new_input_stream_state: _description_
-        :type new_input_stream_state: ContinuousStreamState | BatchStreamState
-        :raises Exception: _description_
-        :raises Exception: _description_
-        :raises Exception: _description_
-        :raises Exception: _description_
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: ContinuousStreamState | BatchStreamState
+        Args:
+            new_input_stream_state (ContinuousStreamState | BatchStreamState): The
+                adapted input stream state from the upstream node.
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The adapted input stream state.
+                It is the same state that was provided as an argument.
         """
 
         logger.debug("Start to combine input and output stream")
@@ -452,6 +477,13 @@ class ProcessStateNetworkNavigator:
         return new_input_stream_state
 
     def fulfill_temporal_branch(self) -> ContinuousStreamState | BatchStreamState:
+        """This method is called to created an additional request for an input stream state.
+        Before this method is called it must be checked that an additional stream is required.
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The new input stream state that is requested
+                from the upstream node.
+        """
         logger.debug("Start to fulfill production branch")
         state_data = (
             self.process_state_handler.process_step_data.state_data_container.get_validated_production_state_data()
@@ -494,8 +526,7 @@ class ProcessStateNetworkNavigator:
         return input_stream_state
 
     def store_input_stream_state_to_temporary_production_plan(self):
-        """
-        Stores the input stream state to the production plan.
+        """Stores the input stream state to the production plan.
         Should be called before the branch is validated
         """
         logger.debug("Store streams to production plan")
@@ -519,6 +550,7 @@ class ProcessStateNetworkNavigator:
         )
 
     def reset_temporal_branch(self):
+        """Restores the process step data to previously stored state."""
         self.process_state_handler.restore_process_step_data(
             time_data_at_start=self.time_data_at_start,
             simulation_state_data_at_start=self.simulation_state_data_at_start,
@@ -528,6 +560,9 @@ class ProcessStateNetworkNavigator:
         logger.debug("Temporal branch has been reset")
 
     def provide_output_stream_from_storage(self):
+        """Creates an output stream state from the mass in the
+        internal storage.
+        """
         state_data = (
             self.process_state_handler.process_step_data.state_data_container.get_pre_production_state_data()
         )
@@ -554,6 +589,8 @@ class ProcessStateNetworkNavigator:
         self.process_state_handler.switch_to_idle_state()
 
     def validate_temporal_branch_without_input_stream(self):
+        """Creates the storage entries and process state entries
+        without the request for an input stream state."""
         logger.debug("Start to validate temporal branch without input stream")
         input_stream_state = (
             self.process_state_handler.get_input_stream_providing_state()
@@ -562,6 +599,10 @@ class ProcessStateNetworkNavigator:
         self.create_process_state_entries()
 
     def validate_temporal_branch(self):
+        """Moves the input stream state to the list of validated
+        input stream state. Creates the process state and storage
+        entries.
+        """
         logger.debug("Validation of temporal branch starts")
         self.store_input_stream_state_to_temporary_production_plan()
         self.process_state_handler.process_step_data.validate_input_stream()
@@ -575,6 +616,9 @@ class ProcessStateNetworkNavigator:
         logger.debug("Temporal branch is validated")
 
     def create_process_state_entries(self):
+        """Creates the process state entries from the provision
+        of the previous output stream state.
+        """
         logger.debug("Start to create process state entries")
         state_data = (
             self.process_state_handler.process_step_data.state_data_container.get_validated_pre_or_post_production_state()

@@ -20,6 +20,11 @@ class DebuggingInformationLogger:
 
 
 class NodeOperationViewer:
+    """Is used to visualizes the NodeOperations that are created
+    by the agents during the simulation. This is mainly used for debugging
+    purposes.
+    """
+
     def __init__(
         self,
         debugging_information_logger: DebuggingInformationLogger,

@@ -6,6 +6,10 @@ from ethos_penalps.utilities.general_functions import get_new_uuid
 
 
 class TikzAnchorNames:
+    """Contains the strings which are used to determine the anchor
+    positions in tikz nodes.
+    """
+
     south: str = ".south"
     south_west: str = ".south west"
     north: str = ".north"
@@ -14,15 +18,22 @@ class TikzAnchorNames:
 
 
 class TikzRelativePositions:
+    """Contains the tikz string which are
+    used to position nodes relative to each other.
+    """
+
     above: str = "above= of "
     below: str = "below= of "
     right: str = "right= of "
     left: str = "left= of "
 
 
-@dataclass
 @dataclass(kw_only=True)
 class TikzEdge:
+    """Represents all information that is required
+    to create a tikz edge.
+    """
+
     start_node_name: str
     target_node_name: str
     edge_style: str = ""
@@ -51,26 +62,44 @@ class TikzEdge:
 
 @dataclass(kw_only=True)
 class ForwardEdge(TikzEdge):
+    """Represents a forward edge."""
+
     edge_style: str = "->"
 
 
 @dataclass(kw_only=True)
 class BackwardEdge(TikzEdge):
+    """Represents a backward edge."""
+
     edge_style: str = "<-"
 
 
 @dataclass(kw_only=True)
 class IntermediateEdge(TikzEdge):
+    """Represents an edge without direction."""
+
     edge_style: str = "-"
 
 
 @dataclass
 class TikzNode:
+    """Represents a node."""
+
     name_to_display: str
     unique_identification_name: str
     node_options: str
 
     def create_node_string(self, add_line_break: bool = False) -> str:
+        """Creates the string which draws the tikz node.
+
+        Args:
+            add_line_break (bool, optional): Determines if a
+                line break should be set after the tikz string.
+                Defaults to False.
+
+        Returns:
+            str: Returns the tikz string that represents this node object.
+        """
         node_string = (
             r"\node["
             + self.node_options
@@ -87,6 +116,17 @@ class TikzNode:
     def create_node_below_of(
         self, unique_tikz_object_name: str, add_line_break: bool = False
     ) -> str:
+        """Creates the string for a tikz node below another tikz node.
+
+        Args:
+            unique_tikz_object_name (str): Name of the object below this node
+                should be created.
+            add_line_break (bool, optional): Add a line break after the node
+                string if a True value is passed to this method. Defaults to False.
+
+        Returns:
+            str: Tikz string for a node below another node.
+        """
         self.node_options = (
             self.node_options
             + ","
@@ -102,6 +142,17 @@ class TikzNode:
     def create_node_above_of(
         self, unique_tikz_object_name: str, add_line_break: bool = False
     ) -> str:
+        """Creates the string for a tikz node above another tikz node.
+
+        Args:
+            unique_tikz_object_name (str): Name of the object above this node
+                should be created.
+            add_line_break (bool, optional): Add a line break after the node
+                string if a True value is passed to this method. Defaults to False.
+
+        Returns:
+            str: Tikz string for a node above another node.
+        """
         self.node_options = (
             self.node_options
             + ","
@@ -117,6 +168,18 @@ class TikzNode:
     def create_node_left_of(
         self, unique_tikz_object_name: str, add_line_break: bool = False
     ) -> str:
+        """Creates the string for a tikz left of another tikz node.
+
+        Args:
+            unique_tikz_object_name (str): Name of the object left of this node
+                should be created.
+            add_line_break (bool, optional): Add a line break after the node
+                string if a True value is passed to this method. Defaults to False.
+
+        Returns:
+            str: Tikz string for a node left of another node.
+        """
+
         self.node_options = (
             self.node_options
             + ","
@@ -132,6 +195,17 @@ class TikzNode:
     def create_node_right_of(
         self, unique_tikz_object_name: str, add_line_break: bool = False
     ) -> str:
+        """Creates the string for a tikz node right of  another tikz node.
+
+        Args:
+            unique_tikz_object_name (str): Name of the object right of this node
+                should be created.
+            add_line_break (bool, optional): Add a line break after the node
+                string if a True value is passed to this method. Defaults to False.
+
+        Returns:
+            str: Tikz string for a node right of another node.
+        """
         self.node_options = (
             self.node_options
             + ","
@@ -147,11 +221,24 @@ class TikzNode:
 
 @dataclass
 class TikzMatrixRow:
+    """Is used to convert a row of tikz nodes of matrix into
+    a tikz string that can be used to plot the matrix.
+    """
+
     name_to_display: str
     unique_identification_name: str
     list_of_tikz_nodes: list[TikzNode]
 
     def create_row_string(self, add_line_break: bool = True) -> str:
+        """Converts the row into a tikz string.
+
+        Args:
+            add_line_break (bool, optional): Adds a line break after the
+            output string. Defaults to True.
+
+        Returns:
+            str: Tikz string that represents a matrix row.
+        """
         row_string = ""
         number_of_tikz_nodes = len(self.list_of_tikz_nodes)
         for current_node_number in range(number_of_tikz_nodes):
@@ -167,6 +254,8 @@ class TikzMatrixRow:
 
 
 class TikzMatrix:
+    """Is used to represent a all rows an nodes of matrix."""
+
     def __init__(
         self,
         list_of_tikz_matrix_rows: list[TikzMatrixRow],
@@ -181,13 +270,25 @@ class TikzMatrix:
         self.relative_position: str = relative_position
         self.list_of_tikz_matrix_rows: list[TikzMatrixRow] = list_of_tikz_matrix_rows
 
-        self.fixed_options: str = r"[column sep=10,row sep=10,draw, rounded corners,nodes={rectangle, anchor=center},"
+        self.fixed_options: str = (
+            r"[column sep=10,row sep=10,draw, rounded corners,nodes={rectangle, anchor=center},"
+        )
         self.postamble: str = "};\n"
 
     def add_option(self, option_string: str):
+        """Adds an additional option string to the standard options of the matrix.
+
+        Args:
+            option_string (str): New combined option string for the matrix.
+        """
         self.fixed_options = self.fixed_options + option_string + ","
 
     def create_tikz_string(self) -> str:
+        """Creates the tikz string that represents the Matrix.
+
+        Returns:
+            str: Matrix tikz string.
+        """
         tikz_matrix_string = ""
         tikz_matrix_string = tikz_matrix_string + self.create_preamble()
         tikz_matrix_string = (
@@ -197,6 +298,7 @@ class TikzMatrix:
         return tikz_matrix_string
 
     def create_matrix_from_rows(self) -> str:
+
         matrix_string = ""
         for tikz_row in self.list_of_tikz_matrix_rows:
             matrix_string = matrix_string + tikz_row.create_row_string()
@@ -225,6 +327,7 @@ class TikzMatrix:
         return matrix_string
 
     def create_preamble(self):
+        """Creates the preamble string of the tikz matrix"""
         preamble_string = (
             r"\matrix "
             + self.fixed_options

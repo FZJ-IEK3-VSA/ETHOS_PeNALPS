@@ -12,6 +12,10 @@ from ethos_penalps.stream import (
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.utilities.units import Units
 
+"""This module contains classes that provided encoding and decoding capabilities for various 
+objects of ETHOS.PeNALPS
+"""
+
 
 class ExtendedEncoder(json.JSONEncoder):
     def default(self, obj):

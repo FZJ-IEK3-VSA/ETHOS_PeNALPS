@@ -21,25 +21,21 @@ from ethos_penalps.stream import (
     ContinuousStreamProductionPlanEntry,
     ContinuousStreamState,
 )
+from ethos_penalps.utilities.general_functions import get_new_uuid
 
 
 @dataclass
 class NodeOperation(ABC):
+    """Base class for all other node operations."""
+
     next_node_name: str | None
     starting_node_name: str
-
-
-def get_new_uuid() -> str:
-    return str(uuid.uuid4())
 
 
 @dataclass
 class UpstreamNewProductionOrder(NodeOperation):
     """This order is passed in upstream direction and
     requests a new output stream from the target node.
-
-    :param NodeOperation: _description_
-    :type NodeOperation: _type_
     """
 
     stream_state: ContinuousStreamState | BatchStreamState
@@ -60,9 +56,6 @@ class UpstreamAdaptionOrder(NodeOperation):
     as a response to a previous input stream adaption request which is
     passed downstream. The start node of this operation has accepted
     the previously proposed adaption.
-
-    :param NodeOperation: _description_
-    :type NodeOperation: _type_
     """
 
     stream_state: ContinuousStreamState | BatchStreamState
@@ -88,9 +81,6 @@ class DownstreamAdaptionOrder(NodeOperation):
     requests input stream of the target node. The adaption is either a shift to
     an earlier delivery or a reduced delivered mass. The adaption request will always
     be accepted.
-
-    :param NodeOperation: _description_
-    :type NodeOperation: _type_
     """
 
     stream_state: ContinuousStreamState | BatchStreamState
@@ -104,9 +94,6 @@ class DownstreamAdaptionOrder(NodeOperation):
 class DownstreamValidationOrder(NodeOperation):
     """This order is passed downstream and validates that the previously
     requested input stream can be delivered as requested.
-
-    :param NodeOperation: _description_
-    :type NodeOperation: _type_
     """
 
     starting_node_output_branch_data: CompleteOutputBranchData
@@ -118,4 +105,8 @@ class DownstreamValidationOrder(NodeOperation):
 
 @dataclass
 class TerminateProduction(NodeOperation):
+    """Indicates the simulation of a ProcessChain is completed
+    and should be terminated.
+    """
+
     operation_type: str = "Terminate production"

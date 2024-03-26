@@ -15,20 +15,44 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessStateSwitch(ABC):
+    """A ProcessState switch models the transition within a
+    Petri it net. It defines which states are connected by an arc
+    and when a transition occurs.
+    """
+
     state_connector: StateConnector
     process_step_data: ProcessStepData
 
     def calculate_next_event_time_backward(self) -> datetime.datetime:
+        """Determines the switch time to the next state.
+
+        Returns:
+            datetime.datetime: Time when a switch occurs from the
+                end state to the start state.
+        """
         raise NotImplementedError
 
 
 class ProcessStateSwitchDelay(ProcessStateSwitch):
+    """This delay is used to model a state switch after a static delay. This
+    is mainly used to model the length of an intermediate state.
+    """
+
     def __init__(
         self,
         process_step_data: ProcessStepData,
         state_connector: StateConnector,
         delay: datetime.timedelta,
     ) -> None:
+        """_summary_
+
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            state_connector (StateConnector): Summarizes the connection of two process states.
+            delay (datetime.timedelta): The static delay after the process state switch occurs.
+        """
         if not isinstance(state_connector.start_state_name, str):
             raise Exception(
                 "A name of typ string should be supplied for process state identification"
@@ -62,11 +86,22 @@ class ProcessStateSwitchDelay(ProcessStateSwitch):
 
 
 class ProcessStateSwitchAtOutputStreamProvided(ProcessStateSwitch):
+    """This process state switch triggers at the start time of the output stream state.
+    The output state must be defined at the end state of this switch."""
+
     def __init__(
         self,
         process_step_data: ProcessStepData,
         state_connector: StateConnector,
     ) -> None:
+        """
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            state_connector (StateConnector): Connects two states. The end state of
+                this switch should be an output stream providing state.
+        """
         if not isinstance(state_connector.start_state_name, str):
             raise Exception(
                 "A name of typ string should be supplied for process state identification"
@@ -85,8 +120,12 @@ class ProcessStateSwitchAtOutputStreamProvided(ProcessStateSwitch):
     def calculate_next_event_time_backward(
         self,
     ) -> datetime.datetime:
-        """This method calculates the time until the next storage event occurs
-        for each storage of the process step
+        """This method calculates the process state switch time. It triggers the switch
+        at the start time of the output stream state.
+
+        Returns:
+            datetime.datetime: The new switch time at the start time of the
+                output stream state.
         """
         if not isinstance(self.state_connector.start_state_name, str):
             raise Exception(
@@ -114,11 +153,23 @@ class ProcessStateSwitchAtOutputStreamProvided(ProcessStateSwitch):
 
 
 class ProcessStateSwitchAtInputStreamProvided(ProcessStateSwitch):
+    """This switch triggers at the the start time of the input stream state.
+    It must be connected to an input stream providing state as target state.
+    """
+
     def __init__(
         self,
         process_step_data: ProcessStepData,
         state_connector: StateConnector,
     ) -> None:
+        """
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            state_connector (StateConnector): Connects two states. The end state of
+                this switch should be an input stream providing state.
+        """
         if not isinstance(state_connector.start_state_name, str):
             raise Exception(
                 "A name of typ string should be supplied for process state identification"
@@ -137,8 +188,12 @@ class ProcessStateSwitchAtInputStreamProvided(ProcessStateSwitch):
     def calculate_next_event_time_backward(
         self,
     ) -> datetime.datetime:
-        """This method calculates the time until the next storage event occurs
-        for each storage of the process step
+        """This method calculates the next process state switch time. It switches at the
+        start time of the input stream state.
+
+        Returns:
+            datetime.datetime: The process state switch time at the start time
+                of the input stream state.
         """
         if not isinstance(self.state_connector.start_state_name, str):
             raise Exception(
@@ -170,11 +225,25 @@ class ProcessStateSwitchAtInputStreamProvided(ProcessStateSwitch):
 
 
 class ProcessStateSwitchAfterInputAndOutputStream(ProcessStateSwitch):
+    """This process sate switch triggers at the start time of either the input stream state
+    or the output stream state. If they do not start at the same time, the earlier start date
+    is chosen.
+    """
+
     def __init__(
         self,
         process_step_data: ProcessStepData,
         state_connector: StateConnector,
     ) -> None:
+        """
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            state_connector (StateConnector): Connects two states. The end state of
+                this switch should be a combined output and input stream providing state.
+
+        """
         if not isinstance(state_connector.start_state_name, str):
             raise Exception(
                 "A name of typ string should be supplied for process state identification"
@@ -193,8 +262,14 @@ class ProcessStateSwitchAfterInputAndOutputStream(ProcessStateSwitch):
     def calculate_next_event_time_backward(
         self,
     ) -> datetime.datetime:
-        """This method calculates the time until the next storage event occurs
-        for each storage of the process step
+        """This method calculates the next process state switch time. It switches at the
+        start time of the input stream state or output stream state. If they do not
+        start at the same time, the earlier start date is chosen.
+
+        Returns:
+            datetime.datetime: The new process state switch time. It is the start time
+                of the input stream state or the output stream state. If they do not
+                start at the same time, the earlier start date is chosen.
         """
         if not isinstance(self.state_connector.start_state_name, str):
             raise Exception(
@@ -232,11 +307,24 @@ class ProcessStateSwitchAfterInputAndOutputStream(ProcessStateSwitch):
 
 
 class ProcessStateSwitchAtNextDiscreteEvent(ProcessStateSwitch):
+    """This process state switch triggers the switch from the idle state
+    so that material request can be fulfilled just in time. The target state
+    of this switch should be the idle state.
+    """
+
     def __init__(
         self,
         process_step_data: ProcessStepData,
         state_connector: StateConnector,
     ) -> None:
+        """
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            state_connector (StateConnector): Connects two states. The end state of
+                this switch should be an idle state.
+        """
         if not isinstance(state_connector.start_state_name, str):
             raise Exception(
                 "A name of typ string should be supplied for process state identification"
@@ -255,8 +343,11 @@ class ProcessStateSwitchAtNextDiscreteEvent(ProcessStateSwitch):
     def calculate_next_event_time_backward(
         self,
     ) -> datetime.datetime:
-        """This method calculates the time until the next storage event occurs
-        for each storage of the process step
+        """This method determines the switch time from the idle state.
+
+        Returns:
+            datetime.datetime: The time when the switch from the idle state must
+                occur so that the output stream sate can be delivered just in time.
         """
         if not isinstance(self.state_connector.start_state_name, str):
             raise Exception(

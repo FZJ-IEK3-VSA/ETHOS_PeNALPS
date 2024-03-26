@@ -55,6 +55,10 @@ def format_timedelta(td: datetime.timedelta) -> str:
 
 
 class ResultPathGenerator:
+    """This class is used to create paths relative to the main file
+    when python codes is executed.
+    """
+
     result_time_stamp: str
     time_stamp_format: str = "%Y_%m_%d__%H_%M_%S"
 
@@ -67,19 +71,16 @@ class ResultPathGenerator:
     ) -> str:
         """Creates a path to subdirectory which is located at the level of the __main__ file. Subdirectory is created if it does not exists prior to call.
 
-        :param file_name: name of the file to be created. Is prepending the full file name with optional timestamp
-        :type file_name: str
-        :param subdirectory_name: Name of the subdirectory which is created
-        :type subdirectory_name: str
-        :param file_extension: The file extension which is appended to the file name
-        :type file_extension: str
-        :param add_time_stamp_to_filename: Adds a current timestamp the file name between name and file extension, defaults to True
-        :type add_time_stamp_to_filename: bool, optional
-        :param time_stamp_format: describes the format of the timestamp which is added if add_time_stamp_to_filename is set to True, defaults to "%Y_%m_%d__%H_%M_%S"
-        :type time_stamp_format: str, optional
-        :return: returns the path to a file in a subdirectory
-        :rtype: str
+        Args:
+            file_name (str): Name of the file to be created. Is prepending the full file name with optional timestamp.
+            subdirectory_name (str): Name of the subdirectory which is created
+            file_extension (str): The file extension which is appended to the file name
+            add_time_stamp_to_filename (bool, optional): Adds a current timestamp the file name between name and file extension. Defaults to True.
+
+        Returns:
+            str: Absolute path to the file relative to the main file.
         """
+
         results_directory = self.create_result_folder_relative_to_main_file(
             subdirectory_name=subdirectory_name, add_time_stamp_to_filename=False
         )

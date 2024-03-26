@@ -34,6 +34,10 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class BaseStorage:
+    """Provides basic functionality to track and update a storage level
+    of a node based on input and output streams to that node.
+    """
+
     def __init__(
         self,
         stream_handler: StreamHandler,
@@ -58,6 +62,21 @@ class BaseStorage:
         list_of_output_stream_states: list[BaseStreamState],
         last_storage_update_time: datetime.datetime,
     ) -> list[StorageProductionPlanEntry]:
+        """Creates a list of StorageProductionPlanEntry from a list of StreamStates
+        for the input and output. The streams are sorted from the ascending temporal order.
+
+        Args:
+            list_of_input_stream_states (list[BaseStreamState]): List of streams that
+                add mass to the storage.
+            list_of_output_stream_states (list[BaseStreamState]): List of streams
+                that remove mass from the storage.
+            last_storage_update_time (datetime.datetime): The first date for which a storage
+                level should be determined.
+
+        Returns:
+            list[StorageProductionPlanEntry]: List of StorageProductionPlanEntry that
+                describe the storage level.
+        """
         list_of_storage_entries = []
         list_of_date_time_ranges = self.create_a_list_of_datetime_ranges_from_list_of_stream_states(
             list_of_input_stream_states=list_of_input_stream_states,
@@ -65,7 +84,7 @@ class BaseStorage:
             exclude_output_times_before_input_end_time=False,
             exclude_output_times_before_input_start_time=False,
             last_update_time_storage=last_storage_update_time,
-            order_from_end_to_start=False
+            order_from_end_to_start=False,
             # back_calculation=True,
         )
 
@@ -117,6 +136,19 @@ class BaseStorage:
         list_of_input_stream_states: list[ContinuousStreamState | BatchStreamState],
         list_of_output_stream_states: list[ContinuousStreamState | BatchStreamState],
     ) -> numbers.Number:
+        """Returns the net mass of all input and output stream states.
+
+        Args:
+            list_of_input_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                stream states that add mass to the storage.
+            list_of_output_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                all states that remove mass from the storage.
+
+        Returns:
+            numbers.Number: The mass that is added or removed from the storage in total. + mass is added
+                ,- mass is removed
+
+        """
         net_mass = 0
         for input_stream_state in list_of_input_stream_states:
             if isinstance(input_stream_state, ContinuousStreamState):
@@ -139,6 +171,26 @@ class BaseStorage:
         last_update_time_storage: datetime.datetime,
         order_from_end_to_start: bool,
     ) -> list[datetimerange.DateTimeRange]:
+        """Returns a list of datetime range that considers all discrete changes to the mass flow
+        of the storage.
+
+        Args:
+            list_of_input_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                stream states that add mass to the storage.
+            list_of_output_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                all states that remove mass from the storage.
+            exclude_output_times_before_input_end_time (bool): Excludes all output times
+                that are earlier than the earliest input end time.
+            exclude_output_times_before_input_start_time (bool):  Excludes all output times
+                that are earlier than the earliest input start time.
+            last_update_time_storage (datetime.datetime): The earliest date for which
+                a storage level is determined.
+            order_from_end_to_start (bool): Determines the order of the date ranges.
+
+        Returns:
+            list[datetimerange.DateTimeRange]: List of datetime range that considers all discrete changes to the mass flow
+        of the storage.
+        """
         all_continuous_times = []
         all_batch_times = []
         input_start_times = []
@@ -231,6 +283,19 @@ class BaseStorage:
         list_of_output_stream_states: list[ContinuousStreamState | BatchStreamState],
         storage_date_range: datetimerange.DateTimeRange,
     ) -> StorageProductionPlanEntry:
+        """Creates a single StorageProductionPlanEntry from a list of input and output streams
+        for a given storage date range.
+
+        Args:
+            list_of_input_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                stream states that add mass to the storage.
+            list_of_output_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                all states that remove mass from the storage.
+            storage_date_range (datetimerange.DateTimeRange): The time range of the output StorageProductionPlanEntry.
+
+        Returns:
+            StorageProductionPlanEntry: Describes the storage level in the storage_date_range.
+        """
         net_mass = self.determine_net_mass_in_date_range(
             list_of_input_stream_states=list_of_input_stream_states,
             list_of_output_stream_states=list_of_output_stream_states,
@@ -285,6 +350,21 @@ class BaseStorage:
         storage_date_range: datetimerange.DateTimeRange,
         from_start_to_end: bool,
     ) -> numbers.Number:
+        """Determines the net mass in the date range.
+
+        Args:
+            list_of_input_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                stream states that add mass to the storage.
+            list_of_output_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                all states that remove mass from the storage.
+            storage_date_range (datetimerange.DateTimeRange): Defines the date range for the net mass
+                analysis.
+            from_start_to_end (bool): Determines the direction of analysis.
+
+
+        Returns:
+            numbers.Number: Net mass in the date range.
+        """
         continuous_input_mass_share_output_commodity = 0
         batch_input_mass_share_output_commodity = 0
         for input_stream_state in list_of_input_stream_states:
@@ -412,6 +492,8 @@ class BaseStorage:
 
 
 class Storage(BaseStorage):
+    """Is used to analyse the internal storage of a Process Step."""
+
     def __init__(
         self,
         name: str,
@@ -425,25 +507,37 @@ class Storage(BaseStorage):
         process_step_name: str,
         minimum_storage_level: numbers.Number = 0,
         maximum_storage_level: numbers.Number | None = None,
-        minimum_storage_level_at_start_time_of_production_branch: numbers.Number
-        | None = None,
-        maximum_storage_level_at_start_time_of_production_branch: numbers.Number
-        | None = None,
+        minimum_storage_level_at_start_time_of_production_branch: (
+            numbers.Number | None
+        ) = None,
+        maximum_storage_level_at_start_time_of_production_branch: (
+            numbers.Number | None
+        ) = None,
     ) -> None:
-        """_summary_
-
-        :param name: _description_
-        :type name: str
-        :param commodity: _description_
-        :type commodity: Commodity
-        :param stream_handler: _description_
-        :type stream_handler: ForwardStreamHandler | BackwardStreamHandler
-        :param input_stream_name: _description_
-        :type input_stream_name: str
-        :param output_stream_name: _description_
-        :type output_stream_name: str
-        :raises Exception: _description_
-        :raises Exception: _description_
+        """
+        Args:
+            name (str): Name of the storage.
+            commodity (Commodity): Commodity that is stored by the storage.
+                It is assumed that input commodity is automatically converted
+                into the output commodity that is stored in the storage.
+            stream_handler (StreamHandler): Container of all input and output streams
+                to the storage.
+            input_stream_name (str): Name of the input stream.
+            output_stream_name (str): Name of the output stream.
+            time_data (TimeData): Contains data about the current state of the ProcessStep.
+            input_to_output_conversion_factor (numbers.Number): The conversion factor
+                that converts input mass into output mass.
+            state_data_container (ProductionProcessStateContainer): Contains all
+                other simulation data of the process step besides the time data.
+            process_step_name (str): Name of the ProcessStep that holds this storage.
+            minimum_storage_level (numbers.Number, optional): The minimum storage level
+                of the storage. Is currently not used. Defaults to 0.
+            maximum_storage_level (numbers.Number | None, optional): The maximum allowed storage level
+                is currently not used. Defaults to None.
+            minimum_storage_level_at_start_time_of_production_branch (numbers.Number  |  None, optional):
+                The minimum storage level at the start of a new request for an output stream. Defaults to None.
+            maximum_storage_level_at_start_time_of_production_branch (numbers.Number  |  None, optional): The maximum storage level at the start of
+                a new request for an output stream. Defaults to None.
         """
 
         if not isinstance(input_stream_name, str):
@@ -474,17 +568,27 @@ class Storage(BaseStorage):
 
         self.minimum_storage_level: numbers.Number = minimum_storage_level
         self.maximum_storage_level: numbers.Number | None = maximum_storage_level
-        self.minimum_storage_level_at_start_time_of_production_branch: numbers.Number | None = (
-            minimum_storage_level_at_start_time_of_production_branch
-        )
-        self.maximum_storage_level_at_start_time_of_production_branch: numbers.Number | None = (
-            maximum_storage_level_at_start_time_of_production_branch
-        )
+        self.minimum_storage_level_at_start_time_of_production_branch: (
+            numbers.Number | None
+        ) = minimum_storage_level_at_start_time_of_production_branch
+        self.maximum_storage_level_at_start_time_of_production_branch: (
+            numbers.Number | None
+        ) = maximum_storage_level_at_start_time_of_production_branch
 
     def determine_missing_input_mass(
         self,
         target_output_mass: numbers.Number,
     ) -> numbers.Number:
+        """Determines the mass that is missing in the storage to reach
+        the target mass.
+
+        Args:
+            target_output_mass (numbers.Number): Target storage level.
+
+        Returns:
+            numbers.Number: The mass that is missing to reach the target
+                storage level.
+        """
         state_data = (
             self.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -502,12 +606,28 @@ class Storage(BaseStorage):
     def convert_output_to_input_mass(
         self, output_mass: numbers.Number
     ) -> numbers.Number:
+        """Converts the output to input mass.
+
+        Args:
+            output_mass (numbers.Number): Mass to be converted.
+
+        Returns:
+            numbers.Number: Converted mass.
+        """
         input_mass = output_mass / self.input_to_output_conversion_factor
         return input_mass
 
     def convert_input_to_output_mass(
         self, input_mass: numbers.Number
     ) -> numbers.Number:
+        """Converts input to output mass.
+
+        Args:
+            input_mass (numbers.Number): Mass to be converted.
+
+        Returns:
+            numbers.Number: Converted mass.
+        """
         output_mass = input_mass * self.input_to_output_conversion_factor
         return output_mass
 
@@ -517,6 +637,19 @@ class Storage(BaseStorage):
         list_of_input_stream_states: list[ContinuousStreamState | BatchStreamState],
         list_of_output_stream_states: list[ContinuousStreamState | BatchStreamState],
     ) -> dict[datetime.datetime, numbers.Number]:
+        """Creates a dictionary that contains the dates of discrete mass transfer as keys.
+
+        Args:
+            list_of_storage_date_ranges (list[datetimerange.DateTimeRange]): The list of datetime ranges
+                that considers all time events.
+            list_of_input_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of stream
+                states that add mass to the storage.
+            list_of_output_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of stream
+                states that remove mass to the storage.
+
+        Returns:
+            dict[datetime.datetime, numbers.Number]: A dictionary that contains the dates of discrete mass transfer as keys
+        """
         # Positive values --> net input mass
         # Negative Values --> net output mass
         batch_dict: dict[datetime.datetime, numbers.Number] = {}
@@ -529,9 +662,9 @@ class Storage(BaseStorage):
                         input_mass_output_commodity = self.convert_input_to_output_mass(
                             input_mass=input_mass_input_commodity
                         )
-                        batch_dict[
-                            input_stream_state.end_time
-                        ] = input_mass_output_commodity
+                        batch_dict[input_stream_state.end_time] = (
+                            input_mass_output_commodity
+                        )
             for output_stream_state in list_of_output_stream_states:
                 if isinstance(output_stream_state, BatchStreamState):
                     if output_stream_state.start_time == start_time_of_date_range:
@@ -552,6 +685,26 @@ class Storage(BaseStorage):
         exclude_output_times_before_input_end_time: bool,
         exclude_output_times_before_input_start_time: bool,
     ) -> list[datetimerange.DateTimeRange]:
+        """Returns a list of datetime range that considers all discrete changes to the mass flow
+        of the storage.
+
+        Args:
+            list_of_input_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                stream states that add mass to the storage.
+            list_of_output_stream_states (list[ContinuousStreamState  |  BatchStreamState]): List of
+                all states that remove mass from the storage.
+            exclude_output_times_before_input_end_time (bool): Excludes all output times
+                that are earlier than the earliest input end time.
+            exclude_output_times_before_input_start_time (bool):  Excludes all output times
+                that are earlier than the earliest input start time.
+            last_update_time_storage (datetime.datetime): The earliest date for which
+                a storage level is determined.
+            order_from_end_to_start (bool): Determines the order of the date ranges.
+
+        Returns:
+            list[datetimerange.DateTimeRange]: List of datetime range that considers all discrete changes to the mass flow
+        of the storage.
+        """
         all_input_start_times = []
         all_input_end_times = []
 
@@ -626,6 +779,17 @@ class Storage(BaseStorage):
         exclude_output_times_before_input_start_time: bool,
         back_calculation: bool,
     ):
+        """Creates all storage entries for the current output stream request
+        when all necessary states have been requested.
+
+        Args:
+            exclude_output_times_before_input_end_time (bool): Excludes all output times
+                that are earlier than the earliest input end time.
+            exclude_output_times_before_input_start_time (bool):  Excludes all output times
+                that are earlier than the earliest input start time.
+            back_calculation (bool): Determines if the Storage entries are created
+                in temporal ascending or descending order.
+        """
         # Determine all relevant time ranges for the storage entries
 
         post_or_validated_state_data = (

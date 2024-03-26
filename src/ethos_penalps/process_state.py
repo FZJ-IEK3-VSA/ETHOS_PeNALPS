@@ -48,7 +48,8 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessState(ABC):
-    """This class represents a state in  process step. The states primary"""
+    """This class represents a state in the Petri net of a process step. It models
+    a type of activity of the ProcessStep"""
 
     def __init__(
         self,
@@ -56,6 +57,17 @@ class ProcessState(ABC):
         process_step_name: str,
         process_step_data: ProcessStepData,
     ):
+        """
+
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+        """
         self.process_state_name: str = process_state_name
         self.next_process_state_end_time: datetime.datetime
         self.start_time: datetime.datetime
@@ -70,6 +82,16 @@ class ProcessState(ABC):
     def _create_process_step_production_plan_entry(
         self, process_state_state: ProcessStateData
     ) -> ProcessStepProductionPlanEntry:
+        """Adds additional information simulation process
+        state to the final ProcessStepProductionPlanEntry.
+
+        Args:
+            process_state_state (ProcessStateData): Internal simulation state
+                that should be converted to a final simulation result.
+
+        Returns:
+            ProcessStepProductionPlanEntry: Final simulation result entry.
+        """
         entry = ProcessStepProductionPlanEntry(
             process_step_name=self.process_step_name,
             process_state_name=self.process_state_name,
@@ -78,7 +100,10 @@ class ProcessState(ABC):
             duration=str(process_state_state.end_time - process_state_state.start_time),
             process_state_type=str(type(self)),
         )
-        logger.debug(entry)
+        logger.debug(
+            "The following ProcessStepProductionPlanEntry has been created: %s",
+            str(entry),
+        )
         return entry
 
     def create_process_state_energy_data_based_on_stream_mass(
@@ -87,6 +112,19 @@ class ProcessState(ABC):
         load_type: LoadType,
         stream: BatchStream | ContinuousStream,
     ):
+        """Adds the energy data that is required to convert a process state
+        in combination with a respective input stream state into a load profile
+
+        Args:
+            specific_energy_demand (float): The mass specific energy demand
+                that is consumed by the process state. The mass is defined
+                the input stream state that precedes the process state.
+            load_type (LoadType): The energy carrier that is consumed by the
+                process state.
+            stream (BatchStream | ContinuousStream): The stream that provides
+                the mass that is treated during the process state.
+
+        """
         if isinstance(stream, (BatchStream, ContinuousStream)):
             new_energy_data = ProcessStateEnergyLoadDataBasedOnStreamMass(
                 process_step_name=self.process_step_name,
@@ -107,12 +145,23 @@ class ProcessState(ABC):
     def add_process_state_energy_data(
         self, process_state_energy_data: ProcessStateEnergyLoadData
     ):
+        """Adds the ProcessStateEnergyLoadData to the collection of energy data.
+
+        Args:
+            process_state_energy_data (ProcessStateEnergyLoadData): Contains
+            the information that is required to convert a ProcessStateState
+            into a LoadProfileEntry.
+        """
         self.process_state_energy_data.add_process_state_energy_load_data(
             process_state_energy_load_data=process_state_energy_data
         )
 
 
 class OutputStreamProvidingState(ProcessState, ABC):
+    """This state models the activity during which a process step
+    provides an output stream.
+    """
+
     def __init__(
         self,
         process_state_name: str,
@@ -120,6 +169,19 @@ class OutputStreamProvidingState(ProcessState, ABC):
         process_step_data: ProcessStepData,
         maximum_stream_mass: float | None = None,
     ):
+        """
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            maximum_stream_mass (float | None, optional): Determines
+                the maximum mass can be transported within a single
+                output stream state. Defaults to None.
+        """
         super().__init__(process_state_name, process_step_name, process_step_data)
         self.maximum_stream_mass = maximum_stream_mass
 
@@ -127,15 +189,17 @@ class OutputStreamProvidingState(ProcessState, ABC):
         self, output_stream_state: ContinuousStreamState | BatchStreamState
     ) -> ContinuousStreamState | BatchStreamState:
         """Check if the required output_mass can be provided under the constraint of
-        the maximum stream mass of this process state. Returns an adapted state
+        the maximum stream mass of this process state. Returns an adapted stream state
         if it exceeds the maximum mass.
 
-        :param output_stream_state: _description_
-        :type output_stream_state: ContinuousStreamState | BatchStreamState
-        :raises Exception: _description_
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: ContinuousStreamState | BatchStreamState
+        Args:
+            output_stream_state (ContinuousStreamState | BatchStreamState): The requested
+                output stream state that should be checked for the maximum mass constraints.
+
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The checked and possibly adapted
+                stream state.
         """
         if self.maximum_stream_mass is None:
             feasible_output_stream_state = output_stream_state
@@ -177,15 +241,24 @@ class OutputStreamProvidingState(ProcessState, ABC):
             )
         return feasible_output_stream_state
 
-    def determine_if_storage_level_is_within_limits(self):
-        pass
-
     @abstractmethod
     def check_if_storage_can_supply_output_directly(self) -> bool:
+        """Checks if the output stream request can be supplied directly
+        from the internal storage without creating an input stream
+        request.
+
+        Returns:
+            bool: Returns True if the mass can be provided directly.
+        """
         raise NotImplementedError
 
 
 class InputStreamProvidingState(ProcessState, ABC):
+    """Models the state at which the process step receives an input stream.
+    Contains the method that determines the required input stream state from
+    the output stream state.
+    """
+
     # def __init__(
     #     self,
     #     process_state_name: str,
@@ -198,6 +271,14 @@ class InputStreamProvidingState(ProcessState, ABC):
         return "InputStreamProvidingState with name: " + self.process_state_name
 
     def fulfill_order(self) -> ContinuousStreamState | BatchStreamState:
+        """Creates another input stream request if the previous input stream state
+        did not provide sufficient mass to provide the output stream state.
+
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The new input stream state that
+                is requested from the upstream node.
+        """
         self.process_step_data.state_data_container.get_validated_production_state_data()
 
         next_stream_end_time_from_previous_streams = (
@@ -231,6 +312,9 @@ class InputStreamProvidingState(ProcessState, ABC):
 
     @abstractmethod
     def create_storage_entries(self):
+        """Creates the storage entries from the input stream states, output stream
+        state and the storage level.
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -246,11 +330,21 @@ class InputStreamProvidingState(ProcessState, ABC):
         2. Create stream state based on the output stream state and determined end time
         3. Add stream to process step data
         4. Return determined input stream state
-        """
 
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The input stream state that is tries
+                to provide the mass for the output stream.
+        """
         raise NotImplementedError
 
     def determine_if_stream_branch_if_fulfilled(self) -> bool:
+        """Checks if all streams have been requested and validated.
+
+        Returns:
+            bool: Returns True if all required input streams have been
+                requested and validated.
+        """
         # Must be called after storage is updated
         production_branch_if_fulfilled = (
             self.process_step_data.main_mass_balance.check_if_production_branch_is_fulfilled()
@@ -258,11 +352,28 @@ class InputStreamProvidingState(ProcessState, ABC):
         return production_branch_if_fulfilled
 
     def determine_if_production_branch_is_fulfilled(self) -> bool:
+        """Checks if all stream instances have been requested to provide
+        the output stream as requested.
+
+        Returns:
+            bool: Returns true if all required input streams states have been
+                requested and validated.
+        """
         return True
 
 
 class FullBatchInputStreamProvidingState(InputStreamProvidingState):
+    """This state models a process step that always request a fixed input stream
+    mass independent from the requested output mass. THis state must be paired with a
+    OutputStreamFromStorageState.
+
+
+    """
+
     def create_storage_entries(self):
+        """Creates the storage entries from the input stream states, output stream
+        state and the storage level.
+        """
         state_data = (
             self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -277,6 +388,14 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
             self.process_step_data.main_mass_balance.storage.create_storage_entries_without_inputstream_and_consuming_output()
 
     def fulfill_order(self) -> ContinuousStreamState | BatchStreamState:
+        """Creates another input stream request if the previous input stream state
+        did not provide sufficient mass to provide the output stream state.
+
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The new input stream state that
+                is requested from the upstream node.
+        """
         self.process_step_data.state_data_container.get_validated_production_state_data()
 
         next_stream_end_time_from_previous_streams = (
@@ -329,6 +448,21 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
     def determine_required_input_stream_state(
         self,
     ) -> ContinuousStreamState | BatchStreamState:
+        """Creates the initial conversion of an output to an input stream
+
+        The following steps must be conducted the function
+
+        1. Determine end time of the input stream
+            1.1. Add the stream end time to time_data class with time_data.set_next_stream_end_time()
+        2. Create stream state based on the output stream state and determined end time
+        3. Add stream to process step data
+        4. Return determined input stream state
+
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The input stream state that is tries
+                to provide the mass for the output stream.
+        """
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
         )
@@ -376,11 +510,13 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
 
         return required_input_stream_state
 
-    def determine_if_storage_level_is_within_limits(self):
-        pass
-        # TODO add check for flexible storage range
-
     def determine_if_stream_branch_if_fulfilled(self) -> bool:
+        """Checks if all streams have been requested and validated.
+
+        Returns:
+            bool: Returns True if all required input streams have been
+                requested and validated.
+        """
         # Must be called after storage is updated
         production_branch_if_fulfilled = (
             self.process_step_data.main_mass_balance.check_if_production_branch_is_fulfilled_with_over_production()
@@ -391,6 +527,11 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
 class InputAndOutputStreamProvidingState(
     InputStreamProvidingState, OutputStreamProvidingState, ABC
 ):
+    """This is the abstract class for states with combined input and
+    output states. These states model the parallel operation of input
+    and output streams.
+    """
+
     @abstractmethod
     def create_storage_entries(self):
         raise NotImplementedError
@@ -401,6 +542,12 @@ class InputAndOutputStreamProvidingState(
 
 
 class IntermediateState(ProcessState, ABC):
+    """Is the base class for intermediate states between input, output,
+    idle state or another intermediate state. These can be used
+    to model more details of a production phase.
+
+    """
+
     def __str__(self) -> str:
         return (
             "Intermediate process state: "
@@ -411,6 +558,11 @@ class IntermediateState(ProcessState, ABC):
 
 
 class IntermediateStateBasedOnEnergy(IntermediateState):
+    """This state models a phase of continuous energy demand between the input, output,
+    idle state or another intermediate state.
+
+    """
+
     def _create_process_step_production_plan_entry(
         self,
         process_state_state: ProcessStateData,
@@ -440,6 +592,8 @@ class IntermediateStateBasedOnEnergy(IntermediateState):
 class ProcessStateParallelContinuousInputWithStorage(
     InputAndOutputStreamProvidingState
 ):
+    """This state models the parallel activity of an input and output stream state."""
+
     def __init__(
         self,
         process_state_name: str,
@@ -447,6 +601,20 @@ class ProcessStateParallelContinuousInputWithStorage(
         process_step_data: ProcessStepData,
         maximum_stream_mass: float | None = None,
     ):
+        """_summary_
+
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            maximum_stream_mass (float | None, optional): Determines
+                the maximum mass can be transported within a single
+                output stream state. Defaults to None.
+        """
         super().__init__(process_state_name, process_step_name, process_step_data)
         self.maximum_stream_mass = maximum_stream_mass
 
@@ -461,6 +629,21 @@ class ProcessStateParallelContinuousInputWithStorage(
     def determine_required_input_stream_state(
         self,
     ) -> BatchStreamState | ContinuousStreamState:
+        """Creates the initial conversion of an output to an input stream
+
+        The following steps must be conducted the function
+
+        1. Determine end time of the input stream
+            1.1. Add the stream end time to time_data class with time_data.set_next_stream_end_time()
+        2. Create stream state based on the output stream state and determined end time
+        3. Add stream to process step data
+        4. Return determined input stream state
+
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The input stream state that is tries
+                to provide the mass for the output stream.
+        """
         state_data = (
             self.process_step_data.state_data_container.get_pre_production_state_data()
         )
@@ -517,6 +700,14 @@ class ProcessStateParallelContinuousInputWithStorage(
         return input_stream_state
 
     def fulfill_order(self) -> BatchStreamState:
+        """Creates another input stream request if the previous input stream state
+        did not provide sufficient mass to provide the output stream state.
+
+
+        Returns:
+            ContinuousStreamState | BatchStreamState: The new input stream state that
+                is requested from the upstream node.
+        """
         state_data = (
             self.process_step_data.state_data_container.get_validated_production_state_data()
         )
@@ -564,6 +755,9 @@ class ProcessStateParallelContinuousInputWithStorage(
         return input_stream_state
 
     def create_storage_entries(self):
+        """Creates the storage entries from the input stream states, output stream
+        state and the storage level.
+        """
         self.process_step_data.main_mass_balance.storage.create_all_storage_production_plan_entry(
             exclude_output_times_before_input_end_time=False,
             exclude_output_times_before_input_start_time=True,
@@ -571,10 +765,21 @@ class ProcessStateParallelContinuousInputWithStorage(
         )
 
     def check_if_storage_can_supply_output_directly(self) -> bool:
+        """Checks if the output stream request can be supplied directly
+        from the internal storage without creating an input stream
+        request.
+
+        Returns:
+            bool: Returns True if the mass can be provided directly.
+        """
         return False
 
 
 class ContinuousOutputStreamProvidingState(OutputStreamProvidingState):
+    """This state models the activity during which a process step
+    provides a continuous output stream.
+    """
+
     def __init__(
         self,
         process_state_name: str,
@@ -582,6 +787,20 @@ class ContinuousOutputStreamProvidingState(OutputStreamProvidingState):
         process_step_data: ProcessStepData,
         maximum_stream_mass: float | None = None,
     ):
+        """_summary_
+
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            maximum_stream_mass (float | None, optional): Determines
+                the maximum mass can be transported within a single
+                output stream state.. Defaults to None.
+        """
         super().__init__(process_state_name, process_step_name, process_step_data)
         self.maximum_stream_mass = maximum_stream_mass
 
@@ -590,6 +809,10 @@ class ContinuousOutputStreamProvidingState(OutputStreamProvidingState):
 
 
 class OutputStreamFromStorageState(OutputStreamProvidingState):
+    """Tries to provides the requested output stream directly from
+    the internal storage if sufficient mass is available.
+    """
+
     def __init__(
         self,
         process_state_name: str,
@@ -597,6 +820,19 @@ class OutputStreamFromStorageState(OutputStreamProvidingState):
         process_step_data: ProcessStepData,
         maximum_stream_mass: float | None = None,
     ):
+        """
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            maximum_stream_mass (float | None, optional): Determines
+                the maximum mass can be transported within a single
+                output stream state.. Defaults to None.
+        """
         super().__init__(process_state_name, process_step_name, process_step_data)
         self.maximum_stream_mass = maximum_stream_mass
 
@@ -614,6 +850,11 @@ class OutputStreamFromStorageState(OutputStreamProvidingState):
 
 
 class BatchOutputStreamProvidingState(OutputStreamProvidingState):
+    """Models the state at which the process step receives an output stream.
+    Contains the method that determines the required input stream state from
+    the output stream state.
+    """
+
     def __init__(
         self,
         process_state_name: str,
@@ -621,15 +862,46 @@ class BatchOutputStreamProvidingState(OutputStreamProvidingState):
         process_step_data: ProcessStepData,
         maximum_stream_mass: float | None = None,
     ):
+        """
+
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            maximum_stream_mass (float | None, optional): Determines
+                the maximum mass can be transported within a single
+                output stream state.. Defaults to None.
+        """
         super().__init__(process_state_name, process_step_name, process_step_data)
         self.maximum_stream_mass = maximum_stream_mass
 
     def check_if_storage_can_supply_output_directly(self) -> bool:
+        """Checks if the output stream request can be supplied directly
+        from the internal storage without creating an input stream
+        request.
+
+        Returns:
+            bool: Returns True if the mass can be provided directly.
+        """
         return False
 
 
 class ContinuousInputStreamRequestingStateWithStorage(InputStreamProvidingState):
+    """Models the state at which the process step receives a continuous input stream.
+    Contains the method that determines the required input stream state from
+    the output stream state.
+    """
+
     def determine_required_input_stream_state(self) -> ContinuousStreamState:
+        """Determines the required input stream state from the output stream state.
+
+        Returns:
+            ContinuousStreamState: New input stream state that is requested from the upstream node.
+        """
         # Determine end time of the input stream
         next_stream_end_time = (
             self.process_step_data.time_data.get_next_process_state_switch_time()
@@ -659,6 +931,9 @@ class ContinuousInputStreamRequestingStateWithStorage(InputStreamProvidingState)
         return input_stream_state
 
     def create_storage_entries(self):
+        """Creates the storage entries from the input stream states, output stream
+        state and the storage level.
+        """
         self.process_step_data.main_mass_balance.storage.create_all_storage_production_plan_entry(
             exclude_output_times_before_input_end_time=False,
             exclude_output_times_before_input_start_time=True,
@@ -670,6 +945,11 @@ class BatchInputStreamRequestingStateWithStorage(InputStreamProvidingState):
     def determine_required_input_stream_state(
         self,
     ) -> BatchStreamState:
+        """Determines the required input stream state from the output stream state.
+
+        Returns:
+            BatchStreamState: New input stream state that is requested from the upstream node.
+        """
         # Determine end time of the input stream
         next_stream_end_time = (
             self.process_step_data.time_data.get_next_process_state_switch_time()
@@ -698,6 +978,9 @@ class BatchInputStreamRequestingStateWithStorage(InputStreamProvidingState):
         return input_stream_state
 
     def create_storage_entries(self):
+        """Creates the storage entries from the input stream states, output stream
+        state and the storage level.
+        """
         self.process_step_data.main_mass_balance.storage.create_all_storage_production_plan_entry(
             exclude_output_times_before_input_end_time=True,
             exclude_output_times_before_input_start_time=False,
@@ -713,6 +996,16 @@ class BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
         process_state_state: ProcessStateData,
         input_stream_state: ContinuousStreamState | BatchStreamState,
     ) -> ProcessStepProductionPlanEntry:
+        """Adds additional information simulation process
+        state to the final ProcessStepProductionPlanEntry.
+
+        Args:
+            process_state_state (ProcessStateData): Internal simulation state
+                that should be converted to a final simulation result.
+
+        Returns:
+            ProcessStepProductionPlanEntry: Final simulation result entry.
+        """
         self.process_state_energy_data_dict
 
         entry = ProcessStepProductionPlanEntryWithInputStreamState(
@@ -730,12 +1023,27 @@ class BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
 
 
 class ProcessStateIdle(ProcessState):
+    """Models the idle phase of a ProcessStep. The ProcessStep always
+    switches back to idle when its not fulfilling any requests.
+    """
+
     def __init__(
         self,
         process_state_name: str,
         process_step_name: str,
         process_step_data: ProcessStepData,
     ):
+        """
+
+        Args:
+            process_state_name (str): The name of the process state
+                must be unique within the process step.
+            process_step_name (str): Name of the process step
+                to which this state belongs to.
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+        """
         super().__init__(process_state_name, process_step_name, process_step_data)
 
     def __str__(self) -> str:
@@ -748,13 +1056,33 @@ class ProcessStateIdle(ProcessState):
 
 
 class ProcessStateSwitchHandler:
+    """Contains all ProcessStateSwitches of the Petri net. A ProcessStateSwitch
+    defines the switch condition between states.
+    """
+
     def __init__(self, process_step_data: ProcessStepData):
+        """
+
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+        """
         self.process_step_data: ProcessStepData = process_step_data
         self.process_state_switch_dictionary: dict[
             StateConnector, ProcessStateSwitch
         ] = {}
 
     def add_process_state_switch(self, process_state_switch: ProcessStateSwitch):
+        """Adds a ProcessStateSwitch instance that defines the switch condition between two states.
+        Only a single ProcessStateSwitch is allowed to connect two states.
+
+
+        Args:
+            process_state_switch (ProcessStateSwitch): Defines the switch
+                condition between two states.
+
+        """
         if process_state_switch.state_connector in self.process_state_switch_dictionary:
             raise Exception(
                 "Process state connector :"
@@ -769,6 +1097,21 @@ class ProcessStateSwitchHandler:
     def create_process_state_switch_at_next_discrete_event(
         self, start_process_state: ProcessState, end_process_state: ProcessState
     ) -> ProcessStateSwitchAtNextDiscreteEvent:
+        """This Process state switch connects the arbitrary state to the Idle State
+        as end state. This switch is triggered when the process step receives
+        a new output stream request.
+
+
+        Args:
+            start_process_state (ProcessState): Name of the process state
+                before the idle state in temporal order.
+            end_process_state (ProcessState): Name of the idle state of the process
+                step.
+
+        Returns:
+            ProcessStateSwitchAtNextDiscreteEvent: Returns the ProcessStateSwitch
+                so it can integrated into a suitable selector.
+        """
         process_state_switch = ProcessStateSwitchAtNextDiscreteEvent(
             state_connector=StateConnector(
                 start_state_name=start_process_state.process_state_name,
@@ -782,6 +1125,18 @@ class ProcessStateSwitchHandler:
     def create_process_state_switch_at_input_stream(
         self, start_process_state: ProcessState, end_process_state: ProcessState
     ) -> ProcessStateSwitchAtInputStreamProvided:
+        """Creates an StateSwitch that triggers the switch to the input state.
+        The end state must always be at the input state.
+
+        Args:
+            start_process_state (ProcessState): Name of the previous state in temporal
+                order.
+            end_process_state (ProcessState): Name of the input stream state.
+
+        Returns:
+            ProcessStateSwitchAtInputStreamProvided: Returns the ProcessStateSwitch
+                so it can integrated into a suitable selector.
+        """
         process_state_switch = ProcessStateSwitchAtInputStreamProvided(
             state_connector=StateConnector(
                 start_state_name=start_process_state.process_state_name,
@@ -795,6 +1150,18 @@ class ProcessStateSwitchHandler:
     def create_process_state_switch_at_output_stream(
         self, start_process_state: ProcessState, end_process_state: ProcessState
     ) -> ProcessStateSwitchAtOutputStreamProvided:
+        """Creates an StateSwitch that triggers the switch to the output state.
+        The end state must always be at the output state.
+
+        Args:
+            start_process_state (ProcessState): Name of the previous state in temporal
+                order.
+            end_process_state (ProcessState): Name of the output stream state.
+
+        Returns:
+            ProcessStateSwitchAtOutputStreamProvided:  Returns the ProcessStateSwitch
+                so it can integrated into a suitable selector.
+        """
         process_state_switch = ProcessStateSwitchAtOutputStreamProvided(
             state_connector=StateConnector(
                 start_state_name=start_process_state.process_state_name,
@@ -811,6 +1178,21 @@ class ProcessStateSwitchHandler:
         end_process_state: ProcessState,
         delay: datetime.timedelta,
     ) -> ProcessStateSwitchDelay:
+        """Creates a process state switch that triggers  the state switch
+        from the start process to the end process after a fixed delay.
+
+        Args:
+            start_process_state (ProcessState): Name of the previous state in temporal
+                order.
+            end_process_state (ProcessState): Name of the target state in temporal
+                order.
+            delay (datetime.timedelta): Determines the duration from start to end time of the
+                end process state.
+
+        Returns:
+            ProcessStateSwitchDelay: Returns the ProcessStateSwitch
+                so it can integrated into a suitable selector.
+        """
         state_connector = StateConnector(
             start_state_name=start_process_state.process_state_name,
             end_state_name=end_process_state.process_state_name,
@@ -827,6 +1209,19 @@ class ProcessStateSwitchHandler:
     def create_process_state_switch_after_output_and_input_stream(
         self, start_process_state: ProcessState, end_process_state: ProcessState
     ) -> ProcessStateSwitchAfterInputAndOutputStream:
+        """Creates a process state switch that triggers the switch to a
+        combined input and output state of the ProcessStep.
+
+        Args:
+            start_process_state (ProcessState): Name of the previous state in temporal
+                order.
+            end_process_state (ProcessState): State name of the combined input and output
+                state.
+
+        Returns:
+            ProcessStateSwitchAfterInputAndOutputStream: Returns the ProcessStateSwitch
+                so it can integrated into a suitable selector.
+        """
         return ProcessStateSwitchAfterInputAndOutputStream(
             process_step_data=self.process_step_data,
             state_connector=StateConnector(

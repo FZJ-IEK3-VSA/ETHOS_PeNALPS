@@ -28,13 +28,23 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 
 class BranchDataContainer:
+    """This class is used to store the internal simulation data of a
+    process step during the simulation.
+    """
+
     def __init__(self) -> None:
-        self.current_branch_data: IncompleteOutputBranchData | OutputBranchData | CompleteOutputBranchData = (
-            UninitializedOutputBranchData()
-        )
+        self.current_branch_data: (
+            IncompleteOutputBranchData | OutputBranchData | CompleteOutputBranchData
+        ) = UninitializedOutputBranchData()
         self.list_of_complete_branch_data: list[CompleteOutputBranchData] = []
 
     def get_current_output_branch_identifier(self) -> OutputBranchIdentifier:
+        """Returns OutputBranchIdentifier of the current branch.
+
+
+        Returns:
+            OutputBranchIdentifier: Identifier of the current output branch.
+        """
         if isinstance(
             self.current_branch_data,
             (IncompleteOutputBranchData, OutputBranchData, CompleteOutputBranchData),
@@ -52,6 +62,13 @@ class BranchDataContainer:
         )
 
     def get_current_temporal_branch_identifier(self) -> TemporalBranchIdentifier:
+        """Returns the temporal branch identifier of the current simulation
+        data. This identifier is used to distinguish multiple input stream states.
+
+        Returns:
+            TemporalBranchIdentifier: Identifies the data that was created to create
+                a request for a specific input stream state.
+        """
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is IncompleteOutputBranchData:
             current_stream_branch = previous_output_branch_data.current_stream_branch
@@ -68,14 +85,40 @@ class BranchDataContainer:
     def update_temporary_production_plan(
         self, updated_temporary_production_plan: OutputBranchProductionPlan
     ):
+        """Updates the temporary production plan. It stores all the simulation results
+        of a process step that are created to provide an output stream. When all
+        required input stream states are validated the data is transferred to the production
+        plan.
+
+        Args:
+            updated_temporary_production_plan (OutputBranchProductionPlan): Is an updated
+                temporary production plan that contains additional information.
+        """
         self.current_branch_data.production_branch_production_plan = (
             updated_temporary_production_plan
         )
 
     def get_temporary_production_plan(self) -> OutputBranchProductionPlan:
+        """Returns temporary production plan that contains the simulation results
+            before the input streams are validated.
+
+        Returns:
+            OutputBranchProductionPlan: Stores the
+                the intermediate production results before the input streams are validated
+                and the output branch is completed.
+        """
         return self.current_branch_data.production_branch_production_plan
 
     def get_incomplete_branch_data(self) -> IncompleteOutputBranchData:
+        """Returns incomplete output branch data. It contains the simulation
+        data of the request and indicates that not all input streams have been
+        validated before.
+
+        Returns:
+            IncompleteOutputBranchData: contains the simulation
+                data of the request and indicates that not all input streams have been
+                validated before.
+        """
         if type(self.current_branch_data) is not IncompleteOutputBranchData:
             raise UnexpectedDataType(
                 current_data_type=self.current_branch_data,
@@ -84,6 +127,13 @@ class BranchDataContainer:
         return self.current_branch_data
 
     def get_complete_branch_data(self) -> CompleteOutputBranchData:
+        """Returns the complete branch data that signals that
+        all input stream states have been validated.
+
+        Returns:
+            CompleteOutputBranchData: Complete branch data that signals that
+                all input stream states have been validated.
+        """
         if type(self.current_branch_data) is not CompleteOutputBranchData:
             raise UnexpectedDataType(
                 current_data_type=self.current_branch_data,
@@ -92,6 +142,13 @@ class BranchDataContainer:
         return self.current_branch_data
 
     def get_output_branch_data(self) -> OutputBranchData:
+        """Returns the output branch data that identifies
+        a specific output stream request.
+
+        Returns:
+            OutputBranchData: Output branch data that identifies
+        a specific output stream request.
+        """
         if not isinstance(self.current_branch_data, OutputBranchData):
             raise UnexpectedDataType(
                 current_data_type=self.current_branch_data,
@@ -103,6 +160,13 @@ class BranchDataContainer:
     def create_new_output_branch_data(
         self, parent_branch_data: IncompleteOutputBranchData
     ):
+        """Creates a new output branch data for a new stream request.
+
+        Args:
+            parent_branch_data (IncompleteOutputBranchData): The identifier
+                of the output stream state that initialized the
+                request for this stream.
+        """
         # Store old branch data
         if type(self.current_branch_data) is CompleteOutputBranchData:
             self.list_of_complete_branch_data.append(self.current_branch_data)
@@ -140,6 +204,7 @@ class BranchDataContainer:
             raise IllogicalSimulationState
 
     def prepare_new_stream_branch(self, stream_name: str):
+        """It converts an OutputBranchData to an IncompleteOutputBranchData"""
         previous_branch_data = self.current_branch_data
         if type(previous_branch_data) is OutputBranchData:
             stream_branch_data = StreamBranchData(
@@ -173,6 +238,8 @@ class BranchDataContainer:
             raise IllogicalSimulationState
 
     def prepare_new_temporal_branch(self):
+        """Prepares the simulation data for a new temporal branch.
+        It converts IncompleteOutputBranchData to an IncompleteStreamBranchData."""
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is IncompleteOutputBranchData:
             stream_branch_data = previous_output_branch_data.current_stream_branch
@@ -209,6 +276,10 @@ class BranchDataContainer:
             raise IllogicalSimulationState
 
     def complete_temporal_branch(self):
+        """Converts an IncompleteOutputBranchData into an
+        StreamBranchData.
+
+        """
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is IncompleteOutputBranchData:
             stream_branch_data = previous_output_branch_data.current_stream_branch
@@ -234,6 +305,10 @@ class BranchDataContainer:
             raise IllogicalSimulationState
 
     def complete_stream_branch(self):
+        """Converts the simulation data from IncompleteOutputBranchData to
+        OutputBranchData.
+
+        """
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is IncompleteOutputBranchData:
             stream_branch_data = previous_output_branch_data.current_stream_branch
@@ -260,6 +335,7 @@ class BranchDataContainer:
             raise IllogicalSimulationState
 
     def complete_output_branch(self):
+        """Converts the OutputBranchData into the CompleteOutputBranchData."""
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is OutputBranchData:
             start_time = (

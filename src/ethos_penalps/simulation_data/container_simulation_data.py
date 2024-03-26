@@ -46,11 +46,21 @@ logger = PeNALPSLogger.get_logger_without_handler()
 class ProductionProcessStateContainer(
     BranchDataContainer, ProcessStateNetworkContainer
 ):
+    """This class stores the instances of the current simulation data of the ProcessStep."""
+
     def __init__(self) -> None:
         BranchDataContainer.__init__(self)
         ProcessStateNetworkContainer.__init__(self)
 
     def add_process_state_state(self, process_state_state: ProcessStateData):
+        """Sets a new process state state. This state data is used
+        to create a ProcessStepEntry
+
+        Args:
+            process_state_state (ProcessStateData): Contains
+                information about the start date, end date and duration
+                of a state.
+        """
         if type(self.state_data) in (
             PreProductionStateData,
             PostProductionStateData,
@@ -68,12 +78,32 @@ class ProductionProcessStateContainer(
             | PreProductionStateData
         ),
     ):
+        """Restores the state data to provided state.
+
+        Args:
+            state_data_to_update (ValidatedPostProductionStateData  |  PostProductionStateData  |  PreProductionStateData): State
+                data that should be used for restoration.
+        """
         self.state_data = state_data_to_update
 
     def restore_branch_data(self, branch_data_at_start: OutputBranchData):
+        """Restores the branch data.
+
+        Args:
+            branch_data_at_start (OutputBranchData): Branch data that should be
+                restored.
+        """
         self.current_branch_data = branch_data_at_start
 
     def check_if_validated_input_stream_list_is_shorter_than_1(self) -> bool:
+        """Determines if there are nor validated input streams in the
+            validated input stream state list.
+
+
+        Returns:
+            bool: Returns True if the validated input stream list
+                is smaller than one.
+        """
         if type(self.state_data) is PreProductionStateData:
             validated_input_stream_list_is_longer_than_1 = True
         elif type(self.state_data) in (
@@ -97,6 +127,14 @@ class ProductionProcessStateContainer(
         return validated_input_stream_list_is_longer_than_1
 
     def get_post_production_state_data(self) -> PostProductionStateData:
+        """Returns the post production data that contains
+        an unvalidated input stream state.
+
+
+        Returns:
+            PostProductionStateData: production data that contains
+            an unvalidated input stream state.
+        """
         if type(self.state_data) is not PostProductionStateData:
             raise UnexpectedDataType(
                 current_data_type=self.state_data,
@@ -105,6 +143,16 @@ class ProductionProcessStateContainer(
         return self.state_data
 
     def get_pre_production_state_data(self) -> PreProductionStateData:
+        """Returns the PreProductionStateData that does not contain
+            an unvalidated input stream sate.
+
+        Raises:
+            UnexpectedDataType: _description_
+
+        Returns:
+            PreProductionStateData: PreProductionStateData that does not contain
+            an unvalidated input stream sate.
+        """
         if type(self.state_data) is not PreProductionStateData:
             raise UnexpectedDataType(
                 current_data_type=self.state_data,
@@ -115,6 +163,10 @@ class ProductionProcessStateContainer(
     def get_pre_or_post_production_state_data(
         self,
     ) -> PreProductionStateData | PostProductionStateData:
+        """Returns either PreProductionStateData or PostProductionStateData,
+        depending on the current simulation state.
+
+        """
         if type(self.state_data) not in (
             PostProductionStateData,
             PreProductionStateData,
@@ -128,6 +180,11 @@ class ProductionProcessStateContainer(
     def get_validated_production_state_data(
         self,
     ) -> ValidatedPostProductionStateData:
+        """Returns validated production state data.
+
+        Returns:
+            ValidatedPostProductionStateData: _description_
+        """
         if not type(self.state_data) is ValidatedPostProductionStateData:
             raise UnexpectedDataType(
                 current_data_type=self.state_data,
