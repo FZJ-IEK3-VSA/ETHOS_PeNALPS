@@ -18,6 +18,8 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessOverviewPage:
+    """Creates an depiction of the material flow model."""
+
     def __init__(
         self,
         enterprise_name: str,
@@ -25,6 +27,17 @@ class ProcessOverviewPage:
         list_of_network_level: list[NetworkLevel],
         result_selector: ResultSelector,
     ) -> None:
+        """
+
+        Args:
+            enterprise_name (str): Name of the modeled enterprise.
+            report_directory (str): Path to the report output directory.
+            list_of_network_level (list[NetworkLevel]): List of all
+                NetworkLevel of the process model.
+            result_selector (ResultSelector): Object that contains
+                the simulation in a structure that resembles the
+                material flow simulation.
+        """
         self.enterprise_name: str = enterprise_name
         self.report_directory: str = report_directory
         self.list_of_network_level: list[NetworkLevel] = list_of_network_level
@@ -33,6 +46,18 @@ class ProcessOverviewPage:
     def create_process_step_overview_page(
         self, report_generator_options: ReportGeneratorOptions
     ):
+        """Creates the overview page of the result report.
+
+        Args:
+            report_generator_options (ReportGeneratorOptions): s an object
+                that contains the parameters to adjust the report
+                appearance.
+
+        Returns:
+            _type_: DataPane object that represents the overview page of the
+                report. Contains a depiction of the model and the orders that
+                were fulfilled during the simulation.
+        """
         if (
             report_generator_options.process_overview_page_options.include_enterprise_graph
             is True

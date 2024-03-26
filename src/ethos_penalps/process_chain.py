@@ -1,6 +1,3 @@
-import datetime
-from dataclasses import dataclass, field
-
 import cloudpickle
 
 from ethos_penalps.data_classes import (
@@ -9,7 +6,6 @@ from ethos_penalps.data_classes import (
     LoopCounter,
     ProcessChainIdentifier,
 )
-from ethos_penalps.utilities.debugging_information import DebuggingInformationLogger
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
@@ -20,12 +16,8 @@ from ethos_penalps.node_operations import (
     UpstreamAdaptionOrder,
     UpstreamNewProductionOrder,
 )
-from ethos_penalps.post_processing.report_generator.process_chain_report_generator import (
-    ReportGeneratorProcessChain,
-)
-from ethos_penalps.post_processing.report_generator.report_options import (
-    ReportGeneratorOptions,
-    standard_simulation_report,
+from ethos_penalps.post_processing.report_generator.failed_simulation_report_generator import (
+    FailedRunReportGenerator,
 )
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_node import ProcessNode
@@ -35,25 +27,14 @@ from ethos_penalps.process_nodes.source import Source
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
+from ethos_penalps.utilities.debugging_information import DebuggingInformationLogger
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-from ethos_penalps.post_processing.report_generator.failed_simulation_report_generator import (
-    FailedRunReportGenerator,
-)
-from ethos_penalps.utilities.debugging_information import (
-    DebuggingInformationLogger,
-    NodeOperationViewer,
-)
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessChain:
-    """The Process Chain is a collector class for sequentially depending process steps.
-    When an enterprise is fully defined the simulation can be started with create_production_plan.
-    Also contains methods for report generation of the enterprise definition and report generation
-    """
-
     def __init__(
         self,
         process_chain_identifier: ProcessChainIdentifier,
@@ -62,27 +43,53 @@ class ProcessChain:
         time_data: TimeData = TimeData(),
         location: str = "",
     ) -> None:
+        """The ProcessChain is a collector class for sequentially depending process steps.
+
+        It creates an instance of the ProcessChain which must be stored in a NetworkLevel.
+        At least one or arbitrary more ProcessChains must be stored in a NetworkLevel. A chain
+        must contain one Sink, Source or a ProcessChainStorage instead of either of those. It must
+        also contain at least one ProcessStep or arbitrary more.
+
+        Args:
+            process_chain_identifier (ProcessChainIdentifier): The ProcessChainIdentifier is used
+                to distinguish several process chains within a NetworkLevel.
+            production_plan (ProductionPlan): The production plan stores the activity of
+                nodes and streams during the simulation of ETHOS.PeNALPS.
+            load_profile_handler (LoadProfileHandlerSimulation): The LoadProfileHandlerSimulation
+                stores the specific energy data that is used to create load profiles and to
+                store the load profiles that are created during the simulation.
+            time_data (TimeData, optional): Contains the start and end time of the simulation.
+                Defaults to TimeData().
+            location (str, optional): Describes the location of ProcessChain. Defaults to "".
+
+        """
         self.process_chain_identifier: ProcessChainIdentifier = process_chain_identifier
         self.time_data: TimeData = time_data
         self.process_node_dict: dict[str, ProcessNode] = {}
         self.stream_handler: StreamHandler = StreamHandler()
         self.sink: Sink | ProcessChainStorage
         self.location: str = location
-        self.load_profile_handler: LoadProfileHandlerSimulation = (
-            LoadProfileHandlerSimulation()
-        )
         self.production_plan: ProductionPlan = production_plan
         self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
         self.debugging_information_logger = DebuggingInformationLogger()
         self.source: Source | ProcessChainStorage
 
     def get_process_node_dict_without_sink_and_source(self) -> dict[str, ProcessNode]:
+        """Returns a dictionary of the nodes of the process chain without the source
+            and sink.
+
+        Returns:
+            dict[str, ProcessNode]: _description_
+        """
         output_node_dict = dict(self.process_node_dict)
         output_node_dict.pop(self.sink.name, None)
         output_node_dict.pop(self.source.name, None)
         return output_node_dict
 
     def create_failed_report(self):
+        """Creates a report for failed simulation which summarizes the
+        simulation.
+        """
         failed_report_generator = FailedRunReportGenerator(
             debugging_information_logger=self.debugging_information_logger,
             process_node_dict=self.process_node_dict,
@@ -90,30 +97,10 @@ class ProcessChain:
         )
         failed_report_generator.generate_report()
 
-    def pickle_dump_production_plan(
-        self,
-        file_name: str = "production_plan",
-        subdirectory_name: str = "production_plan",
-        add_time_stamp_to_filename: bool = True,
-    ):
-        result_path_generator = ResultPathGenerator()
-        result_path = result_path_generator.create_path_to_file_relative_to_main_file(
-            file_name=file_name,
-            subdirectory_name=subdirectory_name,
-            add_time_stamp_to_filename=add_time_stamp_to_filename,
-            file_extension=".pckl",
-        )
-        with open(result_path, "wb") as file:
-            cloudpickle.dump(self.production_plan, file, protocol=None)
-
-    def pickle_load_production_plan(self, path_to_pickle_file: str):
-        with open(path_to_pickle_file, "rb") as input_file:
-            self.production_plan = cloudpickle.load(input_file)
-
     def initialize_production_plan(self):
         """Collects steps that are necessary to conduct before each simulation.
         Creates empty entries for each process node and stream in the production plan.
-        Collects the energy data from streams
+        Collects the energy data from streams.
         """
         for process_node_name in self.process_node_dict:
             process_node = self.get_process_node(process_node_name=process_node_name)
@@ -161,11 +148,15 @@ class ProcessChain:
         self, process_node_to_add: ProcessStep | Source | Sink | ProcessChainStorage
     ):
         """Adds a process node object to the process_node_dict of EnterpriseStructure to
-        consider the node during the simulation
+        consider the node during the simulation.
 
-        :param process_node_to_add: A ProcessStep, Source or Sink object which inherited from process node
-        :type process_node_to_add: ProcessStep | Source | Sink
-        :raises Exception: _description_
+        Args:
+            process_node_to_add (ProcessStep | Source | Sink | ProcessChainStorage): A ProcessStep,
+              Source or Sink object which inherited from process node
+
+        Raises:
+            Exception: _description_
+
         """
         if process_node_to_add.name in self.process_node_dict:
             raise Exception(
@@ -178,22 +169,29 @@ class ProcessChain:
             self.sink = process_node_to_add
 
     def get_process_node(self, process_node_name: str) -> ProcessNode:
-        """Returns a process node object based on its name
+        """Returns a process node object based on its name.
 
-        :param process_node_name: Name of the process node.
-        :type process_node_name: str
-        :return: _description_
-        :rtype: ProcessNode
+        Args:
+            process_node_name (str): Name of the node which should
+              be returned.
+
+        Returns:
+            ProcessNode: A node of the Material flow in the ProcessChain
+
         """
         return self.process_node_dict[process_node_name]
 
     def create_process_step(self, name: str) -> ProcessStep:
-        """Creates a process step.
+        """Creates a ProcessStep which represents a production step
+        of the ProductionSystem. It converts an input commodity
+        into an output commodity.
 
-        :param name: _description_
-        :type name: str
-        :return: _description_
-        :rtype: ProcessStep
+        Args:
+            name (str): Name of the ProcessStep that is used as an identifier
+                and should be unique in the model.
+        Returns:
+            ProcessStep: The new ProcessStep.
+
         """
         process_step = ProcessStep(
             name=name,
@@ -206,11 +204,16 @@ class ProcessChain:
         return process_step
 
     def get_sink(self) -> Sink | ProcessChainStorage:
-        """Returns a Sink
+        """Returns the Sink or ProcessChainStorage of the ProcessChain.
 
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: Sink
+        Raises:
+            Exception: Raises an error if no sink has been added
+                to the ProcessChain yet.
+
+        Returns:
+            Sink | ProcessChainStorage: Sink or ProcessChainStorage of
+                the ProcessChain.
+
         """
         if not hasattr(self, "sink"):
             raise Exception("No sink has been set yet")
@@ -219,12 +222,22 @@ class ProcessChain:
     def create_process_chain_production_plan(
         self, max_number_of_iterations: float | None = None
     ):
-        """Creates a production plan to produce all orders in the Sink object. Each process step between the Source
-        and Sink object is considered. Process step can create a node operation for the upstream or downstream node.
-        These operations are used creates a network of so called production and temporal branches. These are used
-        to ensure that all process steps work in temporal and logically coherent way to fulfill an  order in the Sink.
-        When a valid production plan entry is created the related energy consumption for the time period is created
-        and stored in the LoadProfileHandler.
+        """The method generates a production plan that confidently satisfies all
+        orders in the Sink object for each process step between the Source and
+        Sink object. Nodes in the ProcessChain create and receive NodeOperations
+        from other nodes, either upstream or downstream. The NodeOperations
+        synchronize inputs and outputs of sequentially dependent nodes. Once the
+        feasible input and output times have been determined, the activity of
+        the nodes, streams, and their corresponding load profiles are stored
+        in the production plan and LoadProfileHandler, respectively.
+
+        Args:
+            max_number_of_iterations (float | None, optional): Sets the maximum number of
+                iterations that are allowed in the Simulation. This can be useful to set
+                if you are not sure that you model is well defined. Defaults to None.
+
+        Raises:
+            Exception: Raises an exception if the maximum number of iterations is surpassed.
         """
         logger.info(
             "Create production plan of: %s", self.process_chain_identifier.chain_name
@@ -236,9 +249,15 @@ class ProcessChain:
         # Starts the first production iteration which does not required a node operation
         current_node.check_if_sink_has_orders()
         current_node_operation = current_node.plan_production()
-        current_node: ProcessStep = self.get_node_from_node_operation(
+        current_node = self.get_node_from_node_operation(
             node_operation=current_node_operation
         )
+        assert type(current_node) is ProcessStep, (
+            ("The next node after sink: " + self.get_sink().name)
+            + " is not a ProcessStep. It is of type:"
+            + str(type(current_node))
+        )
+
         CurrentProcessNode.node_name = current_node.name
         # loops over current node list
         while not isinstance(current_node_operation, TerminateProduction):
@@ -286,12 +305,15 @@ class ProcessChain:
         self, node_operation: NodeOperation
     ) -> ProcessNode | None:
         """Returns a target ProcessNode object of a NodeOperation Object.
+            If its TerminateProduction Operation None is returned to
+            indicate the end of the simulation of the ProcessChain.
 
-        :param node_operation: _description_
-        :type node_operation: NodeOperation
-        :raises Exception: _description_
-        :return: _description_
-        :rtype: ProcessNode | None
+        Args:
+            node_operation (NodeOperation): The NodeOperation
+                from which the target node should be extracted.
+
+        Returns:
+            ProcessNode | None: The target node Object.
         """
         logger.debug("get node_operation has been called")
         if isinstance(node_operation.next_node_name, str):
@@ -315,39 +337,44 @@ class ProcessChain:
         return node
 
     def add_sink(self, sink: Sink | ProcessChainStorage):
+        """Adds the Sink or ProcessChainStorage that replaced the Sink
+            in the ProcessChain
+
+        Args:
+            sink (Sink | ProcessChainStorage): The Sink or ProcessChain
+                of the ProcessChain.
+        """
         self.sink = sink
         self.add_process_node(process_node_to_add=sink)
 
     def add_source(self, source: Source | ProcessChainStorage):
+        """Adds the Source or ProcessChainStorage that replaced the Source
+            in the ProcessChain
+
+        Args:
+            source (Source | ProcessChainStorage): The Source or ProcessChain
+                of the ProcessChain.
+        """
         self.add_process_node(process_node_to_add=source)
         self.source = source
-
-    # def create_sink_from_source(self, source: Source) -> Sink:
-    #     production_order_dict = (
-    #         source.create_production_order_collection_from_input_states()
-    #     )
-    #     sink = Sink(
-    #         name=source.name,
-    #         commodity=source.commodity,
-    #         stream_handler=self.stream_handler,
-    #         order_collection=production_order_dict,
-    #         production_plan=self.production_plan,
-    #     )
-    #     return sink
-
-    def get_main_sink(self) -> Sink:
-        return self.sink
 
     def get_list_of_process_step_names(
         self, include_sink: bool = False, include_source: bool = False
     ) -> list[str]:
-        """Returns a list of the names of the main object node chain.
+        """Returns a list of the names of the ProcessChain.
 
-        :return: _description_
-        :rtype: list[str]
+        Args:
+            include_sink (bool, optional): Defines if the sink of
+                the ProcessChain should be included. Defaults to False.
+            include_source (bool, optional):  Defines if the source of
+                the ProcessChain should be included.. Defaults to False.
+
+        Returns:
+            list[str]: A list of all names of the nodes of the
+                ProcessChain.
         """
         list_of_main_production_route_objects = []
-        sink = self.get_main_sink()
+        sink = self.get_sink()
         if include_sink is True:
             list_of_main_production_route_objects.append(sink.name)
         first_stream = sink.get_stream_to_process_chain(
@@ -376,12 +403,3 @@ class ProcessChain:
                 list_of_main_production_route_objects.append(upstream_node)
 
         return list_of_main_production_route_objects
-
-
-class ProcessChainFactor(ProcessChain):
-    def create_replicas(self):
-        pass
-
-
-if __name__ == "__main__":
-    pass

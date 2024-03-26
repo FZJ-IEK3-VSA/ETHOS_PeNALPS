@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import datetimerange
 import scipy.optimize
 
-from ethos_penalps.order_generator import OrderGenerator
 from ethos_penalps.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.process_nodes.sink import Sink
@@ -251,7 +250,9 @@ class CapacityCalculator:
                 """Something went wrong. There should not
                 be more than one output stream entry in the production plan"""
             )
-
+        process_step_capacity_classifier: (
+            ContinuousCapacityClassifier | BatchCapacityClassifier
+        )
         if isinstance(
             self.capacity_calculator_process_chain.process_step_output_stream,
             ContinuousStream,

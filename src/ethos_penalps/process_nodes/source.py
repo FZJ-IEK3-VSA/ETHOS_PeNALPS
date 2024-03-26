@@ -48,6 +48,11 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class Source(ProcessNode):
+    """Is the start point of the material flow of the production system.
+    It provides the raw materials that are required by the production systems.
+    It does not apply any constraints on the availability of these raw materials.
+    """
+
     def __init__(
         self,
         name: str,
@@ -56,6 +61,19 @@ class Source(ProcessNode):
         time_data: TimeData,
         production_plan: ProductionPlan,
     ) -> None:
+        """
+
+        Args:
+            name (str): Name of the source that is used in some figures
+                and for identification. Must be unique.
+            commodity (Commodity): The commodity that is stored in this node.
+            stream_handler (StreamHandler): contains all streams that are connected
+                to this node.
+            production_plan (ProductionPlan): Is used to store the storage states
+                of this node.
+            time_data (TimeData): Contains the the start and end date that is used
+                for the creation of the storage states.
+        """
         super().__init__(stream_handler=stream_handler, name=name)
         self.commodity: Commodity = commodity
         self.production_plan: ProductionPlan = production_plan
@@ -82,6 +100,16 @@ class Source(ProcessNode):
         output_stream: ContinuousStream | BatchStream,
         process_chain_identifier: ProcessChainIdentifier,
     ):
+        """Adds an output stream to this node. This information is required
+        for the simulation.
+
+        Args:
+            output_stream (ContinuousStream | BatchStream): Output stream of this node
+                to another ProcessStep in the downstream NetworkLevel.
+            process_chain_identifier (ProcessChainIdentifier): Identifies the
+                process chain that the stream belongs to.
+        """
+
         if not isinstance(output_stream, ContinuousStream | BatchStream):
             raise Exception(
                 "Expected output stream of type ContinuousStream but got type: "
@@ -91,6 +119,10 @@ class Source(ProcessNode):
         self.dict_of_output_stream_names[process_chain_identifier] = output_stream.name
 
     def create_storage_entries(self):
+        """Creates the storage entries of the source based on the requested
+        output streams. It is assumed that the total material required is available
+        at the beginning of the first stream.
+        """
         stream_net_mass = self.storage.determine_net_mass(
             list_of_input_stream_states=[],
             list_of_output_stream_states=self.list_of_output_stream_states,
@@ -112,6 +144,13 @@ class Source(ProcessNode):
         self,
         process_chain_identifier: ProcessChainIdentifier,
     ):
+        """Sets the currently active output stream based on the ProcessChain
+        that is belongs to.
+
+        Args:
+            process_chain_identifier (ProcessChainIdentifier): ProcessChain that
+                that contains the Stream to be activated.
+        """
         self.current_output_stream_name = self.dict_of_output_stream_names[
             process_chain_identifier
         ]
@@ -120,6 +159,12 @@ class Source(ProcessNode):
         self,
         process_chain_identifier: ProcessChainIdentifier,
     ):
+        """Prepares the source for the next chain.
+
+        Args:
+            process_chain_identifier (ProcessChainIdentifier): Identifies the
+                chain that should be activated for simulation.
+        """
         self.set_current_output_stream(
             process_chain_identifier=process_chain_identifier
         )
@@ -127,6 +172,13 @@ class Source(ProcessNode):
         self.temporal_branch_number: float = 0
 
     def get_downstream_node_name(self) -> str:
+        """Returns the name of the node of the currently active
+        chain downstream of the source.
+
+        Returns:
+            str: Name of the node of the currently active
+        chain downstream of the source.
+        """
         output_stream = self.stream_handler.get_stream(
             stream_name=self.current_output_stream_name
         )
@@ -136,6 +188,17 @@ class Source(ProcessNode):
     def create_complete_branch_data(
         self, upstream_new_production_order: UpstreamNewProductionOrder
     ) -> CompleteOutputBranchData:
+        """Creates the CompleteOutputBranchData that is required for the
+        DownstreamValidationOrder.
+
+        Args:
+            upstream_new_production_order (UpstreamNewProductionOrder): The
+                order that requested the stream that is validated with the output
+                of this method.
+
+        Returns:
+            CompleteOutputBranchData: The complete OutputBranchData.
+        """
         self.production_branch_number = self.production_branch_number + 1
         output_branch_identifier = OutputBranchIdentifier(
             branch_number=self.production_branch_number
@@ -157,6 +220,19 @@ class Source(ProcessNode):
     def process_input_order(
         self, input_node_operation: NodeOperation
     ) -> DownstreamValidationOrder:
+        """Creates the reaction to an incoming order. The source
+        only receives requests for new output streams. These are
+        always accepted because the source does not apply any constraints
+        on the raw material availability.
+
+        Args:
+            input_node_operation (NodeOperation): Contains the requests
+                for a new output stream.
+
+        Returns:
+            DownstreamValidationOrder: Validates that the requested output stream
+                is provided as requested
+        """
         logger.debug(
             "Input order: %s is processed in source: %s",
             input_node_operation,
@@ -179,6 +255,12 @@ class Source(ProcessNode):
     def create_production_order_collection_from_input_states(
         self,
     ) -> OrderCollection:
+        """Converts the requested output streams into new orders.
+
+        Returns:
+            OrderCollection: Orders that were created from the output stream
+                states.
+        """
         order_number = 0
         production_order_dict = {}
         for stream_state in reversed(self.list_of_output_stream_states):
@@ -211,6 +293,17 @@ class Source(ProcessNode):
     def create_downstream_validation_operation(
         self, upstream_new_production_order: UpstreamNewProductionOrder
     ) -> DownstreamValidationOrder:
+        """Creates the order that validates the requested stream will be provided
+        as requested.
+
+        Args:
+            upstream_new_production_order (UpstreamNewProductionOrder): The input
+                order that requested a stream from the source.
+
+        Returns:
+            DownstreamValidationOrder: The order signal that the stream is provided
+                as requested.
+        """
         down_stream_node_name = self.get_downstream_node_name()
         complete_branch_data = self.create_complete_branch_data(
             upstream_new_production_order=upstream_new_production_order
@@ -234,7 +327,18 @@ class Source(ProcessNode):
         return down_stream_validation
 
     def get_input_stream_name(self) -> None:
+        """Returns none because the source does
+        have an input stream.
+
+        Returns:
+            None: The source does not have an input stream.
+        """
         return None
 
     def get_output_stream_name(self) -> str:
+        """Returns the name of the currently active output stream.
+
+        Returns:
+            str: Name of the output stream.
+        """
         return self.current_output_stream_name

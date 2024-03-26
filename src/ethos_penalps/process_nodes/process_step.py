@@ -48,11 +48,11 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessStep(ProcessNode):
-    """Is a class which represents an individual process step of an industry process.
-    Its two main components are the process_state_handler and the production_branch_dict.
-    The production branch dict contains production branches which are used to check the coherence of the production activity
-    of this process step and the upstream and downstream nodes. The process states handler contains all features which determine
-    the temporal and logical behavior of a process step during production and idle time.
+    """Models a production step within an industrial manufacturing process. It requests output
+    streams to provides output streams. The production activity is modelled using a Petri net of states.
+    These states must have states that model the different steps of productions. These steps are then attributed with energy to model
+    a load profile. The activity of the states is synchronized with the downstream and upstream nodes to model a just in time
+    production.
     """
 
     def __init__(
@@ -63,18 +63,20 @@ class ProcessStep(ProcessNode):
         load_profile_handler: LoadProfileHandlerSimulation,
         enterprise_time_data: TimeData,
     ):
-        """Initiates the instance of a process step
+        """_summary_
 
-        :param name: _description_
-        :type name: str
-        :param stream_handler: _description_
-        :type stream_handler: StreamHandler
-        :param production_plan: _description_
-        :type production_plan: ProductionPlan
-        :param load_profile_handler: _description_
-        :type load_profile_handler: LoadProfileHandler
-        :param enterprise_time_data: _description_
-        :type enterprise_time_data: TimeData
+        Args:
+            name (str): Name of the process step that is used in some figures
+                and for the identification of the process step. Must be unique.
+            stream_handler (StreamHandler): Contains all streams that are connected to
+                the ProcessStep.
+            production_plan (ProductionPlan): Is used to store all the simulation
+                results of the ProcessStep.
+            load_profile_handler (LoadProfileHandlerSimulation): Contains all the data that is
+                used to convert the states from the petri net into load profiles. Also stores
+                the load profiles
+            enterprise_time_data (TimeData): Contains the start and end time of the simulation.
+                Also stores the current temporal state of the Petri net.
         """
 
         super().__init__(name=name, stream_handler=stream_handler)
@@ -105,22 +107,48 @@ class ProcessStep(ProcessNode):
     def __str__(self) -> str:
         return "Process Step: " + self.name
 
-    def process_input_order(self, input_node_operation: NodeOperation) -> NodeOperation:
-        """Conducts the incoming node operations. Currently DownstreamValidationOperation and UpstreamNewProductionOrder are supported
+    def process_input_order(
+        self,
+        input_node_operation: (
+            UpstreamNewProductionOrder
+            | DownstreamValidationOrder
+            | DownstreamAdaptionOrder
+            | UpstreamAdaptionOrder
+        ),
+    ) -> (
+        UpstreamNewProductionOrder
+        | DownstreamValidationOrder
+        | DownstreamAdaptionOrder
+        | UpstreamAdaptionOrder
+    ):
+        """Manages the incoming node operations. These either request a an output stream,
+        an adaption of an input stream, validate that a requested input stream can be delivered
+        as requested, requests that an output stream can be adapted as requested or affirms that
+        an output stream can be adapted.
 
-        1. For DownstreamValidationOperation it is checked if the production branch of the current node is fulfilled.
-            - branch_is_fulfilled==True:
-                1. The current branch is stored to the production plan
-                2. A new DownstreamValidationOperation is created for the downstream node
-            - branch_is_fulfilled==False:
-                1. A new UpstreamNewProductionOrders is created to produce the missing product
-        2. From a new UpstreamNewProductionOrder
-            1. A new Production branch is created
-            2. A new UpstreamNewProductionOrder is created and returned
+        Args:
+            input_node_operation (UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder ) : The
+                meaning of the different types of input operation is explained in the following:
+
+                - UpstreamNewProductionOrder: Request an output stream from this ProcessStep.
+                - DownstreamValidationOrder: Validates that a input stream that has been requested
+                  by this process step can be delivered as requested.
+                - DownstreamAdaptionOrder: The upstream node requests that the previously requested output stream is
+                  adapted because the upstream node is busy.
+                - UpstreamAdaptionOrder: The downstream node requests that the output stream is produced as proposed in
+                  the previous adaption request.
 
 
-        :return: _description_
-        :rtype: list[ProductionOrder]
+        Returns:
+            (UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder ): The
+                meaning of the different types of output operation is explained in the following:
+
+                - UpstreamNewProductionOrder: Request a an input stream from the upstream node.
+                - DownstreamValidationOrder: Validates that the requested output stream is delivered as requested.
+                - DownstreamAdaptionOrder: Requests that the Downstream node accepts an adapted output stream because
+                  this Process step is busy.
+                - UpstreamAdaptionOrder: This process step affirms that the adapted output stream should be provided as proposed
+                  by the upstream node.
         """
         logger.debug(
             "The input order type is: %s in process step: %s ",
@@ -194,6 +222,18 @@ class ProcessStep(ProcessNode):
         current_production_branch: ProcessNodeCommunicator,
         downstream_validation_operation: DownstreamValidationOrder,
     ) -> DownstreamValidationOrder:
+        """Creates a downstream validation operation that indicates that the output
+        stream can be provided as requested.
+
+        Args:
+            current_production_branch (ProcessNodeCommunicator): Current production branch.
+            downstream_validation_operation (DownstreamValidationOrder): The previous
+                downstream validation operation.
+
+        Returns:
+            DownstreamValidationOrder: Indicates that the output
+        stream can be provided as requested.
+        """
         down_stream_node_name = self.get_downstream_node_name()
         down_stream_validation = (
             current_production_branch.create_downstream_validation_order(
@@ -211,6 +251,12 @@ class ProcessStep(ProcessNode):
     def get_last_fulfilled_production_branch(
         self,
     ) -> ProcessNodeCommunicator | EmptyProductionBranch:
+        """Returns the last complete production branch
+
+        Returns:
+            ProcessNodeCommunicator | EmptyProductionBranch: Last complete production
+                branch.
+        """
         if not self.production_branch_dict:
             production_branch = EmptyProductionBranch()
         else:
@@ -223,12 +269,22 @@ class ProcessStep(ProcessNode):
         return production_branch
 
     def get_downstream_node_name(self) -> str:
+        """returns the node name of the downstream node.
+
+        Returns:
+            str: Name of the downstream node.
+        """
         main_output_stream = self.stream_handler.get_stream(
             self.process_state_handler.process_step_data.main_mass_balance.main_output_stream_name
         )
         return main_output_stream.get_downstream_node_name()
 
     def get_upstream_node_name(self) -> str:
+        """Returns the node name of the upstream node.
+
+        Returns:
+            str: Name of the upstream node.
+        """
         main_input_stream = self.stream_handler.get_stream(
             self.process_state_handler.process_step_data.main_mass_balance.main_input_stream_name
         )
@@ -241,7 +297,23 @@ class ProcessStep(ProcessNode):
         main_input_stream: ContinuousStream | BatchStream,
         main_output_stream: ContinuousStream | BatchStream,
     ) -> MassBalance:
-        "Mass balance is an output mass balance"
+        """Creates the mass balance of the Process step that is required to convert
+        output into input streams. Also hols the storages. Each process step must have
+        an own mass balance for a well defined simulation model.
+
+        Args:
+            commodity (Commodity): Commodity that is stored by the
+                mass balance.
+            input_to_output_conversion_factor (float): Converts the input to output mass
+                by multiplication.
+            main_input_stream (ContinuousStream | BatchStream): Stream that connects
+                the current mass balance and process step with the upstream node.
+            main_output_stream (ContinuousStream | BatchStream): Stream that connects
+                the current mass balance and process step with the downstream node.
+
+        Returns:
+            MassBalance: Mass balance of the current ProcessStep
+        """
 
         mass_balance = MassBalance(
             commodity=commodity,
@@ -259,11 +331,21 @@ class ProcessStep(ProcessNode):
         return mass_balance
 
     def get_input_stream_name(self) -> str:
+        """Returns the name of the input stream.
+
+        Returns:
+            str: Name of the input stream name.
+        """
         return (
             self.process_state_handler.process_step_data.main_mass_balance.main_input_stream_name
         )
 
-    def get_output_stream_name(self):
+    def get_output_stream_name(self) -> str:
+        """Returns the name the output stream.
+
+        Returns:
+            str: Name of the output stream.
+        """
         return (
             self.process_state_handler.process_step_data.main_mass_balance.main_output_stream_name
         )

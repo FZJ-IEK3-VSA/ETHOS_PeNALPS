@@ -108,12 +108,16 @@ class TikzNameHandler:
 
 @dataclass
 class EmptyTikzNode:
+    """Represents an empty tikz node which is not displayed"""
+
     unique_name: str = field(default_factory=get_new_uuid)
     tikz_options: str = "InfinitesimalNode"
 
 
 @dataclass
 class ProcessStepNode:
+    """Represents the a process step node"""
+
     tex_name: str
     name_in_simulation: str
     name_to_display: str
@@ -121,6 +125,8 @@ class ProcessStepNode:
 
 @dataclass
 class IntermediateStorage:
+    """Represents a storage which connects NetworkLevels"""
+
     sink: Sink
     source: Source
     unique_name: str
@@ -128,10 +134,18 @@ class IntermediateStorage:
 
 @dataclass(kw_only=True)
 class SinkRow:
+    """Represents a row in the tikz matrix which contains the sink."""
+
     main_sink: Sink
     unique_identification_name: str
 
     def create_tikz_string(self):
+        """Creates the string that represents the SinkRow in the
+        tex document.
+
+        Returns:
+            _type_: _description_
+        """
         sink_node = TikzNode(
             name_to_display=self.main_sink.name,
             unique_identification_name=self.unique_identification_name,
@@ -143,6 +157,13 @@ class SinkRow:
 
 @dataclass(kw_only=True)
 class SourceRow:
+    """Object that represents the source row
+    of the material flow system.
+
+    Returns:
+        _type_: _description_
+    """
+
     main_source: Source
     unique_identification_name: str
     unique_name_of_object_below_source: str
@@ -162,6 +183,14 @@ class SourceRow:
 
 @dataclass(kw_only=True)
 class SourceAndSinkRow(SinkRow, SourceRow):
+    """Object that represents the NetworkLevel Storage
+    of the material flow simulation.
+
+    Args:
+        SinkRow (_type_): _description_
+        SourceRow (_type_): _description_
+    """
+
     def __post_init__(self):
         self.name_to_display: str = self.main_sink.name
 
@@ -192,6 +221,7 @@ class SortedProcessChainLevel:
     unique_sink_name: str
 
     def __post_init__(self):
+        """Converts the input data into a structured form."""
         self.unique_chain_name = (
             self.tikz_name_handler.create_unique_tikz_identification_name(
                 input_name=self.process_chain.process_chain_identifier.chain_name
@@ -232,6 +262,8 @@ class SortedProcessChainLevel:
 
 @dataclass(kw_only=True)
 class SortedNetworkLevel:
+    """Sorted representation of the network level"""
+
     network_level: NetworkLevel
     tikz_name_handler: TikzNameHandler
     previous_source_row: SourceRow | None
@@ -294,6 +326,8 @@ class SortedNetworkLevel:
 
 @dataclass(kw_only=True)
 class FilledProcessStepChain:
+    """Representation of the filled process chain."""
+
     name_to_display: str
     maximum_chain_length: int
     unique_chain_name: str
@@ -312,6 +346,12 @@ class FilledProcessStepChain:
 
 @dataclass
 class NetworkLevelMatrix:
+    """Representation of a NetworkLevel for tikz plotting.
+
+    Returns:
+        _type_: _description_
+    """
+
     unique_tikz_name: str
     sorted_network_level: SortedNetworkLevel
 
@@ -350,11 +390,20 @@ class NetworkLevelMatrix:
 
 
 class EnterpriseGraphBuilderTikz:
+    """Converts the list of NetworkLevel into a tikz depiction
+    of the material flow model."""
+
     def __init__(
         self,
         enterprise_name: str,
         list_of_network_level: list[NetworkLevel],
     ) -> None:
+        """
+
+        Args:
+            enterprise_name (str): Name to be displayed at the top of the graphic
+            list_of_network_level (list[NetworkLevel]): List of NetworkLevel which should be displayed.
+        """
         self.full_document_string: str
         self.path_to_tex_file: str
         self.list_of_network_level: list[NetworkLevel] = list_of_network_level
@@ -367,12 +416,26 @@ class EnterpriseGraphBuilderTikz:
         self.tikz_name_handler: TikzNameHandler = TikzNameHandler()
 
     def save_tex_file(self, full_path: str):
+        """Saves the text file to the path provided.
+
+        Args:
+            full_path (str): Save destination path.
+        """
         with open(file=full_path, encoding="UTF-8", mode="w+") as file:
             file.write(self.full_document_string)
             file.close()
             self.path_to_tex_file = full_path
 
-    def create_tex_file(self, full_path: str):
+    def create_tex_file(self, full_path: str) -> str:
+        """Creates and save the the tex file
+
+        Args:
+            full_path (str): Destination of the tex_file.
+
+        Returns:
+            str: path to the created tex file.
+        """
+
         list_of_sorted_network_level = self.create_list_of_sorted_network_level()
         network_node_string = self.create_network_level_nodes(
             list_of_sorted_network_level=list_of_sorted_network_level
@@ -396,6 +459,11 @@ class EnterpriseGraphBuilderTikz:
         return full_path
 
     def create_list_of_sorted_network_level(self) -> list[SortedNetworkLevel]:
+        """Sorts the network level from source to sink of the whole production system.
+
+        Returns:
+            list[SortedNetworkLevel]: _description_
+        """
         previous_sorted_network_level = None
         list_of_sorted_network_level: list[SortedNetworkLevel] = []
         for network_level in self.list_of_network_level:
@@ -415,6 +483,15 @@ class EnterpriseGraphBuilderTikz:
     def create_network_level_nodes(
         self, list_of_sorted_network_level: list[SortedNetworkLevel]
     ) -> str:
+        """Creates the tex string paragraph which contains all nodes.
+
+        Args:
+            list_of_sorted_network_level (list[SortedNetworkLevel]): List
+                of NetworkLevel which should be displayed.
+
+        Returns:
+            str: Node section string
+        """
         node_section_string = ""
         for sorted_network_level in list_of_sorted_network_level:
             if type(sorted_network_level.sink_row) is SinkRow:
@@ -445,6 +522,15 @@ class EnterpriseGraphBuilderTikz:
     def create_title_string(
         self, list_of_sorted_network_level: list[SortedNetworkLevel]
     ) -> str:
+        """Creates the title string section of the text document.
+
+        Args:
+            list_of_sorted_network_level (list[SortedNetworkLevel]): List of
+                NetworkLevel which should be displayed.
+
+        Returns:
+            str: Title string section of the text document.
+        """
         title_node = self.create_title_node()
         last_sorted_network_level = list_of_sorted_network_level[-1]
         node_section_string = title_node.create_node_above_of(
@@ -457,6 +543,17 @@ class EnterpriseGraphBuilderTikz:
         self,
         sorted_network_level: SortedNetworkLevel,
     ) -> NetworkLevelMatrix:
+        """Creates the network level matrix which represents a complete NetworkLevel
+        Matrix.
+
+        Args:
+            sorted_network_level (SortedNetworkLevel):  List of
+                NetworkLevel which should be displayed.
+
+        Returns:
+            NetworkLevelMatrix: Network level matrix that
+            represents a complete NetworkLevel. It can be converted to a tex string.
+        """
         network_level_matrix = NetworkLevelMatrix(
             unique_tikz_name=sorted_network_level.unique_name,
             sorted_network_level=sorted_network_level,
@@ -467,6 +564,15 @@ class EnterpriseGraphBuilderTikz:
     def create_network_level_edges(
         self, list_of_sorted_network_level: list[SortedNetworkLevel]
     ) -> str:
+        """Creates the edges string section for tex document.
+
+        Args:
+            list_of_sorted_network_level (list[SortedNetworkLevel]): List of
+                NetworkLevel which should be displayed.
+
+        Returns:
+            str: Edge string section for tex document.
+        """
         stream_string_section = ""
         for sorted_network_level in list_of_sorted_network_level:
             for (
@@ -504,6 +610,12 @@ class EnterpriseGraphBuilderTikz:
         return stream_string_section
 
     def create_title_node(self) -> TikzNode:
+        """Creates the title node object which can be used
+        to create the corresponding tex string.
+
+        Returns:
+            TikzNode: Title node object
+        """
         unique_identification_name = (
             self.tikz_name_handler.create_unique_tikz_identification_name(
                 input_name=self.title_node_identifier
@@ -518,6 +630,11 @@ class EnterpriseGraphBuilderTikz:
         return tikz_node
 
     def compile_pdf(self) -> str:
+        """Compiles the tex file to a pdf using tectonic.
+
+        Returns:
+            str: Returns the path to the pdf.
+        """
         subprocess.run(
             [
                 "tectonic",
@@ -534,6 +651,14 @@ class EnterpriseGraphBuilderTikz:
         return path_to_pdf
 
     def convert_pdf_to_png(self, path_to_pdf: str) -> str:
+        """Converts a pdf file to png file that can be included into the report.
+
+        Args:
+            path_to_pdf (str): Path to the pdf that should be converted.
+
+        Returns:
+            str: Path to the converted png file
+        """
         path_to_png = path_to_pdf[:-4] + ".png"
         with tempfile.TemporaryDirectory() as path:
             list_of_pillow_images = convert_from_path(path_to_pdf)
@@ -548,6 +673,18 @@ class EnterpriseGraphBuilderTikz:
         show_graph: bool = True,
         output_format: str = "pdf",
     ) -> str:
+        """Creates the complete enterprise graph.
+
+        Args:
+            path_to_results_folder (str): Path to the report folder.
+            show_graph (bool, optional): Determines if the created graph should
+                be shown. Defaults to True.
+            output_format (str, optional): Determines
+                the target format of the enterprise figure. Defaults to "pdf".
+
+        Returns:
+            str: Path to the enterprise graph.
+        """
         result_path_generator = ResultPathGenerator()
         text_folder_path = result_path_generator.create_subdirectory_relative_to_parent(
             parent_directory_path=path_to_results_folder,

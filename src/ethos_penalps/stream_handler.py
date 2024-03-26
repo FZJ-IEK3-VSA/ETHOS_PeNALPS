@@ -26,6 +26,11 @@ class StreamHandler:
             pprint(vars(stream))
 
     def json_dumps_streams(self) -> str:
+        """Dumps all streams to json files.
+
+        Returns:
+            str: Json string of the streams.
+        """
         continuous_stream_json_dict = {}
         batch_stream_json_dict = {}
         for stream_name, stream in self.stream_dict.items():
@@ -41,6 +46,11 @@ class StreamHandler:
         return stream_handler_json_dump
 
     def json_dump_streams(self, path: str | None = None):
+        """Dumps streams to json file.
+
+        Args:
+            path (str | None, optional): Path to the json file. Defaults to None.
+        """
         if path is None:
             result_path_generator = ResultPathGenerator()
             path = result_path_generator.create_path_to_file_relative_to_main_file(
@@ -54,6 +64,12 @@ class StreamHandler:
             out_file.write(json_string)
 
     def json_loads_streams(self, json_string: str):
+        """Loads the streams from a json string.
+
+        Args:
+            json_string (str): Json string which contains
+            the stream data.
+        """
         container_json = json.loads(json_string)
         batch_stream_dict = {}
         for stream_name, stream_json_dict in container_json["batch"].items():
@@ -67,6 +83,11 @@ class StreamHandler:
         self.stream_dict.update(continuous_stream_dict)
 
     def json_load_streams(self, path: str):
+        """Loads streams from json file.
+
+        Args:
+            path (str): Path to json file.
+        """
         with open(file=path) as input_file:
             json_string = input_file.read()
         self.json_loads_streams(json_string=json_string)
@@ -75,6 +96,20 @@ class StreamHandler:
         self,
         continuous_stream_static_data: ContinuousStreamStaticData,
     ) -> ContinuousStream:
+        """Creates a continuous stream that connects two nodes in the material flow
+        model. A continuous streams moves the mass continuously from the start node
+        to the target node at its operation rate. These nodes can be either a
+        ProcessStep, Sink, Source or a ProcessChainStorage. It is important to
+        note that Process steps require states that compatible to continuous streams.
+
+        Args:
+            continuous_stream_static_data (ContinuousStreamStaticData):
+                An object that contains all stream data that does not change
+                during the simulation.
+
+        Returns:
+            ContinuousStream: New stream Object.
+        """
         stream = ContinuousStream(
             static_data=continuous_stream_static_data,
         )
@@ -90,6 +125,15 @@ class StreamHandler:
     def add_stream(
         self, new_stream: ContinuousStream | BatchStream, overwrite_stream: bool = False
     ):
+        """Adds a stream directly to the StreamHandler.
+
+        Args:
+            new_stream (ContinuousStream | BatchStream): _description_
+            overwrite_stream (bool, optional): _description_. Defaults to False.
+
+        Raises:
+            Exception: _description_
+        """
         if new_stream.name in self.stream_dict and overwrite_stream is False:
             raise Exception(
                 "Stream with name "
@@ -101,8 +145,8 @@ class StreamHandler:
     def get_list_of_all_stream_names_in_stream_handler(self) -> list[str]:
         """Gets the names of all streams stored in the StreamHandler instance. Includes inactive streams.
 
-        :return: _description_
-        :rtype: list[str]
+        Returns:
+            list[str]: List of all stream names in the StreamHandler.
         """
         stream_name_list = []
         for stream_name in self.stream_dict:
@@ -110,12 +154,15 @@ class StreamHandler:
         return stream_name_list
 
     def get_stream(self, stream_name: str) -> ContinuousStream | BatchStream:
-        """returns a stream based on the name as a key
+        """Returns a stream based on the name as a key.
 
-        :param stream_name: [description]
-        :type stream_name: str
-        :return: [description]
-        :rtype: Stream
+        Args:
+            stream_name (str): Name of stream to be returned.
+
+
+        Returns:
+            ContinuousStream | BatchStream: Returns the stream with the
+                input key.
         """
         if not isinstance(stream_name, str):
             raise Exception(
@@ -142,6 +189,22 @@ class StreamHandler:
     def create_batch_stream(
         self, batch_stream_static_data: BatchStreamStaticData
     ) -> BatchStream:
+        """Creates a batch stream that connects two nodes in the material flow
+        model. A batch stream transports the mass between two nodes in a discrete manner.
+        At the start time of the stream all mass removed from the start node. At the end
+        time all mass is added to the target node. These nodes can be either a ProcessStep,
+        Sink, Source or a ProcessChainStorage. It is important to note that Process steps
+        require states that compatible to batch streams.
+
+        Args:
+            batch_stream_static_data (BatchStreamStaticData): _description_
+
+        Raises:
+            Exception: _description_
+
+        Returns:
+            BatchStream: _description_
+        """
         batch_stream = BatchStream(static_data=batch_stream_static_data)
         if batch_stream.name in self.stream_dict:
             raise Exception(

@@ -7,6 +7,7 @@ documentation/_build
 documentation/autoapi
 .mypy_cache
 .pytest_cache
+.VSCodeCounter/
 
 # file types to ignore
 **.pyc

@@ -35,6 +35,10 @@ class CompleteTemporalBranchData(TemporalBranchData):
 
 @dataclass(kw_only=True)
 class StreamBranchData:
+    """Tracks the information if the mass of all input streams has been
+    requested.
+    """
+
     identifier: StreamBranchIdentifier
     list_of_complete_input_branches: list[CompleteTemporalBranchData] = field(
         default_factory=list
@@ -61,6 +65,15 @@ class StreamBranchData:
 
 @dataclass(kw_only=True)
 class IncompleteStreamBranchData(StreamBranchData):
+    """_summary_
+
+    Args:
+        StreamBranchData (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
     current_incomplete_input_branch: TemporalBranchData
 
     def create_complete_input_branch_data(self) -> CompleteTemporalBranchData:

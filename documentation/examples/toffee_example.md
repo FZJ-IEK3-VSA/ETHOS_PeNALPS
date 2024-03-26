@@ -1,23 +1,42 @@
-# Example: Toffee Production
+# ETHOS.PeNALPS Workflow on the Example of a Toffee Production Process
 
-This examples how the load profile of a toffee production process can be modelled. The processes modelled is a simplified version of the toffee production process described in {cite}`.2006` S.~32. The results are not validates and the purpose of the model is to show the modeling capabilities of ETHOS.PeNALPS.
+The ETHOS.PeNALPS workflow is demonstrated using the example of a simplified toffee production process described by Korovessi and Linninger {cite}`Korovessi.2005` p. 31-32. During the process, the raw toffee materials are mixed, cooked and cooled in a toffee machine. The cooled toffee is then cut and packaged in two successive machines. The corresponding model is depicted in {numref}`fig:Graphical-Abstract-Toffee`. The energy values are taken from similar machines in {cite}`Wojdalski.2015` and should be interpreted as a non validated showcase example.
 
 
-:::{figure-md} toffee_production_process_description
-<img src="./toffee_machine_figures/process_desciption_toffee.jpg" width="200"/>
+:::{figure-md} fig:Graphical-Abstract-Toffee
+<img src="./toffee_machine_figures/Graphical_Abstract.png" width="800"/>
 
-Description of the toffee production process {cite}`.2006` S.~32.
+Representation of the main conceptual objects of ETHOS.PeNALPS. (a) Representation of the toffee production process model. (b) Representation of the production plan of a single toffee machine, the cutting machine, the packaging machine. (c) The resulting electricity and natural gas load profile of a single toffee machine, the cutting machine and the packaging machine.
 :::
 
-# ETHOS.PeNALPS Model
+## Introduction of the Conceptual Objects of ETHOS.PeNALPS
+The nodes in the material flow simulation are (a) first named by their generic name and their specific name in the example in brackets. It is assumed that the process consists of two toffee machines operating in parallel. The produced toffee is cut and packaged by two sequentially arranged machines. 
 
-:::{figure-md} process_network_model_toffee_production
-<img src="./toffee_machine_figures/enterprise_text_file.png" width="200"/>
 
-Model of a batch toffee production system. 
+The activity of the machines and streams is tracked in the production plan (b), which is partially shown in the figure. Based on the states of the process steps and streams, load profiles (c) are calculated using specific energy demands.
+
+The simulation is started by passing a set of orders for packaged toffee to the packaged toffee sink. It then generates requests for the upstream node, which is the packaging machine. This in turn triggers a chain of upstream requests until it reaches the source. 
+
+## Introduction of the Petri Net of a Process Step
+While fulfilling the request, a process node switches a cycle through its Petri Net. {numref}`fig:depiction-petri-net` displays an example Petri Net for the toffee machine. The places of the Petri Net are the machine states of the modeled machine. There are four types of states:
+
+- Idle state (yellow), which is the start and end point
+- Input state (green), determines the activity of the input stream
+- Output state (red), determines the activity of the output stream
+- Intermediate state (gray), resembles a specific task or phase of production
+
+They are ordered by time of occurrence during production. To satisfy a request for an output stream, the process step switches from idle state to idle state for a full cycle. Each active state during the switch cycle is tracked in the production plan, which simulates the machine’s activity. Even though the states are stored in the correct forward temporal order, the internal switches occur in the opposite temporal direction. This is useful because the output request passed to the process step only provides only the required time frame for the output state.
+
+:::{figure-md} fig:depiction-petri-net
+<img src="./toffee_machine_figures/process_state_network_activity.png" width="800"/>
+
+This figure shows the Petri Net of the example toffee machine and how it determines the activity of the machine in the production plan.
 :::
 
-# Capacity Parameters
+The packaging machine and the cutting machine have only one state apart from their idle state, which are termed "Cutting" and "Packaging", respectively. Each state can be associated with a specific energy demand, that causes an energy demand during the activity of the respective state. Thus, the sequential activity of the states can be used to model the energy demand fluctuations in the load profile. An energy demand can also be attributed to a stream to model a conveyor belt or pump, for instance.
+
+# Parametrization
+## Capacity
 
 A demonstrative correlation for capacities and and throughput of toffee machines is provided manufacturer CHOCOTECH. {cite}`.ChocoTecCarastar` 
 For their Machine Carastar they provide
@@ -37,17 +56,17 @@ By dividing capacity/batch size a turnover time of about 20 minutes is calculate
 
 The capacity of the cutting  and packaging machine is assumed to be 780 kg/h so that is matches the capacity of both toffee machines. 
 
-# Energy Demands
+## Energy Demand
 
 Mass specific energy demands are required for each state of process step. In this case energy demands are required for the states of the toffee machine and the packaging and cutting machine. 
 
-# Toffee  Machine
+### Toffee  Machine
 For the toffee machine the energy data was not available for each state.
 
-## Heat Demand Toffee Machine
-Thus it is estimated based on a cumulated value of $1.25 GJ/ton$ {cite}`Wojdalski.2015` S.~185.
+### Heat Demand Toffee Machine
+Thus it is estimated based on a cumulated value of $1.25 GJ/ton$ {cite}`Wojdalski.2015` p. 185.
 
-## Electricity Demand Toffee Machine
+### Electricity Demand Toffee Machine
 $42 kWh/ton = 151.2 MJ/ton$
 - Input of materials / 5 % / $7.56 MJ/ton$
 - Dissolving of sugars, Form Emulsions (Mixing) /60 % / $90.72 MJ/ton$
@@ -55,10 +74,10 @@ $42 kWh/ton = 151.2 MJ/ton$
 - Cooling / 2 Minutes / 10 % / $15.12 MJ/ton$
 - Output of materials / 5 % / $7.56 MJ/ton$
   
-$2.2kW$ peak {cite}`Wojdalski.2015` S.~187 Batch confectioner
+$2.2kW$ peak {cite}`Wojdalski.2015` p. 187 Batch confectioner
 
-# Packaging and Cutting Machine
-&3kW& peak {cite}`Wojdalski.2015` S.~187
+### Packaging and Cutting Machine
+&3kW& peak {cite}`Wojdalski.2015` p. 187
 The cutting wrapping and packaging line is modelled as two sequential machines and stream conveyor belt. 
 It is assumed that the packaging lines constantly works at peak power. This leads to a total specific energy demand of $13.846 MJ/ton$. This is disaggregation onto the modeling objects as follow.
 

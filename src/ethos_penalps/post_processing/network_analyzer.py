@@ -27,10 +27,17 @@ from ethos_penalps.post_processing.post_processed_data_handler import (
 
 
 class NetworkAnalyzer:
+    """Sorts the nodes and streams according to the material flow direction."""
+
     def __init__(self, list_of_network_level: list[NetworkLevel]) -> None:
         self.list_of_network_level: list[NetworkLevel] = list_of_network_level
 
     def get_list_of_all_stream_process_step_names(self) -> list[str]:
+        """Returns a list of all process step names
+
+        Returns:
+            list[str]: _description_
+        """
         list_of_object_names = []
         for network_level in self.list_of_network_level:
             list_of_process_step_node_names = (

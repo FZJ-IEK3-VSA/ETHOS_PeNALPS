@@ -45,6 +45,12 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 
 class ProcessNode(ABC):
+    """Is the base class for all nodes
+    and provides attributes that all nodes have
+    and which methods they must implement.
+
+    """
+
     def __init__(
         self,
         stream_handler: StreamHandler,

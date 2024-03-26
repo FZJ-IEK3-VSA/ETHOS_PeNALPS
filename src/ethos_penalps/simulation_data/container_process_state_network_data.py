@@ -26,29 +26,58 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class InitializationDataCollector:
+    """Collects the data that is required to initialize the simulation
+    data of a ProcessStep.
+    """
+
     def __init__(self) -> None:
         self.current_process_state_name: str
         self.current_output_stream_state: ContinuousStreamState | BatchStreamState
         self.current_storage_level: numbers.Number
 
     def add_current_process_state_name(self, current_process_state_name: str):
+        """Adds a new process state as current process state.
+
+        Args:
+            current_process_state_name (str): The new process state name.
+        """
         self.current_process_state_name = current_process_state_name
 
     def add_current_output_stream_state(
         self, current_output_stream_state: ContinuousStreamState | BatchStreamState
     ):
+        """Adds a new output stream state to the simulation data.
+
+        Args:
+            current_output_stream_state (ContinuousStreamState | BatchStreamState): The new output
+                stream state of the simulation data.
+        """
         self.current_output_stream_state = current_output_stream_state
 
     def add_current_storage_level(self, current_storage_level: numbers.Number):
+        """Add the first storage level.
+
+        Args:
+            current_storage_level (numbers.Number): The first storage level in the simulation
+                data.
+        """
         self.current_storage_level = current_storage_level
 
 
 class ProcessStateNetworkContainer:
+    """_summary_"""
+
     def __init__(self) -> None:
         self.state_data: CurrentProductionStateData = UninitializedCurrentStateData()
         self.initialization_data_collector = InitializationDataCollector()
 
     def update_storage_level(self, new_storage_level: numbers.Number):
+        """Updates the storage level in the simulation data.
+
+        Args:
+            new_storage_level (numbers.Number): New storage level.
+
+        """
         if new_storage_level < -1:
             warnings.warn(
                 "Storage level went below zero at level: "
@@ -108,11 +137,22 @@ class ProcessStateNetworkContainer:
             )
 
     def get_storage_level(self) -> numbers.Number:
+        """Returns the current storage level.
+
+        Returns:
+            numbers.Number: Current storage level
+        """
         return self.state_data.current_storage_level
 
     def update_existing_output_stream_state(
         self, new_output_stream_state: ContinuousStreamState | BatchStreamState
     ):
+        """Updates the existing output stream state.
+
+        Args:
+            new_output_stream_state (ContinuousStreamState | BatchStreamState): The new
+                output stream state.
+        """
         previous_production_state_data = self.state_data
         if type(previous_production_state_data) is PreProductionStateData:
             self.state_data = PreProductionStateData(
@@ -142,6 +182,13 @@ class ProcessStateNetworkContainer:
     def add_input_stream_to_validated_data(
         self, new_input_stream_state: ContinuousStreamState | BatchStreamState
     ):
+        """Adds a new input stream state as the current unvalidated stream.
+
+        Args:
+            new_input_stream_state (ContinuousStreamState | BatchStreamState): New
+                input stream that waits for validation.
+
+        """
         previous_production_state_data = self.state_data
         if type(previous_production_state_data) is ValidatedPostProductionStateData:
             self.state_data = PostProductionStateData(
@@ -174,6 +221,12 @@ class ProcessStateNetworkContainer:
             )
 
     def update_current_process_state(self, new_process_state_name: str):
+        """Updates the current process state.
+
+        Args:
+            new_process_state_name (str): The new state in the petri net.
+
+        """
         if type(self.state_data) is PostProductionStateData:
             previous_state_data = self.state_data
             self.state_data = PostProductionStateData(
@@ -217,6 +270,14 @@ class ProcessStateNetworkContainer:
     def add_first_input_stream_state(
         self, first_input_stream_state: ContinuousStreamState | BatchStreamState
     ):
+        """Adds the first input stream state that was requested to provide mass
+        for the output stream state.
+
+        Args:
+            first_input_stream_state (ContinuousStreamState | BatchStreamState): First input
+                stream state.
+
+        """
         previous_production_state_data = self.state_data
         if type(previous_production_state_data) is PreProductionStateData:
             self.state_data = PostProductionStateData(
@@ -246,6 +307,12 @@ class ProcessStateNetworkContainer:
     def adapt_existing_input_stream_state(
         self, new_input_stream_state: BatchStreamState | ContinuousStreamState
     ):
+        """Adapts an existing input stream state.
+
+        Args:
+            new_input_stream_state (BatchStreamState | ContinuousStreamState): Adapted
+                input stream state.
+        """
         previous_production_state_data = self.state_data
         if type(previous_production_state_data) is PostProductionStateData:
             self.state_data = PostProductionStateData(

@@ -20,6 +20,11 @@ from ethos_penalps.stream_handler import StreamHandler
 
 
 class FailedRunReportGenerator:
+    """Creates a report with more details than the normal simulation
+    report for debugging. It also does not post process the simulation
+    results.
+    """
+
     def __init__(
         self,
         debugging_information_logger: DebuggingInformationLogger,
@@ -27,6 +32,18 @@ class FailedRunReportGenerator:
         stream_handler: StreamHandler,
         report_directory: str | None = None,
     ) -> None:
+        """
+
+        Args:
+            debugging_information_logger (DebuggingInformationLogger): Tracks
+                additional information about the simulation progress.
+            process_node_dict (dict[str, ProcessNode]): Contains all nodes of
+                the simulation.
+            stream_handler (StreamHandler): Contains all streams of the simulation.
+            report_directory (str | None, optional): Path to the
+                report directory. If set to None a folder relative
+                to the main file is created. Defaults to None.
+        """
         self.debugging_information_logger: DebuggingInformationLogger = (
             debugging_information_logger
         )
@@ -37,11 +54,18 @@ class FailedRunReportGenerator:
         self.open_report_after_creation: bool = True
 
     def add_output_directory(self, output_directory: str | None):
+        """Path to the output directory.
+
+        Args:
+            output_directory (str | None): Path to the output directory.
+            If set to None a folder relative to the main file is created.
+        """
         if isinstance(output_directory, str):
             pathlib.Path(output_directory).mkdir(exist_ok=True)
             self.report_directory = output_directory
 
     def generate_report(self):
+        """Starts the generation of the report."""
         if self.report_directory is None:
             if hasattr(PeNALPSLogger, "directory_to_log"):
                 self.report_directory = PeNALPSLogger.directory_to_log
@@ -103,7 +127,7 @@ class FailedRunReportGenerator:
                     )
                 )
         file_name = "report_of_failed_run"
-        if self.report_directory == None:
+        if self.report_directory is None:
             result_path_generator = ResultPathGenerator()
             path_to_main_file = (
                 result_path_generator.create_path_to_file_relative_to_main_file(
