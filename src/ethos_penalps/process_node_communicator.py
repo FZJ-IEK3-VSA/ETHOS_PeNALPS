@@ -502,6 +502,20 @@ class ProcessNodeCommunicator:
         starting_node_name: str,
         downstream_validation_operation: DownstreamValidationOrder,
     ) -> UpstreamNewProductionOrder:
+        """Starts the process to request another input stream state
+        because the previous input stream state did not provide sufficient mass.
+
+        Args:
+            next_node_name (str): The upstream node that provides the new input stream state.
+            starting_node_name (str): The current process step.
+            downstream_validation_operation (DownstreamValidationOrder): The order that
+                validated the previously requested input stream state. it provides
+                the final product order that should be fulfilled by the output stream.
+
+        Returns:
+            UpstreamNewProductionOrder: This order contains the request for an additional
+                input stream state.
+        """
         self.process_state_handler.process_step_data.state_data_container.prepare_new_temporal_branch()
         self.process_state_navigator.store_current_simulation_data()
         input_stream_state = self.process_state_navigator.fulfill_temporal_branch()

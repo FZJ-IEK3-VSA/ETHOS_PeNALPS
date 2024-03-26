@@ -114,8 +114,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   material flow of industrial processes and the activity of individual
   machines during production. ETHOS.PeNALPS is capable of simulating
   processes such as steel, paper, and industrial food production.
-  ETHOS.PeNALPS is able to model non-cyclic industrial production
-  networks.</p>
+  ETHOS.PeNALPS can model non-cyclic industrial production networks.</p>
   <p>Figure
   <xref alt="[fig:Main Component Overview]" rid="figU003AMainU0020ComponentU0020Overview">[fig:Main Component Overview]</xref>
   shows the main conceptual objects of ETHOS.PeNALPS, which are:</p>
@@ -134,11 +133,11 @@ a Creative Commons Attribution 4.0 International License (CC BY
     </list-item>
   </list>
   <p>The user creates the process model based on generic simulation
-  objects. Once the user completes process model, the model receives a
-  set of production orders to initiate the simulation. The simulation
+  objects. Once the user completes the process model, the model receives
+  a set of production orders to initiate the simulation. The simulation
   generates a production plan that tracks the activity of each node to
   fulfill the requested set of orders. Load profiles are then created
-  based on the activity in the production plan. The process steps’s load
+  based on the activity in the production plan. The process steps’ load
   profiles are modeled using a Petri net with an extensible number of
   states that determine their activity and energy demand during
   production.</p>
@@ -234,7 +233,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     (<xref alt="Borshchev &amp; Filippov, 2004, p. 3" rid="ref-Borshchev.2004" ref-type="bibr">Borshchev
     &amp; Filippov, 2004, p. 3</xref>).
     <styled-content id="figU003ASimulationU0020paradigms"></styled-content></p></caption>
-    <graphic mimetype="image" mime-subtype="png" xlink:href="media/simulation_methos.png" />
+    <graphic mimetype="image" mime-subtype="png" xlink:href="media/simulation_methods.png" />
   </fig>
   <p>The implementation as agents was chosen to improve the adaptability
   and extensibility of the software. Thus, more specifics of a node or
@@ -260,7 +259,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
     </list-item>
   </list>
   <p>Streams connect these nodes and determine the direction of material
-  flow in the simulation. Process chains combine sequentially-dependent
+  flow in the simulation. Process chains combine sequentially dependent
   nodes and streams. These process chains, whether multiple or single,
   are integrated into a network level. A single network level model can
   include multiple chains to represent parallel operation of similar
@@ -293,7 +292,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   (<xref alt="Peterson, 1977" rid="ref-Peterson.1977" ref-type="bibr">Peterson,
   1977</xref>). The states can be as simple as on or off switches or
   constitute a complex network of states during production. The main
-  novelty of this method is the combination of these subsimulations for
+  novelty of this method is the combination of these sub simulations for
   each process step to model a complete industrial manufacturing
   process. An example of toffee production is provided in the
   <ext-link ext-link-type="uri" xlink:href="www.ethospenalps.readthedocs.io/">ETHOS.PeNALPS
@@ -347,9 +346,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <p>Additionally, Stoldt et al.
   (<xref alt="2021" rid="ref-Stoldt.2021" ref-type="bibr">2021</xref>)
   identified some self-developed standalone tools, but no open-source
-  software was found. Open-source software can prevent the need to
-  re-implement concepts from old research for new research. The
-  licensing of the following software projects has been
+  software was found. Well-documented open-source software and
+  simulation models enhance research reproducibility, leveraging new
+  findings without the need to re-implement state of the art concepts.
+  The licensing of the following software projects has been
   investigated.</p>
   <p>Wohlgemuth et al.
   (<xref alt="2006" rid="ref-Wohlgemuth.2006" ref-type="bibr">2006</xref>)

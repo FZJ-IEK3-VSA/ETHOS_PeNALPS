@@ -17,21 +17,51 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class ProcessStateSwitchSelector(ABC):
+    """A process state selector determines which process state switch
+    is triggered from the current process state.
+    """
+
     def __init__(self, process_step_data: ProcessStepData) -> None:
+        """
+
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+        """
         self.target_state_name: str
         self.process_step_data: ProcessStepData = process_step_data
 
     @abstractmethod
     def select_state_switch(self) -> ProcessStateSwitch:
+        """Determines which process sate switch is returned. The switch direction
+        is from end state to start state. A process state switch
+        is also required if only a single state switch is available.
+
+        Returns:
+            ProcessStateSwitch: The selected ProcessStateSwitch.
+        """
         raise NotImplementedError
 
 
 class SingleChoiceSelector(ProcessStateSwitchSelector):
+    """This process state switch is used when there is only a
+    single process state switch for the process state.
+    """
+
     def __init__(
         self,
         process_step_data: ProcessStepData,
         process_state_switch: ProcessStateSwitch,
     ) -> None:
+        """
+
+        Args:
+            process_step_data (ProcessStepData): Contains all data
+                that define the simulation state of the process step and all
+                methods to alter the state.
+            process_state_switch (ProcessStateSwitch): Can be any ProcessStateSwitch.
+        """
         super().__init__(process_step_data)
         self.process_state_switch: ProcessStateSwitch = process_state_switch
         self.target_state_name: str = (
@@ -41,6 +71,11 @@ class SingleChoiceSelector(ProcessStateSwitchSelector):
     def select_state_switch(
         self,
     ) -> ProcessStateSwitch:
+        """Returns the only ProcessStatesSwitch
+
+        Returns:
+            ProcessStateSwitch: _description_
+        """
         return self.process_state_switch
 
 

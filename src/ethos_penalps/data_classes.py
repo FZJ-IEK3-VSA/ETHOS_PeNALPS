@@ -464,9 +464,8 @@ class ListOfLoadProfileEntryMetaData:
 
 @dataclass
 class LoadProfileMetaData(DataClassJsonMixin):
-    """Provides a data frame of LoadProfile and the
-    list of list of LoadProfileEntry that was used to create it.
-
+    """Provides a list of LoadProfileEntry, a data frame
+    from this list and meta data about this list.
     """
 
     name: str
@@ -485,6 +484,11 @@ class LoadProfileMetaData(DataClassJsonMixin):
 
 @dataclass(kw_only=True)
 class LoadProfileMetaDataResampled:
+    """Contains the list of resampled load profile entries,
+    a data frame from that list and additional meta information
+    about it.
+    """
+
     name: str
     object_type: str
     list_of_load_profiles: list[LoadProfileEntry]
@@ -500,6 +504,10 @@ class LoadProfileMetaDataResampled:
 
 @dataclass(kw_only=True)
 class CarpetPlotMatrixEmpty:
+    """Indicates that no Load Profile entries
+    were available for the object with object_name.
+    """
+
     object_name: str
 
 

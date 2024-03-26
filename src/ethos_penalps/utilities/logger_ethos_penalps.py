@@ -28,6 +28,10 @@ class ContextFilter(logging.Filter):
 
 
 class PeNALPSLogger:
+    """This class summarizes the configuration of the logging
+    capabilities of ETHOS.PeNALPS.
+    """
+
     logger_name = "ethos_penalps"
     table_delimiter = "DELIMITER"
     prepend_loop_counter = True
@@ -35,7 +39,8 @@ class PeNALPSLogger:
     logger = logging.getLogger(logger_name)
 
     @staticmethod
-    def initialize_logger():
+    def initialize_logger() -> logging.Logger:
+        """Initializes the logger"""
         root = logging.getLogger()
         root.removeHandler(root.handlers[0])
         table_logger: logging.Logger = PeNALPSLogger.logger
@@ -47,6 +52,11 @@ class PeNALPSLogger:
 
     @staticmethod
     def get_logger_without_handler() -> logging.Logger:
+        """Returns a logger without handler. This logger
+        is used in the modules of ETHOS.PeNALPS.
+        Adding the handler later allows to easily silence
+        the logger
+        """
         # https://docs.python.org/3/library/logging.html#logrecord-attributes
         # create logger
         if not PeNALPSLogger.has_been_called:
@@ -58,6 +68,7 @@ class PeNALPSLogger:
 
     @staticmethod
     def get_human_readable_logger(logging_level: int = logging.INFO) -> logging.Logger:
+        """Returns a logger configuration that can easily be read by humans."""
         # create logger
         logger: logging.Logger = PeNALPSLogger.logger
 
@@ -82,6 +93,7 @@ class PeNALPSLogger:
 
     @staticmethod
     def get_logger_to_create_table(logging_level=logging.INFO) -> logging.Logger:
+        """Returns a logger configuration that can easily be converted to a table."""
         logger: logging.Logger = PeNALPSLogger.logger
         result_path_generator = ResultPathGenerator()
         directory_to_log = (
@@ -132,6 +144,7 @@ class PeNALPSLogger:
 
     @staticmethod
     def read_log_to_data_frame(path_to_log_file: str | None = None) -> pd.DataFrame:
+        """Reads the logger entries to a table."""
         if path_to_log_file is None:
             data_frame = pd.read_csv(
                 filepath_or_buffer=PeNALPSLogger.path_to_log,

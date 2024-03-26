@@ -19,6 +19,11 @@ from ethos_penalps.time_data import TimeData
 
 
 class NetworkLevel:
+    """A NetworkLevel is used to simulate one or more chains of subsequent process steps. Each well defined simulation
+    must have at least one NetworkLevel but arbitrary more can be added. Eac networkLevel must contain at least one Sink
+    and one Source.
+    """
+
     def __init__(
         self,
         stream_handler: StreamHandler,

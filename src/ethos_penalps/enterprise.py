@@ -32,12 +32,39 @@ logger = PeNALPSLogger.get_logger_without_handler()
 
 
 class Enterprise:
+    """The Enterprise is the ContainerObject for all objects of the simulation such as
+
+        - Nodes
+            - Sink
+            - Source
+            - ProcessSteps
+        - Streams
+        - NetworkLevel
+        - ProcessChains
+
+    It also provides the methods to start the simulation, post processing and
+    report generation.
+    """
+
     def __init__(
         self,
         time_data: TimeData,
         name: str = "Enterprise",
         location: str = "",
     ) -> None:
+        """
+
+        Args:
+            time_data (TimeData): Contains the temporal information of the simulation
+                The simulation starts internally at the global_end_date provided.
+                The start date is only used in some of the figures. The simulation
+                Terminates when all order in the sink are fulfilled in each NetworkLevel.
+            name (str, optional): The name of the enterprise
+                is displayed in some figures. Defaults to "Enterprise".
+            location (str, optional): The location is displayed
+                in some figures and can be used to distinguish multiple
+                simulation models. Defaults to "".
+        """
         self.list_of_network_level: list[NetworkLevel] = []
         self.time_data: TimeData = time_data
         self.location: str = location
@@ -85,10 +112,19 @@ class Enterprise:
     def pickle_sink(
         self,
         network_level: NetworkLevel,
-        file_name: str = "sink_",
+        file_name: str = "sink-",
         subdirectory_name: str = "production_plan",
         add_time_stamp_to_filename: bool = True,
     ):
+        """Creates a pickle file from the sink of the NetworkLevel provided.
+
+        Args:
+            network_level (NetworkLevel): NetworkLevel that contains the sink.
+            file_name (str, optional): Filename of the pickle file. Defaults to "sink-".
+            subdirectory_name (str, optional): Directory of the pickle file. Defaults to "production_plan".
+            add_time_stamp_to_filename (bool, optional): Adds a timestamp string to the
+                file name if set to True. Defaults to True.
+        """
         file_name = file_name + network_level.main_sink.name
         result_path_generator = ResultPathGenerator()
         result_path = result_path_generator.create_path_to_file_relative_to_main_file(
@@ -109,9 +145,10 @@ class Enterprise:
         """Stores a pickle file of the production plan.
 
         Args:
-            file_name (str, optional): _description_. Defaults to "production_plan".
-            subdirectory_name (str, optional): _description_. Defaults to "production_plan".
-            add_time_stamp_to_filename (bool, optional): _description_. Defaults to True.
+            file_name (str, optional): Filename of the pickle file. Defaults to "production_plan".
+            subdirectory_name (str, optional): Directory of the pickle file. Defaults to "production_plan".
+            add_time_stamp_to_filename (bool, optional): Adds a timestamp string to the
+                file name if set to True. Defaults to True.
         """
         result_path_generator = ResultPathGenerator()
         result_path = result_path_generator.create_path_to_file_relative_to_main_file(
@@ -124,15 +161,23 @@ class Enterprise:
             cloudpickle.dump(self.production_plan, file, protocol=None)
 
     def pickle_load_production_plan(self, path_to_pickle_file: str):
+        """Loads the production plan from a pickle file.
+
+        Args:
+            path_to_pickle_file (str): Path to the pickle file that
+                contains the production plan.
+        """
         with open(path_to_pickle_file, "rb") as input_file:
             self.production_plan = cloudpickle.load(input_file)
 
     def create_network_level(self) -> NetworkLevel:
-        """Creates an instance of a network level which is the next container
-        level for each
+        """Creates an instance of a NetworkLevel. NetworkLevel are container for ProcessChains
+        that are used to model subsequent Production Steps in a Production Network. Two Network level
+        can be used to connect the N Process chains with M Process Chains of the other Network Level.
+        Each enterprise requires at least one NetworkLevel.
 
         Returns:
-            NetworkLevel: _description_
+            NetworkLevel: The new created NetworkLevel.
         """
         network_level = NetworkLevel(
             production_plan=self.production_plan,
@@ -144,11 +189,19 @@ class Enterprise:
         return network_level
 
     def _prepare_process_chains_for_simulation(self):
+        """Combines the stream handler and node dictionaries of all process
+        chains in the NetworkLevel.
+        """
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()
             network_level.combine_node_dict()
 
     def get_all_process_steps(self) -> dict[str, ProcessStep]:
+        """Returns a dictionary of all process steps in the NetworkLevel
+
+        Returns:
+            dict[str, ProcessStep]: Dictionary of all process steps in the NetworkLevel
+        """
         output_dictionary = {}
         for network_level in self.list_of_network_level:
             network_level.combine_node_dict()
@@ -158,6 +211,13 @@ class Enterprise:
         return output_dictionary
 
     def _get_combined_stream_handler(self) -> StreamHandler:
+        """Returns a StreamHandler that contains all streams of the
+        NetworkLevel.
+
+        Returns:
+            StreamHandler: StreamHandler that contains all streams of the
+        NetworkLevel
+        """
         output_stream_handler = StreamHandler()
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()

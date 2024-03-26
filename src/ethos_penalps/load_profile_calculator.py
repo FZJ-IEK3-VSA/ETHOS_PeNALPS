@@ -239,6 +239,10 @@ class ProcessStepEnergyDataHandler:
 
 @dataclass
 class StreamSpecificEnergyDataHandler:
+    """Contains the energy data that is required to convert stream
+    states into load profiles.
+    """
+
     stream_energy_data_dict: dict[str, StreamEnergyData] = field(default_factory=dict)
     dict_of_all_load_types: dict[str, LoadType] = field(default_factory=dict)
 

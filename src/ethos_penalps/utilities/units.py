@@ -5,6 +5,10 @@ import pint
 
 
 class Units:
+    """This object holds all the standard Units
+    of the simulation and basic conversion capabilities.
+    """
+
     unit_registry = pint.UnitRegistry(system="SI")
     unit_registry.default_format = "~"
     time_unit: pint.Unit = unit_registry.hour
@@ -14,18 +18,49 @@ class Units:
 
     @staticmethod
     def get_unit(unit_string: str) -> pint.Unit:
+        """Returns a pint unit object based on a string
+        to parse the unit.
+
+        Args:
+            unit_string (str): Unit string for parsing
+
+        Returns:
+            pint.Unit: Unit object based on the parsed
+                string.
+        """
         return Units.unit_registry.Unit(unit_string)
 
     @staticmethod
     def compress_quantity(
         quantity_value: numbers.Number, unit: pint.Unit
     ) -> pint.Quantity:
+        """Adapts the magnitude of the provided unit
+        if necessary.
+
+        Args:
+            quantity_value (numbers.Number): Value of
+                the quantity.
+            unit (pint.Unit): Unit of the quantity.
+
+        Returns:
+            pint.Quantity: Quantity based on the value
+                and unit provided.
+        """
         output_quantity = quantity_value * unit
         output_quantity_compact = output_quantity.to_compact()
         return output_quantity_compact
 
     @staticmethod
     def get_value_from_quantity(quantity: pint.Quantity) -> numbers.Number:
+        """Returns the value from a pint quantity
+
+        Args:
+            quantity (pint.Quantity): Quantity that contains the
+                value of interest.
+
+        Returns:
+            numbers.Number: Value of the quantity provided.
+        """
         return quantity.m
 
     @staticmethod
@@ -35,6 +70,20 @@ class Units:
         time_step: datetime.timedelta,
         target_power_unit: str,
     ) -> float:
+        """Converts an energy value from a LoadProfileEntry
+        to an average power value.
+
+        Args:
+            energy_value (float): The energy value of the
+                of the load profile that should be converted to power.
+            energy_unit (str): String of the energy unit.
+            time_step (datetime.timedelta): Time span in which the energy is
+                provided or in demand.
+            target_power_unit (str): The string of the target power unit.
+
+        Returns:
+            float: Value of the power in the target power unit.
+        """
 
         time_quantity = time_step.total_seconds() * Units.get_unit("s")
         energy_quantity = energy_value * Units.get_unit(energy_unit)
@@ -53,6 +102,20 @@ class Units:
         time_step: datetime.timedelta,
         target_energy_unit: str,
     ) -> float:
+        """Converts a power value into a total energy
+        value in the time span provided.
+
+        Args:
+            power_value (float): Average power consumption in
+                the time span.
+            power_unit (str): Power unit as a string.
+            time_step (datetime.timedelta): Time span in which
+                the power is in demand or supply.
+            target_energy_unit (str): Target unit of the energy value.
+
+        Returns:
+            float: Value of energy based on the power provided.
+        """
 
         time_quantity = time_step.total_seconds() * Units.get_unit("s")
         power_quantity = power_value * Units.get_unit(power_unit)

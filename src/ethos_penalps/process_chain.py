@@ -312,9 +312,6 @@ class ProcessChain:
             node_operation (NodeOperation): The NodeOperation
                 from which the target node should be extracted.
 
-        Raises:
-            Exception: _description_
-
         Returns:
             ProcessNode | None: The target node Object.
         """

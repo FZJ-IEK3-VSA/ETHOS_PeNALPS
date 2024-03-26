@@ -33,10 +33,11 @@ class MassBalance:
     standard_mass_unit = Units.mass_unit.__str__()
     standard_time_unit = datetime.timedelta(hours=1)
 
-    """A mass balance realizes three functions.
-    - Connection of input and output streams.
-    - Integration of storage for mass
-    - Conversion of commodities
+    """A mass balance provides the functionality,
+        connects input and out streams of a Process Step,
+        provides the necessary conversion steps between input
+        and output stream and the interface to the storage
+        of the ProcessStep.
     """
 
     def __init__(
@@ -51,6 +52,28 @@ class MassBalance:
         state_data_container: ProductionProcessStateContainer,
         process_step_name: str,
     ) -> None:
+        """
+
+        Args:
+            commodity (Commodity): The output commodity of the ProcessStep.
+            stream_handler (StreamHandler): The container that contains the streams
+                that are connected to the ProcessStep.
+            time_data (TimeData): Store the time data that defines the state of
+                the ProcessStep
+            input_to_output_conversion_factor (numbers.Number): The conversion
+                factor converts input mass into output mass.
+            main_output_stream (ContinuousStream | BatchStream): The
+                output stream of the mass balance.
+            main_input_stream (ContinuousStream | BatchStream): The
+                input stream of the mass balance.
+            optional_input_stream_list (list[ContinuousStream  |  BatchStream]): This
+                is a placeholder for further input streams. This functionality is still
+                in development.
+            state_data_container (ProductionProcessStateContainer): Contains the other
+                simulation data that defines the state of the ProcessStep besides the
+                time data.
+            process_step_name (str): Name of the ProcessStep.
+        """
         self.time_data: TimeData = time_data
         self.stream_handler: StreamHandler = stream_handler
         self.main_output_stream_name: str = main_output_stream.name
@@ -83,6 +106,13 @@ class MassBalance:
     def set_continuous_operation_rate_for_parallel_input_and_output_stream_with_storage(
         self,
     ) -> ContinuousStreamState:
+        """Creates input stream state that request mass parallel to the output stream
+        state.
+
+        Returns:
+            ContinuousStreamState: input stream state that request mass parallel to the output stream
+                state.
+        """
         state_data = (
             self.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -137,6 +167,13 @@ class MassBalance:
     def set_batch_stream_for_parallel_input_and_output_with_storage(
         self,
     ) -> BatchStreamState:
+        """Tries to set the input batch stream in parallel to the output stream
+        state.
+
+        Returns:
+            BatchStreamState: Input batch stream that request mass in parallel to the
+                output stream.
+        """
         input_stream = self.stream_handler.get_stream(
             stream_name=self.main_input_stream_name
         )
@@ -162,6 +199,12 @@ class MassBalance:
         return input_stream_state
 
     def get_output_stream_mass_without_storage(self) -> numbers.Number:
+        """Returns the mass of the output stream state neglecting
+        the mass in the storage.
+
+        Returns:
+            numbers.Number: Mass of the output stream state.
+        """
         state_data = (
             self.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -178,6 +221,20 @@ class MassBalance:
         self,
         operation_rate: numbers.Number = float("inf"),
     ) -> ContinuousStreamState:
+        """Creates an input stream state based on the provided operation rate
+        that provides the mass for the requested input stream state.
+
+        Args:
+            operation_rate (numbers.Number, optional): The mass
+                transfer rate of the output stream state. If set to infinity
+                the input stream will operate in parallel to the
+                output stream. Defaults to float("inf").
+
+        Returns:
+            ContinuousStreamState: Output stream state that operates at
+                the operation rate provided. Tries to start at the start time
+                of the input stream state.
+        """
         # validated_input_stream_list_is_shorter_than_one = (
         #     self.state_data_container.check_if_validated_input_stream_list_is_shorter_than_1()
         # )
@@ -206,6 +263,12 @@ class MassBalance:
     def set_batch_input_stream_according_to_output_stream_with_storage(
         self,
     ) -> BatchStreamState:
+        """Creates an input batch stream state that provides mass
+        for the output stream state.
+
+        Returns:
+            BatchStreamState: Input batch stream state.
+        """
         # output_stream_mass_is_neglected = (
         #     self.state_data_container.check_if_validated_input_stream_list_is_shorter_than_1()
         # )
@@ -236,6 +299,13 @@ class MassBalance:
     def determine_next_stream_end_time_from_previous_input_streams(
         self,
     ) -> datetime.datetime:
+        """Returns the the next stream end time based on the previous
+        input stream state. This method is required when multiple
+        input stream states are required.
+
+        Returns:
+            datetime.datetime: Next stream end time.
+        """
         state_data = (
             self.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -257,6 +327,13 @@ class MassBalance:
     def determine_next_stream_start_time_from_previous_input_streams(
         self,
     ) -> datetime.datetime:
+        """Returns the the next stream start time based on the previous
+        input stream state. This method is required when multiple
+        input stream states are required.
+
+        Returns:
+            datetime.datetime: Next stream start time.
+        """
         state_data = (
             self.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -278,6 +355,12 @@ class MassBalance:
     def determine_required_batch_end_time_to_fulfill_storage(
         self,
     ) -> datetime.datetime:
+        """Determines the required end time for a batch stream so that the
+        output mass is available in time.
+
+        Returns:
+            datetime.datetime: Required end time of the input stream.
+        """
         target_output_mass = self.get_output_stream_mass_without_storage()
         missing_output_mass_output_commodity = (
             self.storage.determine_missing_input_mass(
@@ -376,12 +459,28 @@ class MassBalance:
     def convert_output_to_input_mass(
         self, output_mass: numbers.Number
     ) -> numbers.Number:
+        """Converts output mass to input mass.
+
+        Args:
+            output_mass (numbers.Number): Output mass that should be converted.
+
+        Returns:
+            numbers.Number: Input mass value.
+        """
         input_mass = output_mass / self.input_to_output_conversion_factor
         return input_mass
 
     def convert_input_to_output_mass(
         self, input_mass: numbers.Number
     ) -> numbers.Number:
+        """Converts input to output mass.
+
+        Args:
+            input_mass (numbers.Number): Input mass that should be converted.
+
+        Returns:
+            numbers.Number: Output mass value.
+        """
         output_mass = input_mass * self.input_to_output_conversion_factor
         return output_mass
 
@@ -389,7 +488,20 @@ class MassBalance:
         self,
         output_stream_state: ContinuousStreamState,
         input_to_output_conversion_factor: numbers.Number,
-    ):
+    ) -> float:
+        """Returns the required mass transfer rate for the input
+        stream state based on the output stream state.
+
+        Args:
+            output_stream_state (ContinuousStreamState): The output stream
+                state whose mass transfer rate should be matched.
+            input_to_output_conversion_factor (numbers.Number): The conversion
+                factor form input to output mass.
+
+        Returns:
+            float: The new operation rate for input stream.
+        """
+
         input_stream_operation_rate = (
             output_stream_state.current_operation_rate
             / input_to_output_conversion_factor
@@ -399,6 +511,12 @@ class MassBalance:
     def reevaluate_storage_level_according_to_adapted_input_stream(
         self,
     ) -> BatchStreamState | ContinuousStreamState:
+        """Adapts the storage level according to a changes stream state.
+
+        Returns:
+            BatchStreamState | ContinuousStreamState: Returns the input stream
+                state that was used to adapt the storage level.
+        """
         state_data = (
             self.state_data_container.get_validated_or_post_production_state_data()
         )
@@ -413,11 +531,23 @@ class MassBalance:
             numbers.Number | None
         ) = None,
     ) -> Storage:
-        """Each process step requires a storage currently.
-        Currently storage level must be 0 at start
+        """The storage is used to track the required mass of the output stream state. Each Process Step
+        requires a storage.
 
-        :return: _description_
-        :rtype: _type_
+        Args:
+            current_storage_level (numbers.Number, optional): The storage level at the start of the simulation
+                . Defaults to 0.
+            minimum_storage_level_at_start_time_of_production_branch (numbers.Number, optional): This is an
+                experimental attribute that requires further development. It should provide the capability
+                to change the request behavior so that a minimum storage level will always be available in the storage
+                . Defaults to 0.
+            maximum_storage_level_at_start_time_of_production_branch (numbers.Number  |  None, optional): This is an
+                experimental attribute that requires further development. It should provide the capability
+                to change the request behavior so that a maximum storage level will always be available in the storage
+                . Defaults to 0. Defaults to None.
+
+        Returns:
+            Storage: The new created storage of the ProcessStep.
         """
         storage_name = self.commodity.name + " Storage"
         new_storage = Storage(
@@ -441,18 +571,43 @@ class MassBalance:
         return new_storage
 
     def add_main_input_stream_name(self, input_stream_name: str):
+        """Adds the input stream to the mass balance. This is required for
+        the simulation to work.
+
+        Args:
+            input_stream_name (str): Name of the input stream of the ProcessStep.
+        """
         self.main_input_stream_name = input_stream_name
 
     def add_main_output_stream_name(self, output_stream_name: str):
+        """Adds the output stream to the mass balance. This is required for
+        the simulation to work.
+
+        Args:
+            output_stream_name (str): Name of the output stream of the ProcessStep.
+        """
         self.main_output_stream_name = output_stream_name
 
     def get_input_stream_name(self) -> str:
+        """Returns the name of the input stream.
+
+        Returns:
+            str: Name of the input stream.
+        """
         return self.main_input_stream_name
 
     def get_output_stream_name(self) -> str:
+        """Returns the name of the output stream.
+
+        Returns:
+            str: Name of the output stream.
+        """
         return self.main_output_stream_name
 
     def check_input_and_output_stream_mass_balance(self):
+        """Checks if enough input stream mass has been provided
+        to fulfill the output stream state.
+        """
         logger.debug("Check if stream inputs and outputs fit the mass balance")
 
         missing_net_stream_mass = self.determine_missing_mass_for_output_stream()
@@ -468,7 +623,13 @@ class MassBalance:
                 + str(missing_net_stream_mass)
             )
 
-    def determine_missing_mass_for_output_stream(self):
+    def determine_missing_mass_for_output_stream(self) -> float:
+        """Returns the missing input mass that is required
+        to provide the output stream mass.
+
+        Returns:
+            float: Missing input mass that must be requested.
+        """
         state_data = (
             self.state_data_container.get_validated_pre_or_post_production_state()
         )
@@ -499,6 +660,11 @@ class MassBalance:
         return missing_net_stream_mass
 
     def check_if_production_branch_is_fulfilled(self) -> bool:
+        """Determines if further input stream states must be requested.
+
+        Returns:
+            bool: Returns True if no further input stream states must be requested.
+        """
         self.determine_missing_mass_for_output_stream()
         missing_mass = self.determine_missing_mass_for_output_stream()
         error_limit = 0
@@ -520,6 +686,12 @@ class MassBalance:
     def check_if_production_branch_is_fulfilled_with_over_production(
         self,
     ) -> bool:
+        """Determines if further input stream states must be requested But allows
+        that more input mass is available than required but the output stream state.
+
+        Returns:
+            bool: Returns True if no further input stream states must be requested.
+        """
         maximum_storage_level_at_start_time_of_production_branch = (
             self.storage.maximum_storage_level_at_start_time_of_production_branch
         )
@@ -575,7 +747,15 @@ class MassBalance:
             )
         return is_fulfilled
 
-    def check_if_output_stream_can_be_supplied_directly_from_storage(self):
+    def check_if_output_stream_can_be_supplied_directly_from_storage(self) -> bool:
+        """Returns True if the output stream state can be supplied directly from
+        the internal storage without requesting further input mass.
+
+        Returns:
+            bool: Returns True if the output stream state can be supplied directly from
+                the internal storage
+        """
+
         # maximum_storage_level_at_start_time_of_production_branch - minimum_storage_level_at_start_time_of_production_branch
         # Difference must be at least as big as the output stream batch size
         state_data = (
@@ -595,6 +775,12 @@ class MassBalance:
         return output_mass_can_be_supplied_directly
 
     def determine_if_input_stream_is_bigger_than_output(self) -> bool:
+        """Determines if the input stream is bigger than the output.
+
+
+        Returns:
+            bool: Returns True if the input stream is bigger than the output
+        """
         input_stream = self.stream_handler.get_stream(
             stream_name=self.main_input_stream_name
         )

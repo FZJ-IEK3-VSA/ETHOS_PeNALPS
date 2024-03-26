@@ -140,215 +140,220 @@ logger = PeNALPSLogger.get_logger_without_handler()
 #     return production_order_dict
 
 
-class WorkTimeConfigurator:
-    def __init__(
-        self,
-        include_national_holidays: bool,
-        shift_length: datetime.timedelta,
-        number_of_shifts_per_working_day: int,
-        weekend_work: bool,
-        first_shift_start_time: datetime.time,
-    ) -> None:
-        self.include_national_holidays: bool = include_national_holidays
-        self.shift_length: datetime.timedelta = shift_length
-        self.number_of_shifts_per_working_day: int = number_of_shifts_per_working_day
-        self.weekend_work: bool = weekend_work
-        self.first_shift_start_time: datetime.time = first_shift_start_time
+# class WorkTimeConfigurator:
+#     def __init__(
+#         self,
+#         include_national_holidays: bool,
+#         shift_length: datetime.timedelta,
+#         number_of_shifts_per_working_day: int,
+#         weekend_work: bool,
+#         first_shift_start_time: datetime.time,
+#     ) -> None:
+#         self.include_national_holidays: bool = include_national_holidays
+#         self.shift_length: datetime.timedelta = shift_length
+#         self.number_of_shifts_per_working_day: int = number_of_shifts_per_working_day
+#         self.weekend_work: bool = weekend_work
+#         self.first_shift_start_time: datetime.time = first_shift_start_time
 
-    def determine_required_frequency(self):
-        if self.weekend_work is True and self.include_national_holidays is False:
-            self.pandas_frequency = "D"
-        elif self.weekend_work is False and self.include_national_holidays is False:
-            self.pandas_frequency = "B"
-        elif self.weekend_work is False and self.include_national_holidays is True:
-            self.pandas_frequency = "C"
-        elif self.weekend_work is True and self.include_national_holidays is True:
-            raise Exception("Date combination is not implemented yet")
-        else:
-            raise Exception("Date combination is not implemented yet")
-
-
-no_weekends_two_shift_generator = WorkTimeConfigurator(
-    include_national_holidays=True,
-    shift_length=datetime.timedelta(hours=8),
-    number_of_shifts_per_working_day=2,
-    weekend_work=False,
-    first_shift_start_time=datetime.time(hour=6),
-)
-no_weekends_one_shift_generator = WorkTimeConfigurator(
-    include_national_holidays=True,
-    shift_length=datetime.timedelta(hours=8),
-    number_of_shifts_per_working_day=1,
-    weekend_work=False,
-    first_shift_start_time=datetime.time(hour=6),
-)
-all_day_3_shift_operation = WorkTimeConfigurator(
-    include_national_holidays=False,
-    shift_length=datetime.timedelta(hours=8),
-    number_of_shifts_per_working_day=3,
-    weekend_work=True,
-    first_shift_start_time=datetime.time(hour=0),
-)
-one_shift_24_hours = WorkTimeConfigurator(
-    include_national_holidays=False,
-    shift_length=datetime.timedelta(hours=24),
-    number_of_shifts_per_working_day=1,
-    weekend_work=True,
-    first_shift_start_time=datetime.time(hour=0),
-)
+#     def determine_required_frequency(self):
+#         if self.weekend_work is True and self.include_national_holidays is False:
+#             self.pandas_frequency = "D"
+#         elif self.weekend_work is False and self.include_national_holidays is False:
+#             self.pandas_frequency = "B"
+#         elif self.weekend_work is False and self.include_national_holidays is True:
+#             self.pandas_frequency = "C"
+#         elif self.weekend_work is True and self.include_national_holidays is True:
+#             raise Exception("Date combination is not implemented yet")
+#         else:
+#             raise Exception("Date combination is not implemented yet")
 
 
-class OrderGenerator:
-    def __init__(self, target_mass: float, commodity: Commodity) -> None:
-        self.target_mass: float = target_mass
-        self.commodity: Commodity = commodity
+# no_weekends_two_shift_generator = WorkTimeConfigurator(
+#     include_national_holidays=True,
+#     shift_length=datetime.timedelta(hours=8),
+#     number_of_shifts_per_working_day=2,
+#     weekend_work=False,
+#     first_shift_start_time=datetime.time(hour=6),
+# )
+# no_weekends_one_shift_generator = WorkTimeConfigurator(
+#     include_national_holidays=True,
+#     shift_length=datetime.timedelta(hours=8),
+#     number_of_shifts_per_working_day=1,
+#     weekend_work=False,
+#     first_shift_start_time=datetime.time(hour=6),
+# )
+# all_day_3_shift_operation = WorkTimeConfigurator(
+#     include_national_holidays=False,
+#     shift_length=datetime.timedelta(hours=8),
+#     number_of_shifts_per_working_day=3,
+#     weekend_work=True,
+#     first_shift_start_time=datetime.time(hour=0),
+# )
+# one_shift_24_hours = WorkTimeConfigurator(
+#     include_national_holidays=False,
+#     shift_length=datetime.timedelta(hours=24),
+#     number_of_shifts_per_working_day=1,
+#     weekend_work=True,
+#     first_shift_start_time=datetime.time(hour=0),
+# )
 
-    # def create_number_of_shifts_for_day(
-    #     self,
-    #     day: datetime.date,
-    #     first_shift_start_time: datetime.time,
-    #     shift_length: datetime.timedelta,
-    #     mass_produced_per_shift: float,
-    #     number_of_shifts_per_day: int,
-    #     order_number: int,
-    # ) -> tuple[dict[int, ProductionOrder], int]:
-    #     output_order_dict: dict[int, ProductionOrder] = {}
-    #     current_shift_start_date = datetime.datetime.combine(
-    #         day - datetime.timedelta(days=1), first_shift_start_time
-    #     )
-    #     for shift_number in range(number_of_shifts_per_day):
-    #         production_deadline = current_shift_start_date + shift_length
-    #         output_order_dict[order_number] = ProductionOrder(
-    #             production_target=mass_produced_per_shift,
-    #             production_deadline=production_deadline,
-    #             commodity=self.commodity,
-    #             order_number=order_number,
-    #         )
 
-    #         order_number = order_number + 1
+# class OrderGenerator:
+#     def __init__(self, target_mass: float, commodity: Commodity) -> None:
+#         self.target_mass: float = target_mass
+#         self.commodity: Commodity = commodity
 
-    #         current_shift_start_date = production_deadline
-    #     return output_order_dict, order_number
+# def create_number_of_shifts_for_day(
+#     self,
+#     day: datetime.date,
+#     first_shift_start_time: datetime.time,
+#     shift_length: datetime.timedelta,
+#     mass_produced_per_shift: float,
+#     number_of_shifts_per_day: int,
+#     order_number: int,
+# ) -> tuple[dict[int, ProductionOrder], int]:
+#     output_order_dict: dict[int, ProductionOrder] = {}
+#     current_shift_start_date = datetime.datetime.combine(
+#         day - datetime.timedelta(days=1), first_shift_start_time
+#     )
+#     for shift_number in range(number_of_shifts_per_day):
+#         production_deadline = current_shift_start_date + shift_length
+#         output_order_dict[order_number] = ProductionOrder(
+#             production_target=mass_produced_per_shift,
+#             production_deadline=production_deadline,
+#             commodity=self.commodity,
+#             order_number=order_number,
+#         )
 
-    # def create_production_order_for_total_mass(
-    #     self,
-    #     start_date: datetime.datetime,
-    #     total_mass: float,
-    #     end_date: datetime.datetime,
-    #     work_time_configurator: WorkTimeConfigurator,
-    # ):
-    #     work_time_configurator.determine_required_frequency()
-    #     pandas_frequency = work_time_configurator.pandas_frequency
-    #     date_range = pandas.date_range(
-    #         start=start_date, end=end_date, freq=pandas_frequency
-    #     )
-    #     number_of_working_days = len(date_range)
-    #     number_of_shifts = (
-    #         number_of_working_days
-    #         * work_time_configurator.number_of_shifts_per_working_day
-    #     )
-    #     mass_produced_per_day = total_mass / number_of_working_days
-    #     mass_produced_per_shift = (
-    #         mass_produced_per_day
-    #         / work_time_configurator.number_of_shifts_per_working_day
-    #     )
-    #     output_order_dict: dict[int, ProductionOrder] = {}
-    #     current_order_number = 0
-    #     for current_date in date_range:
-    #         (
-    #             daily_order_output_dict,
-    #             current_order_number,
-    #         ) = self.create_number_of_shifts_for_day(
-    #             day=current_date.date(),
-    #             shift_length=work_time_configurator.shift_length,
-    #             first_shift_start_time=work_time_configurator.first_shift_start_time,
-    #             mass_produced_per_shift=mass_produced_per_shift,
-    #             number_of_shifts_per_day=work_time_configurator.number_of_shifts_per_working_day,
-    #             order_number=current_order_number,
-    #         )
+#         order_number = order_number + 1
 
-    #         output_order_dict.update(daily_order_output_dict)
-    #     logger.info(
-    #         """A total of: %s shifts have been created to produce a mass of: %s .\nThey start between: %s and: %s.\nPer shift a mass of: %s
-    #         is produced of commodity: %s""",
-    #         number_of_shifts,
-    #         total_mass,
-    #         start_date,
-    #         end_date,
-    #         mass_produced_per_shift,
-    #         self.commodity,
-    #     )
-    #     return output_order_dict
+#         current_shift_start_date = production_deadline
+#     return output_order_dict, order_number
 
-    # def create_production_order_mass_per_shift(
-    #     self,
-    #     deadline_start_date: datetime.datetime,
-    #     shift_per_mass_total_mass: float,
-    #     deadline_end_date: datetime.datetime,
-    #     work_time_configurator: WorkTimeConfigurator,
-    # ):
-    #     work_time_configurator.determine_required_frequency()
-    #     pandas_frequency = work_time_configurator.pandas_frequency
+# def create_production_order_for_total_mass(
+#     self,
+#     start_date: datetime.datetime,
+#     total_mass: float,
+#     end_date: datetime.datetime,
+#     work_time_configurator: WorkTimeConfigurator,
+# ):
+#     work_time_configurator.determine_required_frequency()
+#     pandas_frequency = work_time_configurator.pandas_frequency
+#     date_range = pandas.date_range(
+#         start=start_date, end=end_date, freq=pandas_frequency
+#     )
+#     number_of_working_days = len(date_range)
+#     number_of_shifts = (
+#         number_of_working_days
+#         * work_time_configurator.number_of_shifts_per_working_day
+#     )
+#     mass_produced_per_day = total_mass / number_of_working_days
+#     mass_produced_per_shift = (
+#         mass_produced_per_day
+#         / work_time_configurator.number_of_shifts_per_working_day
+#     )
+#     output_order_dict: dict[int, ProductionOrder] = {}
+#     current_order_number = 0
+#     for current_date in date_range:
+#         (
+#             daily_order_output_dict,
+#             current_order_number,
+#         ) = self.create_number_of_shifts_for_day(
+#             day=current_date.date(),
+#             shift_length=work_time_configurator.shift_length,
+#             first_shift_start_time=work_time_configurator.first_shift_start_time,
+#             mass_produced_per_shift=mass_produced_per_shift,
+#             number_of_shifts_per_day=work_time_configurator.number_of_shifts_per_working_day,
+#             order_number=current_order_number,
+#         )
 
-    #     date_range = pandas.date_range(
-    #         start=deadline_start_date, end=deadline_end_date, freq=pandas_frequency
-    #     )
-    #     number_of_working_days = len(date_range)
-    #     number_of_shifts = (
-    #         number_of_working_days
-    #         * work_time_configurator.number_of_shifts_per_working_day
-    #     )
-    #     output_order_dict: dict[int, ProductionOrder] = {}
-    #     # current_order_number = number_of_shifts - 1
-    #     current_order_number = 0
-    #     for current_date in date_range:
-    #         (
-    #             daily_order_output_dict,
-    #             current_order_number,
-    #         ) = self.create_number_of_shifts_for_day(
-    #             day=current_date.date(),
-    #             shift_length=work_time_configurator.shift_length,
-    #             first_shift_start_time=work_time_configurator.first_shift_start_time,
-    #             mass_produced_per_shift=shift_per_mass_total_mass,
-    #             number_of_shifts_per_day=work_time_configurator.number_of_shifts_per_working_day,
-    #             order_number=current_order_number,
-    #         )
+#         output_order_dict.update(daily_order_output_dict)
+#     logger.info(
+#         """A total of: %s shifts have been created to produce a mass of: %s .\nThey start between: %s and: %s.\nPer shift a mass of: %s
+#         is produced of commodity: %s""",
+#         number_of_shifts,
+#         total_mass,
+#         start_date,
+#         end_date,
+#         mass_produced_per_shift,
+#         self.commodity,
+#     )
+#     return output_order_dict
 
-    #         output_order_dict.update(daily_order_output_dict)
-    #     total_mass = number_of_shifts * shift_per_mass_total_mass
-    #     logger.info(
-    #         "A total of: %s shifts have been created to produce a mass of: %s",
-    #         number_of_shifts,
-    #         total_mass,
-    #     )
-    #     logger.info(
-    #         "They start between: %s and: %s.",
-    #         deadline_start_date,
-    #         deadline_end_date,
-    #     )
-    #     logger.info(
-    #         "Per shift a mass of: %s is produced of commodity: %s.",
-    #         shift_per_mass_total_mass,
-    #         self.commodity,
-    #     )
+# def create_production_order_mass_per_shift(
+#     self,
+#     deadline_start_date: datetime.datetime,
+#     shift_per_mass_total_mass: float,
+#     deadline_end_date: datetime.datetime,
+#     work_time_configurator: WorkTimeConfigurator,
+# ):
+#     work_time_configurator.determine_required_frequency()
+#     pandas_frequency = work_time_configurator.pandas_frequency
 
-    #     return output_order_dict
+#     date_range = pandas.date_range(
+#         start=deadline_start_date, end=deadline_end_date, freq=pandas_frequency
+#     )
+#     number_of_working_days = len(date_range)
+#     number_of_shifts = (
+#         number_of_working_days
+#         * work_time_configurator.number_of_shifts_per_working_day
+#     )
+#     output_order_dict: dict[int, ProductionOrder] = {}
+#     # current_order_number = number_of_shifts - 1
+#     current_order_number = 0
+#     for current_date in date_range:
+#         (
+#             daily_order_output_dict,
+#             current_order_number,
+#         ) = self.create_number_of_shifts_for_day(
+#             day=current_date.date(),
+#             shift_length=work_time_configurator.shift_length,
+#             first_shift_start_time=work_time_configurator.first_shift_start_time,
+#             mass_produced_per_shift=shift_per_mass_total_mass,
+#             number_of_shifts_per_day=work_time_configurator.number_of_shifts_per_working_day,
+#             order_number=current_order_number,
+#         )
 
-    # def create_single_order(
-    #     self, production_target: float, production_deadline: datetime.datetime
-    # ) -> dict[int, ProductionOrder]:
-    #     output_order_dict = {
-    #         0: ProductionOrder(
-    #             production_target=production_target,
-    #             production_deadline=production_deadline,
-    #             order_number=1,
-    #             commodity=self.commodity,
-    #         ),
-    #     }
-    #     return output_order_dict
+#         output_order_dict.update(daily_order_output_dict)
+#     total_mass = number_of_shifts * shift_per_mass_total_mass
+#     logger.info(
+#         "A total of: %s shifts have been created to produce a mass of: %s",
+#         number_of_shifts,
+#         total_mass,
+#     )
+#     logger.info(
+#         "They start between: %s and: %s.",
+#         deadline_start_date,
+#         deadline_end_date,
+#     )
+#     logger.info(
+#         "Per shift a mass of: %s is produced of commodity: %s.",
+#         shift_per_mass_total_mass,
+#         self.commodity,
+#     )
+
+#     return output_order_dict
+
+# def create_single_order(
+#     self, production_target: float, production_deadline: datetime.datetime
+# ) -> dict[int, ProductionOrder]:
+#     output_order_dict = {
+#         0: ProductionOrder(
+#             production_target=production_target,
+#             production_deadline=production_deadline,
+#             order_number=1,
+#             commodity=self.commodity,
+#         ),
+#     }
+#     return output_order_dict
 
 
 class NOrderGenerator:
+    """This class generates an OrderCollection
+    that can be provided during a simulation. This is a convenience
+    class. An order collection can also be created using own methods.
+    """
+
     def __init__(
         self,
         mass_per_order: float,
@@ -357,6 +362,20 @@ class NOrderGenerator:
         commodity: Commodity,
         time_span_between_order: datetime.timedelta = datetime.timedelta(minutes=0),
     ) -> None:
+        """
+
+        Args:
+            mass_per_order (float): The mass that each order requires.
+            production_deadline (datetime.datetime): The deadline of the last order.
+                If time_span_between_order is not provided each order will
+                have the same deadline,
+            number_of_orders (int): The number of order that will be created.
+            commodity (Commodity): The commodity of the order.
+                It must have same commodity as the sink.
+            time_span_between_order (datetime.timedelta, optional): The fixed
+                time span between the deadline of each order.
+                Defaults to datetime.timedelta(minutes=0).
+        """
         self.mass_per_order: float = mass_per_order
         self.production_deadline: datetime.datetime = production_deadline
         self.number_of_orders: int = number_of_orders
@@ -367,10 +386,12 @@ class NOrderGenerator:
     def create_n_order_collection(
         self,
     ) -> OrderCollection:
-        """Creates an ord
+        """Creates an order collection based on the attributes of this
+        class.
 
         Returns:
-            OrderCollection: _description_
+            OrderCollection: Contains all orders that should be fulfilled during
+                the simulation.
         """
         output_order_dict = {}
         number_of_orders = self.number_of_orders
