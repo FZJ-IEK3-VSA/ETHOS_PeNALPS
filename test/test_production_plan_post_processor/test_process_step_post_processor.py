@@ -7,9 +7,12 @@ from test.test_production_plan_post_processor.forming_quenching_and_triming_chai
     fill_forming_quenching_and_trimming_chain,
 )
 
-from ethos_penalps.capacity_calculator import CapacityAdjuster, CapacityCalculator
+from ethos_penalps.automatic_sizer.capacity_calculator import (
+    CapacityAdjuster,
+    CapacityCalculator,
+)
 from ethos_penalps.data_classes import Commodity
-from ethos_penalps.enterprise import Enterprise, NetworkLevel
+from ethos_penalps.organizational_agents.enterprise import Enterprise, NetworkLevel
 from ethos_penalps.order_generator import NOrderGenerator
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.general_functions import ResultPathGenerator

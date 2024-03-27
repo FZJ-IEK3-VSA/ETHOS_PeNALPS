@@ -3,7 +3,7 @@ import logging
 
 from cutting_and_packaging_chain import fill_cutting_and_packaging_chain
 from ethos_penalps.data_classes import Commodity, LoadType
-from ethos_penalps.enterprise import Enterprise
+from ethos_penalps.organizational_agents.enterprise import Enterprise
 from ethos_penalps.order_generator import NOrderGenerator
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger

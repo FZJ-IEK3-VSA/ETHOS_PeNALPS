@@ -15,9 +15,9 @@ from ethos_penalps.node_operations import (
     UpstreamAdaptionOrder,
     UpstreamNewProductionOrder,
 )
-from ethos_penalps.process_state import OutputStreamProvidingState
-from ethos_penalps.process_state_handler import ProcessStateHandler
-from ethos_penalps.process_state_network_navigator import (
+from ethos_penalps.petri_net.process_state import OutputStreamProvidingState
+from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
+from ethos_penalps.petri_net.process_state_network_navigator import (
     OutputStreamAdaptionDecider,
     ProcessStateNetworkNavigator,
 )

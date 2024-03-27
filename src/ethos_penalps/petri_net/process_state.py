@@ -15,7 +15,7 @@ from ethos_penalps.load_profile_calculator import (
     ProcessStateEnergyLoadData,
     ProcessStateEnergyLoadDataBasedOnStreamMass,
 )
-from ethos_penalps.process_state_switch import (
+from ethos_penalps.petri_net.process_state_switch import (
     ProcessStateSwitch,
     ProcessStateSwitchAfterInputAndOutputStream,
     ProcessStateSwitchAtInputStreamProvided,

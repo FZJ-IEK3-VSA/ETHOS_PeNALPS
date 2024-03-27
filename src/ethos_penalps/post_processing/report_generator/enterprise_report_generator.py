@@ -11,7 +11,7 @@ import matplotlib.pyplot
 
 from ethos_penalps.data_classes import CurrentProcessNode, LoopCounter
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation, LoadType
-from ethos_penalps.network_level import NetworkLevel
+from ethos_penalps.organizational_agents.network_level import NetworkLevel
 from ethos_penalps.node_operations import ProductionOrder
 from ethos_penalps.post_processing.network_analyzer import (
     NetworkAnalyzer,

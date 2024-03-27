@@ -4,7 +4,7 @@ import numbers
 import cloudpickle
 
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
-from ethos_penalps.network_level import NetworkLevel
+from ethos_penalps.organizational_agents.network_level import NetworkLevel
 from ethos_penalps.post_processing.report_generator.enterprise_report_generator import (
     EnterpriseReportGenerator,
 )
@@ -12,7 +12,7 @@ from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationErro
 from ethos_penalps.post_processing.report_generator.report_options import (
     standard_simulation_report,
 )
-from ethos_penalps.process_chain import ProcessChain
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.sink import Sink

@@ -2,12 +2,12 @@ import datetime
 import logging
 
 from ethos_penalps.data_classes import Commodity, LoadType
-from ethos_penalps.enterprise import Enterprise
+from ethos_penalps.organizational_agents.enterprise import Enterprise
 from ethos_penalps.order_generator import NOrderGenerator
 from ethos_penalps.stream import BatchStreamStaticData, ContinuousStreamStaticData
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-from ethos_penalps.process_chain import ProcessChain
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage

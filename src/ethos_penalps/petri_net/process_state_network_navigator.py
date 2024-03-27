@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from ethos_penalps.data_classes import TemporalBranchIdentifier
 from ethos_penalps.mass_balance import MassBalance
-from ethos_penalps.process_state import (
+from ethos_penalps.petri_net.process_state import (
     BatchInputStreamRequestingStateWithStorage,
     BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream,
     FullBatchInputStreamProvidingState,
@@ -13,7 +13,7 @@ from ethos_penalps.process_state import (
     OutputStreamProvidingState,
     ProcessStateParallelContinuousInputWithStorage,
 )
-from ethos_penalps.process_state_handler import ProcessStateHandler
+from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
 from ethos_penalps.production_plan import OutputBranchProductionPlan, ProductionPlan
 from ethos_penalps.simulation_data.container_simulation_data import (
     OutputBranchData,

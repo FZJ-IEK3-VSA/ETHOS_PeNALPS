@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import datetimerange
 import scipy.optimize
 
-from ethos_penalps.process_chain import ProcessChain
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source

@@ -1,4 +1,4 @@
-name: Run ETHOS.PeNALPS Tests
+name: Daily ETHOS.PeNALPS Tests
 on: 
   workflow_dispatch:
     inputs:
@@ -90,7 +90,7 @@ jobs:
           with:
             repository: FZJ-IEK3-VSA/ETHOS_PeNALPS
             path: './ETHOS_PENALPS'
-            ref: ${{ github.ref }}
+            ref: main
         - uses: conda-incubator/setup-miniconda@v3
           with:
             miniforge-version: latest

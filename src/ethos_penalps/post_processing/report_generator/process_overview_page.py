@@ -3,7 +3,7 @@ import traceback
 import datapane
 import pandas
 
-from ethos_penalps.network_level import NetworkLevel
+from ethos_penalps.organizational_agents.network_level import NetworkLevel
 from ethos_penalps.post_processing.network_analyzer import ResultSelector
 from ethos_penalps.post_processing.report_generator.report_options import (
     ReportGeneratorOptions,

@@ -12,7 +12,7 @@ from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorag
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-from ethos_penalps.process_state import ProcessState
+from ethos_penalps.petri_net.process_state import ProcessState
 from ethos_penalps.stream import ContinuousStream, BatchStream
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.data_classes import StateConnector

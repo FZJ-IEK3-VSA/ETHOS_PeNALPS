@@ -12,8 +12,8 @@ from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
-from ethos_penalps.process_state_handler import ProcessStateHandler
-from ethos_penalps.process_state_switch_selector import (
+from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
+from ethos_penalps.petri_net.process_state_switch_selector import (
     BatchStateSwitchSelector,
     ProcessStateSwitchSelector,
     ProvideOutputFromStorageSwitchSelector,
