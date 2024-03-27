@@ -1,6 +1,7 @@
-from ethos_penalps.production_plan import ProductionPlan
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 import pathlib
+
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.production_plan import ProductionPlan
 
 
 def test_load_production_plan():

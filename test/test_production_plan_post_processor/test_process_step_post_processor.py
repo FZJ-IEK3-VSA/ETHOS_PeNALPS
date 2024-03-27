@@ -1,5 +1,4 @@
 import datetime
-
 from test.test_production_plan_post_processor.cutting_and_heating_chain import (
     fill_cutting_and_heating_chain,
 )
@@ -12,15 +11,15 @@ from ethos_penalps.automatic_sizer.capacity_calculator import (
     CapacityCalculator,
 )
 from ethos_penalps.data_classes import Commodity
-from ethos_penalps.organizational_agents.enterprise import Enterprise, NetworkLevel
 from ethos_penalps.order_generator import NOrderGenerator
-from ethos_penalps.time_data import TimeData
-from ethos_penalps.utilities.general_functions import ResultPathGenerator
-from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.organizational_agents.enterprise import Enterprise, NetworkLevel
 from ethos_penalps.post_processing.production_plan_post_processor import (
     ProcessStepPostProcessor,
     StreamPostProcessor,
 )
+from ethos_penalps.time_data import TimeData
+from ethos_penalps.utilities.general_functions import ResultPathGenerator
+from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 # from process_chain_2_1 import fill_process_chain_2_1
 

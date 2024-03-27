@@ -1,9 +1,7 @@
 import datetime
 
 from ethos_penalps.data_classes import Commodity, LoadProfileEntry, LoadType
-from ethos_penalps.utilities.debugging_information import NodeOperationViewer
 from ethos_penalps.organizational_agents.enterprise import Enterprise
-
 from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.sink import Sink
@@ -14,6 +12,7 @@ from ethos_penalps.stream import (
     ContinuousStreamStaticData,
 )
 from ethos_penalps.time_data import TimeData
+from ethos_penalps.utilities.debugging_information import NodeOperationViewer
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 

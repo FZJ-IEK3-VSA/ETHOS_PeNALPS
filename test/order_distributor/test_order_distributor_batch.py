@@ -1,24 +1,25 @@
 import datetime
 import pathlib
+
 import pandas
-from ethos_penalps.stream_handler import StreamHandler
-from ethos_penalps.order_generator import NOrderGenerator
-from ethos_penalps.stream_node_distributor import OrderDistributor
 from ethos_penalps.data_classes import (
     Commodity,
     OrderCollection,
     ProcessChainIdentifier,
     ProductionOrderMetadata,
 )
-from ethos_penalps.process_nodes.sink import Sink
-from ethos_penalps.stream import BatchStreamStaticData, BatchStream
-from ethos_penalps.post_processing.time_series_visualizations.order_plot import (
-    post_process_order_collection,
-    create_order_gantt_plot,
-)
+from ethos_penalps.order_generator import NOrderGenerator
 from ethos_penalps.post_processing.time_series_visualizations.gantt_chart import (
     create_gantt_chart,
 )
+from ethos_penalps.post_processing.time_series_visualizations.order_plot import (
+    create_order_gantt_plot,
+    post_process_order_collection,
+)
+from ethos_penalps.process_nodes.sink import Sink
+from ethos_penalps.stream import BatchStream, BatchStreamStaticData
+from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.stream_node_distributor import OrderDistributor
 
 
 def test_batch_order_distribution():
