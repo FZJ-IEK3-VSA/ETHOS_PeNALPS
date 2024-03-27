@@ -9,21 +9,21 @@ from ethos_penalps.data_classes import (
     StorageDataFrameMetaInformation,
 )
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
-from ethos_penalps.organizational_agents.network_level import NetworkLevel
 from ethos_penalps.order_generator import OrderCollection
+from ethos_penalps.organizational_agents.network_level import NetworkLevel
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
+from ethos_penalps.post_processing.post_processed_data_handler import (
+    PostProcessSimulationDataHandler,
+)
 from ethos_penalps.post_processing.time_series_visualizations.order_plot import (
     post_process_order_collection,
 )
-from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.process_nodes.sink import Sink, Source
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import StreamDataFrameMetaInformation
 from ethos_penalps.stream_node_distributor import SplittedOrderCollection
-from ethos_penalps.post_processing.post_processed_data_handler import (
-    PostProcessSimulationDataHandler,
-)
 
 
 class NetworkAnalyzer:

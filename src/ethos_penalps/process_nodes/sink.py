@@ -20,10 +20,10 @@ from ethos_penalps.node_operations import (
     UpstreamAdaptionOrder,
     UpstreamNewProductionOrder,
 )
+from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
 from ethos_penalps.process_node_communicator import EmptyProductionBranch
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.source import Source
-from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
 from ethos_penalps.production_plan import OutputBranchProductionPlan, ProductionPlan
 from ethos_penalps.simulation_data.simulation_data_branch import (
     CompleteOutputBranchData,

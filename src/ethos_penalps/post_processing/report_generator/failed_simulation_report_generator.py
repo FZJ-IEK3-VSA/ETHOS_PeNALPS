@@ -4,19 +4,18 @@ import traceback
 import webbrowser
 
 import datapane
-
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
 
+from ethos_penalps.process_nodes.process_node import ProcessNode
+from ethos_penalps.process_nodes.process_step import ProcessStep
+from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.utilities.debugging_information import (
     DebuggingInformationLogger,
     NodeOperationViewer,
 )
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-from ethos_penalps.process_nodes.process_step import ProcessStep
-from ethos_penalps.process_nodes.process_node import ProcessNode
-from ethos_penalps.stream_handler import StreamHandler
 
 
 class FailedRunReportGenerator:

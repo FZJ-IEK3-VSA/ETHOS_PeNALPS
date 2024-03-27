@@ -6,17 +6,17 @@ import os
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Union
+
 import datetimerange
 import pandas as pd
-from dataclasses_json import config, dataclass_json, DataClassJsonMixin
+from dataclasses_json import DataClassJsonMixin, config, dataclass_json
 
-from ethos_penalps.utilities.units import Units
 from ethos_penalps.data_classes import (
     Commodity,
     LoadType,
+    ProcessChainIdentifier,
     ProcessStepProductionPlanEntry,
     StreamLoadEnergyData,
-    ProcessChainIdentifier,
 )
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.general_functions import (
@@ -28,11 +28,12 @@ from ethos_penalps.utilities.json_coding_functions import (
     json_datetime_range_deserialization_function,
     json_datetime_range_serialization_function,
     json_datetime_serialization_function,
-    json_timedelta_deserialization_function,
-    json_timedelta_serialization_function,
     json_pint_unit_deserialization_function,
     json_pint_unit_serialization_function,
+    json_timedelta_deserialization_function,
+    json_timedelta_serialization_function,
 )
+from ethos_penalps.utilities.units import Units
 
 
 @dataclass(kw_only=True, frozen=True)

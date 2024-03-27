@@ -15,6 +15,15 @@ from pdf2image.exceptions import (
 )
 
 from ethos_penalps.organizational_agents.network_level import NetworkLevel
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
+from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
+from ethos_penalps.petri_net.process_state_switch_selector import (
+    BatchStateSwitchSelector,
+    ProcessStateSwitchSelector,
+    ProvideOutputFromStorageSwitchSelector,
+    SingleChoiceSelector,
+    StateConnector,
+)
 from ethos_penalps.post_processing.tikz_visualizations.tikz_wrapper import (
     BackwardEdge,
     ForwardEdge,
@@ -26,19 +35,10 @@ from ethos_penalps.post_processing.tikz_visualizations.tikz_wrapper import (
     TikzNode,
     TikzRelativePositions,
 )
-from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
-from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
-from ethos_penalps.petri_net.process_state_switch_selector import (
-    BatchStateSwitchSelector,
-    ProcessStateSwitchSelector,
-    ProvideOutputFromStorageSwitchSelector,
-    SingleChoiceSelector,
-    StateConnector,
-)
 from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedCase

@@ -7,17 +7,17 @@ from dataclasses import dataclass
 import datetimerange
 import scipy.optimize
 
+from ethos_penalps.data_classes import ProcessChainIdentifier
+from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.order_generator import NOrderGenerator, OrderCollection
 from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
+from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
-from ethos_penalps.data_classes import ProcessChainIdentifier
-from ethos_penalps.production_plan import ProductionPlan
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.time_data import TimeData
-from ethos_penalps.order_generator import OrderCollection, NOrderGenerator
 
 
 @dataclass
