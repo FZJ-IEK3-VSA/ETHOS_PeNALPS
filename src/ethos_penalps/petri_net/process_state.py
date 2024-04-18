@@ -6,16 +6,16 @@ from dataclasses import dataclass, field
 from ethos_penalps.data_classes import (
     Commodity,
     ProcessStateData,
+    ProcessStateEnergyData,
     ProcessStepProductionPlanEntry,
     StateConnector,
-    ProcessStateEnergyData,
 )
 from ethos_penalps.load_profile_calculator import (
     LoadType,
     ProcessStateEnergyLoadData,
     ProcessStateEnergyLoadDataBasedOnStreamMass,
 )
-from ethos_penalps.process_state_switch import (
+from ethos_penalps.petri_net.process_state_switch import (
     ProcessStateSwitch,
     ProcessStateSwitchAfterInputAndOutputStream,
     ProcessStateSwitchAtInputStreamProvided,
@@ -42,7 +42,6 @@ from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-
 
 logger = PeNALPSLogger.get_logger_without_handler()
 

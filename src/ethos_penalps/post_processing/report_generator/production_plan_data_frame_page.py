@@ -1,21 +1,21 @@
 import datapane
 import pandas
 
+from ethos_penalps.data_classes import EmptyMetaDataInformation
+from ethos_penalps.post_processing.post_processed_data_handler import (
+    PostProcessSimulationDataHandler,
+)
 from ethos_penalps.post_processing.report_generator.report_options import (
     ReportGeneratorOptions,
 )
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import (
-    ContinuousStream,
     BatchStream,
     BatchStreamProductionPlanEntry,
+    ContinuousStream,
     ContinuousStreamProductionPlanEntry,
 )
-from ethos_penalps.data_classes import EmptyMetaDataInformation
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
-from ethos_penalps.post_processing.post_processed_data_handler import (
-    PostProcessSimulationDataHandler,
-)
 
 logger = PeNALPSLogger.get_logger_without_handler()
 

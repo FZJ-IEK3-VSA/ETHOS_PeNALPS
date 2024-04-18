@@ -9,7 +9,7 @@ where = ["src"]
 
 [project]
 name = "ethos_penalps"
-version = "1.0.3"
+version = "1.0.5"
 description = "A package to create energy load curves for industry locations in Germany"
 readme = "README.md"
 authors = [

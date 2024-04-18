@@ -1,7 +1,6 @@
 import datetime
 from abc import ABC, abstractmethod
 
-
 from ethos_penalps.data_classes import (
     Commodity,
     OutputBranchIdentifier,
@@ -20,12 +19,12 @@ from ethos_penalps.node_operations import (
     UpstreamAdaptionOrder,
     UpstreamNewProductionOrder,
 )
+from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
 from ethos_penalps.process_node_communicator import (
     EmptyProductionBranch,
     ProcessNodeCommunicator,
 )
 from ethos_penalps.process_nodes.process_node import ProcessNode
-from ethos_penalps.process_state_handler import ProcessStateHandler
 from ethos_penalps.process_step_data import ProcessStepData
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.simulation_data.simulation_data_branch import (

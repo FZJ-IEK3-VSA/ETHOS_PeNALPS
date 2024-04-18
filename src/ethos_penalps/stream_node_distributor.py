@@ -1,6 +1,6 @@
-import numbers
-import math
 import datetime
+import math
+import numbers
 import warnings
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -9,15 +9,15 @@ import numpy
 import pandas
 
 from ethos_penalps.data_classes import (
+    Commodity,
     OrderCollection,
     ProcessChainIdentifier,
     ProductionOrder,
-    Commodity,
 )
+from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
-from ethos_penalps.stream import ContinuousStream, BatchStream
 from ethos_penalps.utilities.general_functions import (
     check_if_date_1_is_before_date_2,
     check_if_date_1_is_before_or_at_date_2,

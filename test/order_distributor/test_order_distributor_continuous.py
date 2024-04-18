@@ -1,20 +1,21 @@
 import datetime
 import pathlib
+
 import pandas
-from ethos_penalps.stream_handler import StreamHandler
-from ethos_penalps.order_generator import NOrderGenerator
-from ethos_penalps.stream_node_distributor import OrderDistributor
 from ethos_penalps.data_classes import (
     Commodity,
     OrderCollection,
     ProcessChainIdentifier,
 )
+from ethos_penalps.order_generator import NOrderGenerator
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.stream import (
-    BatchStreamStaticData,
     BatchStream,
+    BatchStreamStaticData,
     ContinuousStreamStaticData,
 )
+from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.stream_node_distributor import OrderDistributor
 
 test_commodity = Commodity(name="Test Commodity")
 n_order_generator = NOrderGenerator(

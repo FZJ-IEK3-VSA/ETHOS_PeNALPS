@@ -1,14 +1,13 @@
 import datetime
 import logging
-
 from test.test_b_pillar.cutting_and_heating_chain import fill_cutting_and_heating_chain
 from test.test_b_pillar.forming_quenching_and_trimming_chain import (
     fill_forming_quenching_and_trimming_chain,
 )
 
 from ethos_penalps.data_classes import Commodity
-from ethos_penalps.enterprise import Enterprise
 from ethos_penalps.order_generator import NOrderGenerator
+from ethos_penalps.organizational_agents.enterprise import Enterprise
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 

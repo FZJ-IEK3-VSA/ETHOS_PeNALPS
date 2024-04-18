@@ -1,6 +1,6 @@
 # Simple Cooker Example
 
-This section shows how to setup a minimal simulation of a production system which consists of a single cooker. A depiction of the ETHOS.PeNALPS Model is shown in {numref}`cooking-example-single`. The energy, time and mass data is used from an experiment by Korzeniowska-Ginter et al. {cite}`Korzeniowska_Ginter_2019`. They conducted a series of experiments to determine cooking length and energy demand that are required to cook potatoes using household appliances. For this case the data from the electric stove with a metal plate is used. 
+This section shows how to setup a minimal simulation of a production system which consists of a single cooker. A depiction of the ETHOS.PeNALPS Model is shown in {numref}`cooking-example-single`. The energy, time and mass data is used from an experiment by Korzeniowska-Ginter et al. {cite}`KorzeniowskaGinter.2019`. They conducted a series of experiments to determine cooking length and energy demand that are required to cook potatoes using household appliances. For this case the data from the electric stove with a metal plate is used. 
 
 :::{figure-md} cooking-example-single
 <img src="./figures/1_tutorial/single_cooker_process_chain_example.png" width=300>
@@ -33,7 +33,7 @@ output_commodity = Commodity(name="Cooked Goods")
 input_commodity = Commodity(name="Raw Goods")
 ```
 ## Create Product Orders 
-As a third step the orders to be produced during the simulation must be created. The mass is passed as metric tones. The order consists of the commodity of the product, the deadline and the number of orders. The simulation attempts to fulfill the order just in time. If it is not possible due to capacity constraints, the production start is shifted to an earlier time. The order size is based on the mass that was used in a single experiment which consists of 200 gram potatoes and 450 ml of water. {cite}`Korzeniowska_Ginter_2019` p.3
+As a third step the orders to be produced during the simulation must be created. The mass is passed as metric tones. The order consists of the commodity of the product, the deadline and the number of orders. The simulation attempts to fulfill the order just in time. If it is not possible due to capacity constraints, the production start is shifted to an earlier time. The order size is based on the mass that was used in a single experiment which consists of 200 gram potatoes and 450 ml of water. {cite}`KorzeniowskaGinter.2019` p.3
 
 ```
 # Create all order for the simulation
@@ -160,7 +160,7 @@ The transitions connect the newly created nodes. The transitions are called proc
 3. process_state_switch_at_output_stream --> output_state
 4. create_process_state_switch_delay --> intermediate_state
 
-Additionally, selectors are implemented to determine which transition are evaluated when multiple transitions could occur in the same state. In this example each state only has a single transition. Thus, the process state switch is passed to a so called single choice selector. The cooking time is assumed to be 24 minutes in total. {cite}`Korzeniowska_Ginter_2019` p.5
+Additionally, selectors are implemented to determine which transition are evaluated when multiple transitions could occur in the same state. In this example each state only has a single transition. Thus, the process state switch is passed to a so called single choice selector. The cooking time is assumed to be 24 minutes in total. {cite}`KorzeniowskaGinter.2019` p.5
 
 ```
 activate_not_cooking = process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
@@ -201,7 +201,7 @@ process_step.process_state_handler.process_state_switch_selector_handler.create_
 ```
 ## Initialize Energy Data
 
-Finally the energy data must be initialized. Therefore, the energy load type must be initialized, which is electricity in this example. It can either be addressed to a specific state or to the activity of a stream. Here the complete energy is consumed during the cooking state. The specific energy demand is provided in the units MJ/t. An energy demand of 830.76 MJ/t for the cooking process. It is  based on the energy demand of 0.15 kWh/650 gram from Korzeniowska-Ginter et al. {cite}`Korzeniowska_Ginter_2019` p.5.  The input stream of the corresponding process step must be passed to the energy data to determine the mass that is processed in the state.
+Finally the energy data must be initialized. Therefore, the energy load type must be initialized, which is electricity in this example. It can either be addressed to a specific state or to the activity of a stream. Here the complete energy is consumed during the cooking state. The specific energy demand is provided in the units MJ/t. An energy demand of 830.76 MJ/t for the cooking process. It is  based on the energy demand of 0.15 kWh/650 gram from Korzeniowska-Ginter et al. {cite}`KorzeniowskaGinter.2019` p.5.  The input stream of the corresponding process step must be passed to the energy data to determine the mass that is processed in the state.
 
 ```
 electricity_load = LoadType(name="Electricity")

@@ -8,9 +8,9 @@ import pandas
 import pint
 from dataclasses_json import DataClassJsonMixin, config, dataclass_json
 
+from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedBehaviorWarning
 from ethos_penalps.utilities.general_functions import get_new_uuid
 from ethos_penalps.utilities.units import Units
-from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedBehaviorWarning
 
 
 @dataclass(

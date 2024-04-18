@@ -4,12 +4,12 @@ from dataclasses import dataclass, field
 import pandas
 
 from ethos_penalps.data_classes import (
-    EmptyMetaDataInformation,
-    LoadProfileMetaDataResampled,
     EmptyLoadProfileMetadata,
+    EmptyMetaDataInformation,
     LoadProfileEntry,
-    LoadType,
     LoadProfileMetaData,
+    LoadProfileMetaDataResampled,
+    LoadType,
 )
 from ethos_penalps.load_profile_calculator import (
     LoadProfileCollection,

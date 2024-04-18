@@ -1,7 +1,7 @@
 import datetime
 
 from ethos_penalps.data_classes import LoadType
-from ethos_penalps.process_chain import ProcessChain
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
 from ethos_penalps.stream import BatchStreamStaticData, ContinuousStreamStaticData

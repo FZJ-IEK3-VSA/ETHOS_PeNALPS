@@ -10,8 +10,8 @@ from ethos_penalps.stream import (
     ContinuousStream,
     ContinuousStreamStaticData,
 )
-from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
+from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 logger = PeNALPSLogger.get_logger_without_handler()
 

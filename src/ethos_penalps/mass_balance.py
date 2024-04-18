@@ -2,7 +2,6 @@ import datetime
 import numbers
 from dataclasses import dataclass
 
-
 from ethos_penalps.data_classes import Commodity
 from ethos_penalps.simulation_data.container_simulation_data import (
     CurrentProductionStateData,

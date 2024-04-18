@@ -2,8 +2,11 @@ import datetime
 from abc import ABC, abstractmethod
 
 from ethos_penalps.data_classes import StateConnector
-from ethos_penalps.process_state import ProcessState, ProcessStateSwitchHandler
-from ethos_penalps.process_state_switch import (
+from ethos_penalps.petri_net.process_state import (
+    ProcessState,
+    ProcessStateSwitchHandler,
+)
+from ethos_penalps.petri_net.process_state_switch import (
     ProcessStateSwitch,
     ProcessStateSwitchAtInputStreamProvided,
     ProcessStateSwitchAtNextDiscreteEvent,
