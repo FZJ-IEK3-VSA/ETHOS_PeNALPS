@@ -26,6 +26,7 @@ parts:
       - file: ethos_penalps_articles/model_topology.md
       - file: ethos_penalps_articles/roadmap.md
       - file: ethos_penalps_articles/contribution_guide.md
+      - file: ethos_penalps_articles/statement_of_need.md
 
   - caption: API
     chapters:
