@@ -3,7 +3,8 @@ import traceback
 import datapane
 import pandas
 
-from ethos_penalps.network_level import NetworkLevel
+from ethos_penalps.data_classes import ProductionOrder
+from ethos_penalps.organizational_agents.network_level import NetworkLevel
 from ethos_penalps.post_processing.network_analyzer import ResultSelector
 from ethos_penalps.post_processing.report_generator.report_options import (
     ReportGeneratorOptions,
@@ -11,7 +12,6 @@ from ethos_penalps.post_processing.report_generator.report_options import (
 from ethos_penalps.post_processing.tikz_visualizations.enterprise_graph_builder import (
     EnterpriseGraphBuilderTikz,
 )
-from ethos_penalps.data_classes import ProductionOrder
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 
 logger = PeNALPSLogger.get_logger_without_handler()

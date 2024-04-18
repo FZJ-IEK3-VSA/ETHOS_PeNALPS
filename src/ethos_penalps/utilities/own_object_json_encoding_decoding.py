@@ -1,7 +1,6 @@
 import datetime
 import json
 
-
 from ethos_penalps.data_classes import Commodity
 from ethos_penalps.stream import (
     BatchStream,

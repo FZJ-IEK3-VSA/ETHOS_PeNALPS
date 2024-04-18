@@ -1,6 +1,6 @@
 from ethos_penalps.process_nodes.process_step import ProcessStep
+from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
-from ethos_penalps.stream import ContinuousStream, BatchStream
 
 
 class ProcessStepSetter:

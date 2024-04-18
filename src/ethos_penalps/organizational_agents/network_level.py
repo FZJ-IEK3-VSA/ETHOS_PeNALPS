@@ -8,7 +8,7 @@ from ethos_penalps.data_classes import (
     get_new_uuid,
 )
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
-from ethos_penalps.process_chain import ProcessChain
+from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_step import ProcessNode
 from ethos_penalps.process_nodes.sink import Sink

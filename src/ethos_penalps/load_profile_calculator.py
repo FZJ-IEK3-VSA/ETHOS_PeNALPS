@@ -7,8 +7,8 @@ import pint
 
 from ethos_penalps.data_classes import (
     Commodity,
-    LoadProfileMetaData,
     LoadProfileEntry,
+    LoadProfileMetaData,
     LoadType,
     ProcessStateEnergyData,
     ProcessStateEnergyLoadData,
@@ -28,9 +28,8 @@ from ethos_penalps.stream import (
 )
 from ethos_penalps.utilities.data_base_interactions import DataBaseInteractions
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedBehaviorWarning
-from ethos_penalps.utilities.units import Units
-
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.units import Units
 
 logger = PeNALPSLogger.get_logger_without_handler()
 

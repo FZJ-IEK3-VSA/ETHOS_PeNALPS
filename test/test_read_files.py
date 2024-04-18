@@ -2,10 +2,8 @@ import datetime
 import json
 import pathlib
 
-
 from ethos_penalps.data_classes import Commodity, LoadType
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
-
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import (
     BatchStream,
@@ -14,11 +12,11 @@ from ethos_penalps.stream import (
     ContinuousStreamStaticData,
 )
 from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.own_object_json_encoding_decoding import (
     MyDecoder,
     MyEncoder,
 )
-from ethos_penalps.time_data import TimeData
 
 
 def test_read_files():

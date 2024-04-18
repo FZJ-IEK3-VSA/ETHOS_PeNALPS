@@ -9,19 +9,11 @@ import matplotlib
 import matplotlib.pyplot
 import pandas as pd
 
-
 from ethos_penalps.data_classes import CurrentProcessNode, LoopCounter
-from ethos_penalps.utilities.debugging_information import (
-    DebuggingInformationLogger,
-    NodeOperationViewer,
-)
 from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation, LoadType
 from ethos_penalps.node_operations import ProductionOrder
 from ethos_penalps.post_processing.enterprise_graph_for_failed_run import (
     GraphVisualization,
-)
-from ethos_penalps.post_processing.time_series_visualizations.carpet_plot_load_profile_generator import (
-    CarpetPlotLoadProfileGenerator,
 )
 from ethos_penalps.post_processing.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
@@ -33,11 +25,18 @@ from ethos_penalps.post_processing.report_generator.report_options import (
 from ethos_penalps.post_processing.tikz_visualizations.process_chain_graph_builder import (
     GraphBuilder,
 )
+from ethos_penalps.post_processing.time_series_visualizations.carpet_plot_load_profile_generator import (
+    CarpetPlotLoadProfileGenerator,
+)
 from ethos_penalps.post_processing.time_series_visualizations.gantt_chart import (
     GanttChartGenerator,
 )
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.utilities.debugging_information import (
+    DebuggingInformationLogger,
+    NodeOperationViewer,
+)
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 

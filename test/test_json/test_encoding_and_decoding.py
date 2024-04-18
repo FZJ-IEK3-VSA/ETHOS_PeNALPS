@@ -1,20 +1,21 @@
-import json
 import datetime
-from ethos_penalps.utilities.own_object_json_encoding_decoding import (
-    MyEncoder,
-    MyDecoder,
-)
-from ethos_penalps.stream_handler import StreamHandler
+import json
+from dataclasses import dataclass, field
+
+from dataclasses_json import DataClassJsonMixin, dataclass_json
+from ethos_penalps.data_classes import Commodity, LoadType, StreamLoadEnergyData
 from ethos_penalps.stream import (
     BatchStream,
     BatchStreamStaticData,
-    ContinuousStreamStaticData,
     ContinuousStream,
+    ContinuousStreamStaticData,
 )
-from ethos_penalps.data_classes import Commodity, LoadType, StreamLoadEnergyData
+from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.utilities.own_object_json_encoding_decoding import (
+    MyDecoder,
+    MyEncoder,
+)
 from ethos_penalps.utilities.units import Units
-from dataclasses import dataclass, field
-from dataclasses_json import DataClassJsonMixin, dataclass_json
 
 
 def test_encode_and_decode_batch_energy_load():

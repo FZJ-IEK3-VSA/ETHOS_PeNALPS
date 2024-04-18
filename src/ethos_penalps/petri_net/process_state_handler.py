@@ -5,7 +5,7 @@ from ethos_penalps.data_classes import (
     ProcessStateData,
     ProcessStepProductionPlanEntry,
 )
-from ethos_penalps.process_state import (
+from ethos_penalps.petri_net.process_state import (
     BatchInputStreamRequestingStateWithStorage,
     BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream,
     BatchOutputStreamProvidingState,
@@ -22,8 +22,8 @@ from ethos_penalps.process_state import (
     ProcessStateIdle,
     ProcessStateParallelContinuousInputWithStorage,
 )
-from ethos_penalps.process_state_switch import ProcessStateSwitch
-from ethos_penalps.process_state_switch_selector import (
+from ethos_penalps.petri_net.process_state_switch import ProcessStateSwitch
+from ethos_penalps.petri_net.process_state_switch_selector import (
     MultiTargetSelector,
     ProcessStateSwitchSelectorHandler,
 )
