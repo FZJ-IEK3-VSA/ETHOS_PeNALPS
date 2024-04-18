@@ -2,10 +2,10 @@
 
 Energy system models are tools that provide guidance on future energy systems, which are currently undergoing significant changes to due global efforts to reduce dependence on fossil fuels {cite}`Prina.2020` p. 1. However, building long-term models with high spatial and temporal resolution and transparent input data remains a challenge {cite}`Prina.2020` p. 12. For instance, historical load profiles for the German industrial sector in 2015 are available {cite}`Priesmann.2021` pp. 5–6, while load profiles for other regions are not currently available. Furthermore, decarbonization efforts will cause changes in the industrial sector, creating a need for load profiles of future scenarios. To address the lack of sectoral load profiles for the industry, Boßmann and Stafell {cite}`Bomann.2015` p. 1321 demonstrated the use of a bottom-up approach. Therefore, it is necessary to obtain load profiles of the industrial processes that are part of the industrial sector. However, these profiles are often unavailable for open research due to:
 
-• Companies’ efforts to protect commercial secrets;
-• Missing measurements;
-• Unstructured collection of energy data in companies;
-• Novelty of the industrial processes and their current lack of implementation.
+- Companies’ efforts to protect commercial secrets;
+- Missing measurements;
+- Unstructured collection of energy data in companies;
+- Novelty of the industrial processes and their current lack of implementation.
 
 ETHOS.PeNALPS can support the creation of an energy system model by providing load profiles for industrial processes. While many industrial processes and their load profiles have been previously simulated, most have not published load profiles and simulation implementations under an open-source license. This creates a research gap, despite similar work having already been done.
 
