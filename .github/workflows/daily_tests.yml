@@ -30,7 +30,7 @@ jobs:
       strategy:
         fail-fast: false
         matrix:
-          os: ["ubuntu-latest","ubuntu-20.04", "macos-latest","macos-13","macos-12", "macos-11","windows-latest","windows-2019"]
+          os: ["ubuntu-latest","ubuntu-20.04", "macos-latest","macos-13","macos-12", "windows-latest","windows-2019"]
       steps:
         - uses: conda-incubator/setup-miniconda@v3
           with:
@@ -83,7 +83,7 @@ jobs:
       strategy:
         fail-fast: false
         matrix:
-          os: ["ubuntu-latest","ubuntu-20.04", "macos-latest","macos-13","macos-12", "macos-11","windows-latest","windows-2019"]
+          os: ["ubuntu-latest","ubuntu-20.04", "macos-latest","macos-13","macos-12", "windows-latest","windows-2019"]
       steps:
         - name: Checkout
           uses: actions/checkout@v4
