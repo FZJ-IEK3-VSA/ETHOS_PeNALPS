@@ -1,6 +1,6 @@
 | Name | Version | Platforms | Daily Tests |
 |---|---|---|---|
-|[![Conda Recipe](https://img.shields.io/badge/recipe-ethos_penalps-green.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Version](https://img.shields.io/conda/vn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps) |![example workflow](https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS/actions/workflows/test.yml/badge.svg)
+|[![Conda Recipe](https://img.shields.io/badge/recipe-ethos_penalps-green.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Version](https://img.shields.io/conda/vn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps) |![example workflow](https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS/actions/workflows/daily_tests.yml/badge.svg)
 
 <a href="https://www.fz-juelich.de/en/iek/iek-3"><img src="https://github.com/FZJ-IEK3-VSA/README_assets/blob/main/FJZ_IEK-3_logo.svg?raw=True" alt="Forschungszentrum Juelich Logo" width="300px"></a> 
 # ETHOS.PeNALPS
@@ -23,7 +23,7 @@ objects. After the material flow simulation is completed, a set of production or
 ![Main Component Overview](paper/main_component_overview.png)
 *Depiction of the main components and workflow of ETHOS.PeNALPS*
 
-The [HTML documentation provides a tutorial](https://ethospenalps.readthedocs.io/en/latest/ethos_penalps_tutorial/overview.html) for ETHOS.PeNALPS. The executable files for the tutorial are located in the example section of this repository. Also two examples for a [toffee production process](https://ethospenalps.readthedocs.io/en/latest/examples/toffee_example.html) and a [b-pillar production process](https://ethospenalps.readthedocs.io/en/latest/examples/b_pillar_example.html) are available.
+The [HTML documentation provides a tutorial](https://ethospenalps.readthedocs.io/en/latest/ethos_penalps_tutorial/0_overview.html) for ETHOS.PeNALPS. The executable files for the tutorial are located in the example section of this repository. Also two examples for a [toffee production process](https://ethospenalps.readthedocs.io/en/latest/examples/toffee_example.html) and a [b-pillar production process](https://ethospenalps.readthedocs.io/en/latest/examples/b_pillar_example.html) are available.
 
 
 # Installation
