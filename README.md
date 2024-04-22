@@ -23,7 +23,7 @@ objects. After the material flow simulation is completed, a set of production or
 ![Main Component Overview](paper/main_component_overview.png)
 *Depiction of the main components and workflow of ETHOS.PeNALPS*
 
-The [HTML documentation provides a tutorial](https://ethospenalps.readthedocs.io/en/latest/ethos_penalps_tutorial/overview.html) for ETHOS.PeNALPS. The executable files for the tutorial are located in the example section of this repository. Also two examples for a [toffee production process](https://ethospenalps.readthedocs.io/en/latest/examples/toffee_example.html) and a [b-pillar production process](https://ethospenalps.readthedocs.io/en/latest/examples/b_pillar_example.html) are available.
+The [HTML documentation provides a tutorial](https://ethospenalps.readthedocs.io/en/latest/ethos_penalps_tutorial/0_overview.html) for ETHOS.PeNALPS. The executable files for the tutorial are located in the example section of this repository. Also two examples for a [toffee production process](https://ethospenalps.readthedocs.io/en/latest/examples/toffee_example.html) and a [b-pillar production process](https://ethospenalps.readthedocs.io/en/latest/examples/b_pillar_example.html) are available.
 
 
 # Installation
