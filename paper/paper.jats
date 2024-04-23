@@ -238,7 +238,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <p>The implementation as agents was chosen to improve the adaptability
   and extensibility of the software. Thus, more specifics of a node or
   even another simulation paradigm can be implemented. The
-  <ext-link ext-link-type="uri" xlink:href="www.ethospenalps.readthedocs.io/">documentation
+  <ext-link ext-link-type="uri" xlink:href="https://ethospenalps.readthedocs.io/">documentation
   of ETHOS.PeNALPS</ext-link> contains a roadmap for the software. The
   process model is generated from generic objects as shown in Figure
   <xref alt="[fig:Main Component Overview]" rid="figU003AMainU0020ComponentU0020Overview">[fig:Main Component Overview]</xref>.
@@ -295,7 +295,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   novelty of this method is the combination of these sub simulations for
   each process step to model a complete industrial manufacturing
   process. An example of toffee production is provided in the
-  <ext-link ext-link-type="uri" xlink:href="www.ethospenalps.readthedocs.io/">ETHOS.PeNALPS
+  <ext-link ext-link-type="uri" xlink:href="https://ethospenalps.readthedocs.io/">ETHOS.PeNALPS
   documentation</ext-link> to illustrate the method.</p>
 </sec>
 <sec id="other-tools">
@@ -408,7 +408,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <person-group person-group-type="author">
         <string-name>AutoMod Simulationssoftware</string-name>
       </person-group>
-      <article-title>Startseite - AutoMod simulationssoftware - simulating reality</article-title>
+      <article-title>AutoMod simulationssoftware - simulating reality</article-title>
       <uri>https://automod.de/</uri>
     </element-citation>
   </ref>
@@ -472,19 +472,19 @@ a Creative Commons Attribution 4.0 International License (CC BY
   </ref>
   <ref id="ref-LannerGroupLimited.19.03.2024">
     <element-citation>
-      <person-group person-group-type="author">
+      <article-title>WITNESS simulation modeling software</article-title>
+      <person-group person-group-type="editor">
         <string-name>Lanner Group Limited</string-name>
       </person-group>
-      <article-title>WITNESS simulation modeling software</article-title>
       <uri>https://www.lanner.com/en-gb/technology/witness-simulation-software.html</uri>
     </element-citation>
   </ref>
   <ref id="ref-LLC.19.03.2024">
     <element-citation>
-      <person-group person-group-type="author">
-        <name><surname>LLC</surname><given-names>Simio</given-names></name>
-      </person-group>
       <article-title>Manufacturing simulation and scheduling software | simio</article-title>
+      <person-group person-group-type="editor">
+        <string-name>Simio LLC</string-name>
+      </person-group>
       <uri>https://www.simio.com/applications/manufacturing-simulation-software/</uri>
     </element-citation>
   </ref>
@@ -586,7 +586,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <ref id="ref-Rippel.25.03.2024">
     <element-citation>
       <person-group person-group-type="author">
-        <name><surname>Rippel</surname><given-names>Daniel</given-names></name>
+        <name><surname>Rippel</surname><given-names>D.</given-names></name>
       </person-group>
       <article-title>M-ProPlAn: E-mail</article-title>
       <person-group person-group-type="editor">
@@ -596,10 +596,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
   </ref>
   <ref id="ref-RockwellAutomation.17.02.2024">
     <element-citation>
-      <person-group person-group-type="author">
+      <article-title>Arena simulation software | arena simulation software</article-title>
+      <person-group person-group-type="editor">
         <string-name>Rockwell Automation</string-name>
       </person-group>
-      <article-title>Arena simulation software | arena simulation software</article-title>
       <uri>https://www.rockwellautomation.com/de-de/products/software/arena-simulation.html</uri>
     </element-citation>
   </ref>
@@ -607,13 +607,14 @@ a Creative Commons Attribution 4.0 International License (CC BY
     <element-citation publication-type="book">
       <person-group person-group-type="author">
         <name><surname>Lind</surname><given-names>Salla</given-names></name>
-        <string-name>Johansson,Krassi, Boris</string-name>
+        <name><surname>Krassi</surname><given-names>Boris</given-names></name>
         <name><surname>Johansson</surname><given-names>Björn</given-names></name>
         <name><surname>Viitaniemi</surname><given-names>Juhani</given-names></name>
         <name><surname>Heilala</surname><given-names>Juhani</given-names></name>
         <name><surname>Stahre</surname><given-names>Johan</given-names></name>
         <name><surname>Vatanen</surname><given-names>Saija</given-names></name>
-        <string-name>Fasth, Åsa, Berlin, Cecilia</string-name>
+        <name><surname>Fasth</surname><given-names>Åsa</given-names></name>
+        <name><surname>Berlin</surname><given-names>Cecilia</given-names></name>
       </person-group>
       <source>SIMTER: A joint simulation tool for production development</source>
       <publisher-name>VTT Technical Research Centre of Finland</publisher-name>
@@ -623,10 +624,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
   </ref>
   <ref id="ref-SiemensDigitalIndustriesSoftware.15.03.2024">
     <element-citation>
-      <person-group person-group-type="author">
+      <article-title>Plant simulation software | siemens software</article-title>
+      <person-group person-group-type="editor">
         <string-name>Siemens Digital Industries Software</string-name>
       </person-group>
-      <article-title>Plant simulation software | siemens software</article-title>
       <uri>https://plm.sw.siemens.com/en-US/tecnomatix/products/plant-simulation-software/</uri>
     </element-citation>
   </ref>
@@ -636,10 +637,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Stoldt</surname><given-names>Johannes</given-names></name>
       </person-group>
       <article-title>Gestaltungsmethodik für simulationsstudien in umplanungsprojekten zur energieeffizienzsteigerung in fabriken</article-title>
-      <publisher-name>Universitätsverlag Chemnitz; Technische Universität Chemnitz</publisher-name>
+      <publisher-name>Technische Universität Chemnit</publisher-name>
       <publisher-loc>Chemnitz</publisher-loc>
       <year iso-8601-date="2019">2019</year>
-      <pub-id pub-id-type="doi">343579</pub-id>
+      <uri>https://nbn-resolving.org/urn:nbn:de:bsz:ch1-qucosa2-343579</uri>
     </element-citation>
   </ref>
   <ref id="ref-Stoldt.2021">
@@ -667,10 +668,10 @@ a Creative Commons Attribution 4.0 International License (CC BY
   </ref>
   <ref id="ref-TheAnyLogicCompany.19.03.2024">
     <element-citation>
-      <person-group person-group-type="author">
+      <article-title>AnyLogic: Simulation modeling software tools &amp; solutions for business</article-title>
+      <person-group person-group-type="editor">
         <string-name>The AnyLogic Company</string-name>
       </person-group>
-      <article-title>AnyLogic: Simulation modeling software tools &amp; solutions for business</article-title>
       <uri>https://www.anylogic.com/</uri>
     </element-citation>
   </ref>
