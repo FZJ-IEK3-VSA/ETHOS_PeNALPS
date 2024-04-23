@@ -64,7 +64,7 @@ There are four simulation modeling paradigms as shown in \ref{fig:Simulation par
 
 ![Simulation paradigms for material flow simulations [@Thiede.2012b p.47] adapted from [@Borshchev.2004 p. 3]. \label{fig:Simulation paradigms}](simulation_methods.png)
 
-The implementation as agents was chosen to improve the adaptability and extensibility of the software. Thus, more specifics of a node or even another simulation paradigm can be implemented. The [documentation of ETHOS.PeNALPS](www.ethospenalps.readthedocs.io/) contains a roadmap for the software. The process model is generated from generic objects as shown in Figure \ref{fig:Main Component Overview}. The main components are the generic nodes that create and manage material requests as agents. These nodes include
+The implementation as agents was chosen to improve the adaptability and extensibility of the software. Thus, more specifics of a node or even another simulation paradigm can be implemented. The [documentation of ETHOS.PeNALPS](https://ethospenalps.readthedocs.io/) contains a roadmap for the software. The process model is generated from generic objects as shown in Figure \ref{fig:Main Component Overview}. The main components are the generic nodes that create and manage material requests as agents. These nodes include
 
 - Source
 - Sink
@@ -80,7 +80,7 @@ A network level consists of a source and a sink that define the start and end po
   
 The simulation is initiated by creating the first request in the sink from the production order. Requests are then passed upstream until they reach the source of the network level. If a request cannot be fulfilled in time, it can be modified within a chain to shift the request to an earlier time and ensure that the deadline is always met.
 
-The behavior of a process step during request fulfillment is determined by a sequence of states that are stored in a Petri net, which is a state transition system consisting of places, transitions, and arcs [@Peterson.1977]. The states can be as simple as on or off switches or constitute a complex network of states during production. The main novelty of this method is the combination of these sub simulations for each process step to model a complete industrial manufacturing process. An example of toffee production is provided in the [ETHOS.PeNALPS documentation](www.ethospenalps.readthedocs.io/) to illustrate the method.
+The behavior of a process step during request fulfillment is determined by a sequence of states that are stored in a Petri net, which is a state transition system consisting of places, transitions, and arcs [@Peterson.1977]. The states can be as simple as on or off switches or constitute a complex network of states during production. The main novelty of this method is the combination of these sub simulations for each process step to model a complete industrial manufacturing process. An example of toffee production is provided in the [ETHOS.PeNALPS documentation](https://ethospenalps.readthedocs.io/) to illustrate the method.
 
 
 # Other Tools
