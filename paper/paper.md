@@ -60,7 +60,7 @@ ETHOS.PeNALPS provides modeling capabilities to simulate load profiles of indivi
 
 # Method
 
-There are four simulation modeling paradigms as shown in Figure \ref{fig:Simulation paradigms}. ETHOS.PeNALPS utilizes an agent-based approach for the nodes of a material flow system. Currently, the most important nodes of the material flow system, the process steps, contain a Petri net to model their activity. The part of the ETHOS.PeNALPS simulation based on the Petri net can be classified as a discrete event simulation. @Borshchev.2004 and @Thiede.2012b provide an introduction and comparison to these paradigms.
+There are four simulation modeling paradigms as shown in Figure \ref{fig:Simulation paradigms}. ETHOS.PeNALPS utilizes an agent-based approach for the nodes of a material flow system. Currently, the most important nodes of the material flow system, the process steps, contain a Petri net to model their activity. The part of the ETHOS.PeNALPS simulation based on the Petri net can be classified as a discrete event simulation. @Borshchev.2004 and Thiede [-@Thiede.2012b p.45-49] provide an introduction and comparison to these paradigms.
 
 ![Simulation paradigms for material flow simulations [@Thiede.2012b p.47] adapted from [@Borshchev.2004 p. 3]. \label{fig:Simulation paradigms}](simulation_methods.png)
 
