@@ -268,4 +268,3 @@ class ParallelOrderAggregator(OrderDistributorBase):
             )
             splitted_order.check_if_order_are_empty()
             self.dict_of_splitted_order[process_chain_identifier] = splitted_order
-

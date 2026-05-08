@@ -111,10 +111,7 @@ class Sink(ProcessNode):
         self.current_production_branch_identifier: OutputBranchIdentifier
         self.current_temporal_branch_identifier: TemporalBranchIdentifier
         self.order_distributor: (
-            OrderAggregatorAndDistributor
-            | OrderDistributor
-            | OrderToChainSplitter
-            | ParallelOrderAggregator
+            OrderAggregatorAndDistributor | OrderDistributor | OrderToChainSplitter | ParallelOrderAggregator
         ) = self._select_order_distributor(
             order_processing_type=order_processing_type,
         )
@@ -133,17 +130,9 @@ class Sink(ProcessNode):
     def _select_order_distributor(
         self,
         order_processing_type: OrderProcessingType,
-    ) -> (
-        OrderAggregatorAndDistributor
-        | OrderDistributor
-        | OrderToChainSplitter
-        | ParallelOrderAggregator
-    ):
+    ) -> OrderAggregatorAndDistributor | OrderDistributor | OrderToChainSplitter | ParallelOrderAggregator:
         order_distributor: (
-            OrderAggregatorAndDistributor
-            | OrderDistributor
-            | OrderToChainSplitter
-            | ParallelOrderAggregator
+            OrderAggregatorAndDistributor | OrderDistributor | OrderToChainSplitter | ParallelOrderAggregator
         )
         if order_processing_type == OrderProcessingType.AGGREGATE_AND_DISTRIBUTE:
             order_distributor = OrderAggregatorAndDistributor(
@@ -206,9 +195,7 @@ class Sink(ProcessNode):
         if not has_orders and self.order_distributor.dict_of_splitted_order:
             has_orders = True
         if not has_orders:
-            raise MisconfigurationError(
-                "Sink: " + self.name + " has no orders. A sink requires at least one order."
-            )
+            raise MisconfigurationError("Sink: " + self.name + " has no orders. A sink requires at least one order.")
 
     def plan_production(self) -> UpstreamNewProductionOrder:
         """Creates the next Upstream production order to fulfill the next order.

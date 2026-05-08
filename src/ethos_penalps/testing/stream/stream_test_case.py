@@ -423,5 +423,3 @@ def build_stream_test_case(
                 make_batch_stream_states_from_tuples(stream=stream, start=group_start, mass_and_gap_tuples=tuples_b)
             )
     return StreamTestCase(stream=stream, states=states)
-
-
