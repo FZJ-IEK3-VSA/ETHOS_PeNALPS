@@ -8,7 +8,7 @@ dependencies:
   - cloudpickle
   - dataclasses-json
   - datapane
-  - datetimerange
+  - datetimerange <2.3  # 2.3+ added astimezone() in validate_time_inversion which breaks tz-naive pandas Timestamps
   - graphviz
   - jsonpickle
   - matplotlib
