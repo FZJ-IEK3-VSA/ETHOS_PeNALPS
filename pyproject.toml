@@ -50,7 +50,7 @@ filterwarnings = [
     "ignore: distutils Version classes are deprecated.",
     "ignore: pkg_resources is deprecated as an API.",
     "ignore: Deprecated API features detected!",
-    "ignore::pyparsing.core.PyparsingDeprecationWarning",
+    "ignore::pyparsing.PyparsingDeprecationWarning",
 
 ] # How to configure Filterwarning:minversion = "6.0"
 # https://docs.pytest.org/en/7.1.x/reference/reference.html#confval-pythonpath
