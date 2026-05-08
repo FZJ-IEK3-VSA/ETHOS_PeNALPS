@@ -183,13 +183,9 @@ class ChildStatePath(StatePath):
     nodes_names_of_parrent_branch: list[str] = field(default_factory=list)
     unique_node_list: list[NodeData] = field(default_factory=list)
     non_unique_node_list: list[NodeData] = field(default_factory=list)
-    all_node_list_with_matrix_nodes: list[NodeData | EmptyNodeData] = field(
-        default_factory=list
-    )
+    all_node_list_with_matrix_nodes: list[NodeData | EmptyNodeData] = field(default_factory=list)
 
-    def add_names_of_nodes_of_parrent_path(
-        self, list_of_nodes_of_parrent_branch: list[NodeData]
-    ):
+    def add_names_of_nodes_of_parrent_path(self, list_of_nodes_of_parrent_branch: list[NodeData]):
         for node_data in list_of_nodes_of_parrent_branch:
             self.nodes_names_of_parrent_branch.append(node_data.unique_name)
 
@@ -197,9 +193,7 @@ class ChildStatePath(StatePath):
         unique_name_list = []
         for node in self.list_of_nodes:
             unique_name_list.append(node.unique_name)
-        list_of_unique_node_names = list(
-            set(unique_name_list) - set(self.nodes_names_of_parrent_branch)
-        )
+        list_of_unique_node_names = list(set(unique_name_list) - set(self.nodes_names_of_parrent_branch))
         unique_node_list = []
         for node in self.list_of_nodes:
             if node.unique_name in list_of_unique_node_names:
@@ -227,9 +221,7 @@ class PathPortPair:
 
 @dataclass
 class EdgePath:
-    list_of_edge_node_pairs: list[ForwardEdge | BackwardEdge | IntermediateEdge] = (
-        field(default_factory=list)
-    )
+    list_of_edge_node_pairs: list[ForwardEdge | BackwardEdge | IntermediateEdge] = field(default_factory=list)
 
 
 @dataclass
@@ -289,9 +281,7 @@ class TikzSubMatrix:
         unique_child_name_list = []
         for node_data in child_path.list_of_nodes:
             unique_child_name_list.append(node_data.unique_name)
-        intersection_name_list = list(
-            set(unique_parrent_name_list) & set(unique_child_name_list)
-        )
+        intersection_name_list = list(set(unique_parrent_name_list) & set(unique_child_name_list))
 
         child_path.non_unique_node_list.extend(intersection_name_list)
 
@@ -302,27 +292,15 @@ class TikzSubMatrix:
             "Parent Row Node Position": [],
         }
         for intersection_node_name in intersection_name_list:
-            parrent_row_root_index = unique_parrent_name_list.index(
-                intersection_node_name
-            )
-            intersection_name_and_position_dict["Parent Row Node Position"].append(
-                parrent_row_root_index
-            )
-            child_row_node_position = unique_child_name_list.index(
-                intersection_node_name
-            )
-            intersection_name_and_position_dict["Child Row Node Position"].append(
-                child_row_node_position
-            )
-            intersection_name_and_position_dict["Intersection Name"].append(
-                intersection_node_name
-            )
+            parrent_row_root_index = unique_parrent_name_list.index(intersection_node_name)
+            intersection_name_and_position_dict["Parent Row Node Position"].append(parrent_row_root_index)
+            child_row_node_position = unique_child_name_list.index(intersection_node_name)
+            intersection_name_and_position_dict["Child Row Node Position"].append(child_row_node_position)
+            intersection_name_and_position_dict["Intersection Name"].append(intersection_node_name)
 
         index_data_frame = pandas.DataFrame(intersection_name_and_position_dict)
 
-        index_data_frame.sort_values(
-            "Parent Row Node Position", ascending=True, inplace=True
-        )
+        index_data_frame.sort_values("Parent Row Node Position", ascending=True, inplace=True)
 
         left_parent_row_index = index_data_frame["Parent Row Node Position"].iloc[0]
         right_parent_row_index = index_data_frame["Parent Row Node Position"].iloc[-1]
@@ -377,12 +355,8 @@ class TikzSubMatrix:
         for node_number in range(maximum_row_length):
             matrix_row_node_list.append(EmptyNodeData())
         if len(child_path.unique_node_list) == 0:
-            left_child_node = matrix_row_node_list[
-                pair_of_path_ports.left_parrent_port.node_position
-            ]
-            right_child_node = matrix_row_node_list[
-                pair_of_path_ports.right_parrent_port.node_position
-            ]
+            left_child_node = matrix_row_node_list[pair_of_path_ports.left_parrent_port.node_position]
+            right_child_node = matrix_row_node_list[pair_of_path_ports.right_parrent_port.node_position]
 
             left_node_parrent_row = pair_of_path_ports.left_child_port.node_data
             right_node_parrent_row = pair_of_path_ports.right_child_port.node_data
@@ -393,18 +367,12 @@ class TikzSubMatrix:
             child_path.all_node_list_with_matrix_nodes.append(right_node_parrent_row)
 
             if pair_of_path_ports.child_inter_port_length < 0:
-                child_path.all_node_list_with_matrix_nodes = list(
-                    reversed(child_path.all_node_list_with_matrix_nodes)
-                )
+                child_path.all_node_list_with_matrix_nodes = list(reversed(child_path.all_node_list_with_matrix_nodes))
         elif len(child_path.unique_node_list) == 1:
-            left_child_node = matrix_row_node_list[
-                pair_of_path_ports.left_parrent_port.node_position
-            ]
+            left_child_node = matrix_row_node_list[pair_of_path_ports.left_parrent_port.node_position]
             right_child_node = child_path.unique_node_list[0]
 
-            matrix_row_node_list[
-                pair_of_path_ports.right_parrent_port.node_position
-            ] = right_child_node
+            matrix_row_node_list[pair_of_path_ports.right_parrent_port.node_position] = right_child_node
             left_node_parrent_row = pair_of_path_ports.left_child_port.node_data
             right_node_parrent_row = pair_of_path_ports.right_child_port.node_data
 
@@ -413,9 +381,7 @@ class TikzSubMatrix:
             child_path.all_node_list_with_matrix_nodes.append(right_child_node)
             child_path.all_node_list_with_matrix_nodes.append(right_node_parrent_row)
             if pair_of_path_ports.child_inter_port_length < 0:
-                child_path.all_node_list_with_matrix_nodes = list(
-                    reversed(child_path.all_node_list_with_matrix_nodes)
-                )
+                child_path.all_node_list_with_matrix_nodes = list(reversed(child_path.all_node_list_with_matrix_nodes))
 
         elif len(child_path.unique_node_list) > 1:
             raise Exception("Not implemented yet")
@@ -466,19 +432,11 @@ class TikzMatrix:
 
 @dataclass
 class StatePathHandler:
-    list_of_initial_junction_state_connectors: list[StateConnector] = field(
-        default_factory=list
-    )
+    list_of_initial_junction_state_connectors: list[StateConnector] = field(default_factory=list)
     dict_of_all_paths: dict[uuid.uuid4, StatePath] = field(default_factory=dict)
-    list_of_remaining_paths: list[StatePathConnector, StatePath] = field(
-        default_factory=list
-    )
-    dict_of_all_juctions: dict[StatePathConnector, PathJunction] = field(
-        default_factory=dict
-    )
-    list_of_remaining_junctions: list[StatePathConnector, PathJunction] = field(
-        default_factory=list
-    )
+    list_of_remaining_paths: list[StatePathConnector, StatePath] = field(default_factory=list)
+    dict_of_all_juctions: dict[StatePathConnector, PathJunction] = field(default_factory=dict)
+    list_of_remaining_junctions: list[StatePathConnector, PathJunction] = field(default_factory=list)
 
     def add_state_path(self, state_path: StatePath):
         self.dict_of_all_paths[state_path.unique_id] = state_path
@@ -488,16 +446,9 @@ class StatePathHandler:
         return self.list_of_remaining_paths.pop()
 
     def add_junction(self, path_junction: PathJunction):
-        if (
-            path_junction.state_connector
-            not in self.list_of_initial_junction_state_connectors
-        ):
-            self.list_of_initial_junction_state_connectors.append(
-                path_junction.state_connector
-            )
-            self.dict_of_all_juctions[path_junction.state_path_connector] = (
-                path_junction
-            )
+        if path_junction.state_connector not in self.list_of_initial_junction_state_connectors:
+            self.list_of_initial_junction_state_connectors.append(path_junction.state_connector)
+            self.dict_of_all_juctions[path_junction.state_path_connector] = path_junction
             self.list_of_remaining_junctions.append(path_junction)
 
     def pop_path_junction(self) -> PathJunction:
@@ -511,9 +462,7 @@ class StatePathHandler:
 
         for state_path in self.dict_of_all_paths.values():
             if type(state_path) is ChildStatePath:
-                parrent_path = self.get_state_path_by_unqiue_id(
-                    path_id=state_path.parrent_unique_id
-                )
+                parrent_path = self.get_state_path_by_unqiue_id(path_id=state_path.parrent_unique_id)
                 state_path.add_names_of_nodes_of_parrent_path(
                     list_of_nodes_of_parrent_branch=parrent_path.list_of_nodes
                 )
@@ -532,14 +481,10 @@ class ProcessStateMatrixBuilder:
         display_names_dict,
     ) -> None:
         self.state_path_handler: StatePathHandler = StatePathHandler()
-        self.unique_process_state_names: dict[str, dict[str, str] | str] = (
-            unique_process_state_names
-        )
+        self.unique_process_state_names: dict[str, dict[str, str] | str] = unique_process_state_names
         self.display_names_dict: dict[str, dict[str, str] | str] = display_names_dict
         self.process_state_handler: ProcessStateHandler = process_state_handler
-        self.output_stream_state_name = (
-            process_state_handler.output_stream_providing_state_name
-        )
+        self.output_stream_state_name = process_state_handler.output_stream_providing_state_name
         self.idle_state_name = process_state_handler.idle_process_state_name
 
     def create_edges_in_submatrix(
@@ -553,15 +498,9 @@ class ProcessStateMatrixBuilder:
             #     state_path_connector=state_path.state_path_connector
             # )
             if type(state_path) is ChildStatePath:
-                for number_of_edges in range(
-                    len(state_path.all_node_list_with_matrix_nodes) - 1
-                ):
-                    start_node = state_path.all_node_list_with_matrix_nodes[
-                        number_of_edges
-                    ]
-                    target_node = state_path.all_node_list_with_matrix_nodes[
-                        number_of_edges + 1
-                    ]
+                for number_of_edges in range(len(state_path.all_node_list_with_matrix_nodes) - 1):
+                    start_node = state_path.all_node_list_with_matrix_nodes[number_of_edges]
+                    target_node = state_path.all_node_list_with_matrix_nodes[number_of_edges + 1]
                     self.create_edge_from_node_pair(
                         node_to_add_edge=start_node,
                         start_node=start_node,
@@ -622,9 +561,7 @@ class ProcessStateMatrixBuilder:
     ) -> TikzMatrix:
         """Loops over all process states"""
         # Is the output string generated
-        tikz_matrix = TikzMatrix(
-            process_step_name=self.process_state_handler.process_step_data.process_step_name
-        )
+        tikz_matrix = TikzMatrix(process_step_name=self.process_state_handler.process_step_data.process_step_name)
 
         self.create_sub_matrix_main_paths()
         self.create_paths_from_junctions()
@@ -634,9 +571,7 @@ class ProcessStateMatrixBuilder:
 
     def create_sub_matrix_main_paths(self):
         "Node collection starts at output stream providing state"
-        output_stream_state_name = (
-            self.process_state_handler.output_stream_providing_state_name
-        )
+        output_stream_state_name = self.process_state_handler.output_stream_providing_state_name
 
         idle_to_output_path = StatePath(
             list_of_nodes=[],
@@ -675,9 +610,7 @@ class ProcessStateMatrixBuilder:
         while self.state_path_handler.list_of_remaining_junctions:
             current_junction = self.state_path_handler.pop_path_junction()
 
-            parrent_path = self.state_path_handler.get_state_path_by_unqiue_id(
-                path_id=current_junction.parrent_path_id
-            )
+            parrent_path = self.state_path_handler.get_state_path_by_unqiue_id(path_id=current_junction.parrent_path_id)
             current_state_path = ChildStatePath(
                 state_path_connector=current_junction.state_path_connector,
                 list_of_nodes=[],
@@ -699,9 +632,7 @@ class ProcessStateMatrixBuilder:
     def create_sub_matrix_rows_from_paths(
         self,
     ) -> TikzSubMatrix:
-        output_stream_state_name = (
-            self.process_state_handler.output_stream_providing_state_name
-        )
+        output_stream_state_name = self.process_state_handler.output_stream_providing_state_name
         main_sub_matrix = TikzSubMatrix(
             process_step_name=self.process_state_handler.process_step_data.process_step_name,
             state_path_connector=StatePathConnector(
@@ -712,9 +643,7 @@ class ProcessStateMatrixBuilder:
         maximum_path_length = self.state_path_handler.determine_maximum_path_length()
 
         for state_path in self.state_path_handler.dict_of_all_paths.values():
-            edge_direction = self.determine_edge_direction(
-                state_path_connector=state_path.state_path_connector
-            )
+            edge_direction = self.determine_edge_direction(state_path_connector=state_path.state_path_connector)
             if type(state_path) is StatePath:
                 if edge_direction.right is False:
                     list_of_path_node_data = state_path.list_of_nodes
@@ -729,10 +658,8 @@ class ProcessStateMatrixBuilder:
                 )
                 main_sub_matrix.add_center_row(matrix_row=matrix_row)
             elif type(state_path) is ChildStatePath:
-                parrent_state_path = (
-                    self.state_path_handler.get_state_path_by_unqiue_id(
-                        path_id=state_path.parrent_unique_id
-                    )
+                parrent_state_path = self.state_path_handler.get_state_path_by_unqiue_id(
+                    path_id=state_path.parrent_unique_id
                 )
 
                 matrix_row = main_sub_matrix.create_matrix_child_row(
@@ -751,24 +678,18 @@ class ProcessStateMatrixBuilder:
         state_path_connector: StatePathConnector,
     ) -> Direction:
         if (
-            state_path_connector.start_state_name
-            == self.process_state_handler.idle_process_state_name
-            and state_path_connector.target_state_name
-            == self.process_state_handler.output_stream_providing_state_name
+            state_path_connector.start_state_name == self.process_state_handler.idle_process_state_name
+            and state_path_connector.target_state_name == self.process_state_handler.output_stream_providing_state_name
         ):
             direction = Direction(right=True)
         elif (
-            state_path_connector.start_state_name
-            == self.process_state_handler.output_stream_providing_state_name
-            and state_path_connector.target_state_name
-            == self.process_state_handler.idle_process_state_name
+            state_path_connector.start_state_name == self.process_state_handler.output_stream_providing_state_name
+            and state_path_connector.target_state_name == self.process_state_handler.idle_process_state_name
         ):
             direction = Direction(right=False)
         elif (
-            state_path_connector.start_state_name
-            == self.process_state_handler.input_stream_providing_state_name
-            and state_path_connector.target_state_name
-            == self.process_state_handler.input_stream_providing_state_name
+            state_path_connector.start_state_name == self.process_state_handler.input_stream_providing_state_name
+            and state_path_connector.target_state_name == self.process_state_handler.input_stream_providing_state_name
         ):
             direction = Direction(right=True)
         else:
@@ -797,17 +718,14 @@ class ProcessStateMatrixBuilder:
                 state_path=state_path,
             )
             state_path.list_of_nodes.append(node_data)
-            state_path.current_state_name = (
-                state_path.last_state_connector.start_state_name
-            )
+            state_path.current_state_name = state_path.last_state_connector.start_state_name
 
         # current_state_connector = state_path.last_state_connector
 
         iteration_counter = 0
         while (
             # getattr(state_path.last_state_connector, state_connector_position)
-            state_path.current_state_name
-            != state_path.state_path_connector.start_state_name
+            state_path.current_state_name != state_path.state_path_connector.start_state_name
         ):
             node_data = self.create_process_state_node(
                 process_state_handler=self.process_state_handler,
@@ -843,18 +761,20 @@ class ProcessStateMatrixBuilder:
         switch_from_specific_state: str | None = None,
     ):
         if switch_from_specific_state is None:
-            process_state_switch_selector = self.process_state_handler.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
-                current_process_state_name=current_state_path.current_state_name
+            process_state_switch_selector = (
+                self.process_state_handler.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
+                    current_process_state_name=current_state_path.current_state_name
+                )
             )
         elif type(switch_from_specific_state) is str:
-            process_state_switch_selector = self.process_state_handler.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
-                current_process_state_name=switch_from_specific_state
+            process_state_switch_selector = (
+                self.process_state_handler.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
+                    current_process_state_name=switch_from_specific_state
+                )
             )
 
         if isinstance(process_state_switch_selector, SingleChoiceSelector):
-            state_connector = (
-                process_state_switch_selector.process_state_switch.state_connector
-            )
+            state_connector = process_state_switch_selector.process_state_switch.state_connector
             current_state_path.last_state_connector = state_connector
 
         elif isinstance(process_state_switch_selector, BatchStateSwitchSelector):
@@ -875,9 +795,7 @@ class ProcessStateMatrixBuilder:
                 process_state_switch_selector.input_is_satisfied_switch.state_connector
             )
 
-        elif isinstance(
-            process_state_switch_selector, ProvideOutputFromStorageSwitchSelector
-        ):
+        elif isinstance(process_state_switch_selector, ProvideOutputFromStorageSwitchSelector):
             path_junction = PathJunction(
                 state_path_connector=StatePathConnector(
                     start_state_name=self.process_state_handler.idle_process_state_name,
@@ -898,22 +816,14 @@ class ProcessStateMatrixBuilder:
         else:
             raise Exception("Not implemented yet")
 
-        current_state_path.current_state_name = (
-            current_state_path.last_state_connector.start_state_name
-        )
+        current_state_path.current_state_name = current_state_path.last_state_connector.start_state_name
         return current_state_path
 
-    def create_process_state_node(
-        self, process_state_handler: ProcessStateHandler, state_path: StatePath
-    ) -> NodeData:
+    def create_process_state_node(self, process_state_handler: ProcessStateHandler, state_path: StatePath) -> NodeData:
         process_step_name = process_state_handler.process_step_data.process_step_name
         node_data = NodeData(
-            unique_name=self.unique_process_state_names[process_step_name][
-                state_path.current_state_name
-            ],
-            display_name=self.display_names_dict[process_step_name][
-                state_path.current_state_name
-            ],
+            unique_name=self.unique_process_state_names[process_step_name][state_path.current_state_name],
+            display_name=self.display_names_dict[process_step_name][state_path.current_state_name],
             process_state_name=state_path.current_state_name,
         )
         return node_data
@@ -948,9 +858,7 @@ class GraphBuilder:
         self.create_display_names()
 
         node_section_string = self.create_node_section()
-        self.full_document_string = (
-            document_preamble + node_section_string + document_postamble
-        )
+        self.full_document_string = document_preamble + node_section_string + document_postamble
 
         self.save_tex_file(full_path=full_path)
         return full_path
@@ -965,9 +873,7 @@ class GraphBuilder:
             process_node = self.process_node_dict[process_node_name]
 
             if isinstance(process_node, Source):
-                source_string = self.create_source_node(
-                    process_node=process_node, node_above=node_above
-                )
+                source_string = self.create_source_node(process_node=process_node, node_above=node_above)
                 node_section_string = node_section_string + source_string
             elif isinstance(process_node, ProcessStep):
                 process_state_matrix_builder = ProcessStateMatrixBuilder(
@@ -991,13 +897,9 @@ class GraphBuilder:
                 edge_string = self.create_state_tikz_edges(
                     state_path_handler=process_state_matrix_builder.state_path_handler
                 )
-                node_section_string = (
-                    node_section_string + process_state_node_string + edge_string
-                )
+                node_section_string = node_section_string + process_state_node_string + edge_string
             elif isinstance(process_node, Sink):
-                sink_string = self.create_source_node(
-                    process_node=process_node, node_above=node_above
-                )
+                sink_string = self.create_source_node(process_node=process_node, node_above=node_above)
                 node_section_string = node_section_string + sink_string
 
             first_node = False
@@ -1013,15 +915,11 @@ class GraphBuilder:
         current_node = self.process_node_dict[source_name]
         maximum_iterations = 100
         current_iterration = 0
-        while (
-            type(current_node) is not Sink and current_iterration < maximum_iterations
-        ):
+        while type(current_node) is not Sink and current_iterration < maximum_iterations:
             if type(current_node) is ProcessStep:
                 down_stream_node_name = current_node.get_downstream_node_name()
             elif type(current_node) is Source:
-                output_stream = self.stream_handler.get_stream(
-                    stream_name=current_node.current_output_stream_name
-                )
+                output_stream = self.stream_handler.get_stream(stream_name=current_node.current_output_stream_name)
                 down_stream_node_name = output_stream.get_downstream_node_name()
             self.sorted_node_dict[current_node.name] = current_node
             current_node = self.process_node_dict[down_stream_node_name]
@@ -1040,9 +938,7 @@ class GraphBuilder:
             start_node_name = stream.static_data.start_process_step_name
             target_node_name = stream.static_data.end_process_step_name
             unqiue_start_node_name = self.unique_process_node_name_dict[start_node_name]
-            unqiue_target_node_name = self.unique_process_node_name_dict[
-                target_node_name
-            ]
+            unqiue_target_node_name = self.unique_process_node_name_dict[target_node_name]
             if type(stream) is ContinuousStream:
                 draw_option = r"[->]"
             elif type(stream) is BatchStream:
@@ -1059,9 +955,7 @@ class GraphBuilder:
             stream_section_str = stream_section_str + current_stream_edge
         return stream_section_str
 
-    def identify_node_types(
-        self, matrix: TikzMatrix, process_state_handler: ProcessStateHandler
-    ) -> TikzMatrix:
+    def identify_node_types(self, matrix: TikzMatrix, process_state_handler: ProcessStateHandler) -> TikzMatrix:
         for submatrix in matrix.list_of_submatrices:
             for matrix_row in submatrix.list_of_all_rows:
                 for node_data in matrix_row.list_of_path_node_data:
@@ -1069,26 +963,19 @@ class GraphBuilder:
                         node_data.tikz_options = "InfinitesimalNode"
                     else:
                         if (
-                            node_data.process_state_name
-                            == process_state_handler.input_stream_providing_state_name
-                            and node_data.process_state_name
-                            == process_state_handler.output_stream_providing_state_name
+                            node_data.process_state_name == process_state_handler.input_stream_providing_state_name
+                            and node_data.process_state_name == process_state_handler.output_stream_providing_state_name
                         ):
                             node_data.tikz_options = "InputAndOutputState"
                         else:
-                            if (
-                                node_data.process_state_name
-                                == process_state_handler.idle_process_state_name
-                            ):
+                            if node_data.process_state_name == process_state_handler.idle_process_state_name:
                                 node_data.tikz_options = "IdleState"
                             elif (
-                                node_data.process_state_name
-                                == process_state_handler.input_stream_providing_state_name
+                                node_data.process_state_name == process_state_handler.input_stream_providing_state_name
                             ):
                                 node_data.tikz_options = "InputState"
                             elif (
-                                node_data.process_state_name
-                                == process_state_handler.output_stream_providing_state_name
+                                node_data.process_state_name == process_state_handler.output_stream_providing_state_name
                             ):
                                 node_data.tikz_options = "OutputState"
 
@@ -1104,26 +991,16 @@ class GraphBuilder:
             if isinstance(process_node, ProcessStep):
                 unique_process_node_name = process_node_name.replace(" ", "-")
                 unique_process_node_name = unique_process_node_name.replace("_", "-")
-                self.unique_process_node_name_dict[process_node_name] = (
-                    unique_process_node_name
-                )
+                self.unique_process_node_name_dict[process_node_name] = unique_process_node_name
                 self.unique_process_state_names[process_node_name] = {}
-                for (
-                    process_state_name
-                ) in process_node.process_state_handler.process_state_dictionary:
+                for process_state_name in process_node.process_state_handler.process_state_dictionary:
                     unique_process_state_name = process_state_name.replace(" ", "-")
-                    unique_process_state_name = unique_process_state_name.replace(
-                        "_", "-"
-                    )
-                    self.unique_process_state_names[process_node_name][
-                        process_state_name
-                    ] = unique_process_state_name
+                    unique_process_state_name = unique_process_state_name.replace("_", "-")
+                    self.unique_process_state_names[process_node_name][process_state_name] = unique_process_state_name
             elif isinstance(process_node, (Source, Sink)):
                 unique_process_node_name = process_node_name.replace(" ", "")
                 unique_process_node_name = unique_process_node_name.replace("_", "-")
-                self.unique_process_node_name_dict[process_node_name] = (
-                    unique_process_node_name
-                )
+                self.unique_process_node_name_dict[process_node_name] = unique_process_node_name
 
     def create_display_names(self):
         """Remove whitespaces from node names"""
@@ -1131,26 +1008,16 @@ class GraphBuilder:
             process_node = self.process_node_dict[process_node_name]
             if isinstance(process_node, ProcessStep):
                 self.display_names_dict[process_node_name] = {}
-                for (
-                    process_state_name
-                ) in process_node.process_state_handler.process_state_dictionary:
+                for process_state_name in process_node.process_state_handler.process_state_dictionary:
                     name_to_display = process_state_name.replace("_", "-")
-                    self.display_names_dict[process_node_name][
-                        process_state_name
-                    ] = name_to_display
+                    self.display_names_dict[process_node_name][process_state_name] = name_to_display
             elif isinstance(process_node, (Source, Sink)):
                 name_to_display = process_node_name.replace("_", "-")
 
                 self.display_names_dict[process_node_name] = name_to_display
 
     def create_title_node(self) -> str:
-        title_node_line = (
-            r"\node[draw=none,rectangle]("
-            + self.title_node_name
-            + r"){"
-            + self.enterprise_name
-            + r"};"
-        )
+        title_node_line = r"\node[draw=none,rectangle](" + self.title_node_name + r"){" + self.enterprise_name + r"};"
         return title_node_line
 
     def create_source_node(self, process_node: Source | Sink, node_above: str) -> str:
@@ -1217,10 +1084,7 @@ class GraphBuilder:
                         )
                     elif type(node_data_entry) is EmptyNodeData:
                         new_string = (
-                            r"  \node[draw=none,InfinitesimalNode]("
-                            + node_data_entry.unique_name
-                            + "){}; &"
-                            + "\n"
+                            r"  \node[draw=none,InfinitesimalNode](" + node_data_entry.unique_name + "){}; &" + "\n"
                         )
 
                     matrix_string = matrix_string + new_string

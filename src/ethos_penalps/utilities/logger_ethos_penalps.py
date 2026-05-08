@@ -1,14 +1,13 @@
 import logging
 import os
 import sys
+from typing import ClassVar
 
 import pandas as pd
 
 from ethos_penalps.data_classes import CurrentProcessNode, LoopCounter
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 
-# MYVAR = "Jabberwocky"
-# logging.captureWarnings(capture=True)
 logging.basicConfig(
     level=logging.CRITICAL,
 )
@@ -19,7 +18,7 @@ class ContextFilter(logging.Filter):
     This is a filter which injects contextual information into the log.
     """
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         loop_counter = LoopCounter.loop_number
         current_node_name = CurrentProcessNode.node_name
         record.loop_counter = loop_counter
@@ -32,11 +31,13 @@ class PeNALPSLogger:
     capabilities of ETHOS.PeNALPS.
     """
 
-    logger_name = "ethos_penalps"
-    table_delimiter = "DELIMITER"
-    prepend_loop_counter = True
-    has_been_called: bool = False
-    logger = logging.getLogger(logger_name)
+    logger_name: ClassVar[str] = "ethos_penalps"
+    table_delimiter: ClassVar[str] = "DELIMITER"
+    prepend_loop_counter: ClassVar[bool] = True
+    has_been_called: ClassVar[bool] = False
+    logger: ClassVar[logging.Logger] = logging.getLogger(logger_name)
+    directory_to_log: ClassVar[str | None] = None
+    path_to_log: ClassVar[str | None] = None
 
     @staticmethod
     def initialize_logger() -> logging.Logger:
@@ -78,9 +79,7 @@ class PeNALPSLogger:
         # create formatter
         # More attributes:
         # https://docs.python.org/3/library/logging.html#logrecord-attributes
-        formatter = logging.Formatter(
-            "%(filename)s %(funcName)s line:%(lineno)d :%(message)s "
-        )
+        formatter = logging.Formatter("%(filename)s %(funcName)s line:%(lineno)d :%(message)s ")
 
         # add formatter to console handler
         console_handler.setFormatter(formatter)
@@ -92,25 +91,16 @@ class PeNALPSLogger:
         return logger
 
     @staticmethod
-    def get_logger_to_create_table(logging_level=logging.INFO) -> logging.Logger:
+    def get_logger_to_create_table(logging_level: int = logging.INFO) -> logging.Logger:
         """Returns a logger configuration that can easily be converted to a table."""
         logger: logging.Logger = PeNALPSLogger.logger
+        logger.setLevel(logging_level)
         result_path_generator = ResultPathGenerator()
-        directory_to_log = (
-            result_path_generator.create_result_folder_relative_to_main_file(
-                subdirectory_name="results", add_time_stamp_to_filename=True
-            )
+        directory_to_log = result_path_generator.create_result_folder_relative_to_main_file(
+            subdirectory_name="results", add_time_stamp_to_filename=True
         )
         PeNALPSLogger.directory_to_log = directory_to_log
         path_to_log_file = os.path.join(directory_to_log, "table.log")
-        # path_to_log_file = (
-        #     result_path_generator.create_path_to_file_relative_to_main_file(
-        #         file_name="table_log",
-        #         subdirectory_name=directory_to_log,
-        #         file_extension=".log",
-        #         add_time_stamp_to_filename=False,
-        #     )
-        # )
         PeNALPSLogger.path_to_log = path_to_log_file
 
         table_delimiter = PeNALPSLogger.table_delimiter
@@ -132,25 +122,25 @@ class PeNALPSLogger:
             + "%(message)s "
         )
 
-        file_handler = logging.FileHandler(PeNALPSLogger.path_to_log)
+        file_handler = logging.FileHandler(path_to_log_file)
 
         file_handler.setFormatter(log_file_formatter)
 
         # https://docs.python.org/3/howto/logging-cookbook.html#context-info
         # add formatter to ch
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(logging_level)
         logger.addHandler(file_handler)
         return logger
 
     @staticmethod
     def read_log_to_data_frame(path_to_log_file: str | None = None) -> pd.DataFrame:
         """Reads the logger entries to a table."""
-        if path_to_log_file is None:
-            data_frame = pd.read_csv(
-                filepath_or_buffer=PeNALPSLogger.path_to_log,
-                delimiter=PeNALPSLogger.table_delimiter,
-                engine="python",
-            )
+        log_path: str = path_to_log_file if path_to_log_file is not None else PeNALPSLogger.path_to_log  # type: ignore[assignment]
+        data_frame = pd.read_csv(
+            filepath_or_buffer=log_path,
+            delimiter=PeNALPSLogger.table_delimiter,
+            engine="python",
+        )
         if PeNALPSLogger.prepend_loop_counter:
             data_frame.columns = [
                 "Current node name",

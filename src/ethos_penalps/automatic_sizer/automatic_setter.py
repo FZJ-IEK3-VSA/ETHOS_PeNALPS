@@ -1,6 +1,7 @@
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class ProcessStepSetter:
@@ -8,9 +9,7 @@ class ProcessStepSetter:
     in an automated way using a sensitivity analysis or an optimization e.g.
     """
 
-    def __init__(
-        self, process_step: ProcessStep, stream_handler: StreamHandler
-    ) -> None:
+    def __init__(self, process_step: ProcessStep, stream_handler: StreamHandler) -> None:
         """
 
         Args:

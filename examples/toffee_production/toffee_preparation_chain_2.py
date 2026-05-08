@@ -33,10 +33,8 @@ def fill_toffee_preparation_chain_2(
 
     # Create process state petri nets
     # Toffee machine
-    filling_state = (
-        toffee_machine.process_state_handler.create_batch_input_stream_requesting_state(
-            process_state_name="Filling"
-        )
+    filling_state = toffee_machine.process_state_handler.create_batch_input_stream_requesting_state(
+        process_state_name="Filling"
     )
     mixing_state = toffee_machine.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
         process_state_name="Mixing"
@@ -44,20 +42,12 @@ def fill_toffee_preparation_chain_2(
     cooking_state = toffee_machine.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
         process_state_name="Cooking"
     )
-    cooling_state = (
-        toffee_machine.process_state_handler.create_intermediate_process_state(
-            process_state_name="Cooling"
-        )
-    )
-    discharge_state = (
-        toffee_machine.process_state_handler.create_batch_output_stream_providing_state(
-            process_state_name="Discharge"
-        )
+    cooling_state = toffee_machine.process_state_handler.create_intermediate_process_state(process_state_name="Cooling")
+    discharge_state = toffee_machine.process_state_handler.create_batch_output_stream_providing_state(
+        process_state_name="Discharge"
     )
 
-    idle_state = toffee_machine.process_state_handler.create_idle_process_state(
-        process_state_name="Idle"
-    )
+    idle_state = toffee_machine.process_state_handler.create_idle_process_state(process_state_name="Idle")
 
     # Create transitions of petri nets
 
@@ -177,9 +167,7 @@ def fill_toffee_preparation_chain_2(
     )
 
     # Add internal storages (required)
-    toffee_machine.process_state_handler.process_step_data.main_mass_balance.create_storage(
-        current_storage_level=0
-    )
+    toffee_machine.process_state_handler.process_step_data.main_mass_balance.create_storage(current_storage_level=0)
 
     # Add streams to sinks and sources
     raw_toffee_source.add_output_stream(

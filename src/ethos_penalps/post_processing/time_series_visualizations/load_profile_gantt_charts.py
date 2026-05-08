@@ -1,8 +1,6 @@
 import datetime
 import logging
 import os
-from pickletools import read_uint1
-
 
 import matplotlib
 import matplotlib.dates as mdates
@@ -17,8 +15,6 @@ from ethos_penalps.data_classes import (
     LoadProfileMetaData,
     ProcessStepDataFrameMetaInformation,
 )
-
-from ethos_penalps.utilities.units import Units
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream import (
     BatchStream,
@@ -29,6 +25,7 @@ from ethos_penalps.utilities.data_base_interactions import DataBaseInteractions
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.general_functions import ResultPathGenerator, denormalize
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.units import Units
 
 
 def create_load_profile_gantt_chart(
@@ -50,9 +47,7 @@ def create_load_profile_gantt_chart(
     # subplot_number = subplot_number + 1
 
     # Calculate time difference for each stream
-    data_frame["Time difference"] = (
-        data_frame[end_time_column_name] - data_frame[start_time_column_name]
-    )
+    data_frame["Time difference"] = data_frame[end_time_column_name] - data_frame[start_time_column_name]
     # Create column with touple (start_time : datetime.datetime, time_difference : datetime:timedelta)
     data_frame["barh tuple"] = list(
         zip(
@@ -96,9 +91,7 @@ def create_load_profile_gantt_chart(
     # Create list of values which are represented by the colour
 
     denormalized_tick_values = []
-    max_power_quantity = Units.compress_quantity(
-        quantity_value=max_value, unit=load_profile_meta_data.power_unit
-    )
+    max_power_quantity = Units.compress_quantity(quantity_value=max_value, unit=load_profile_meta_data.power_unit)
     for tick_value in normalized_tick_values:
         denormalized_tick_values.append(
             str(

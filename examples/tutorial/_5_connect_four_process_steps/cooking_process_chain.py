@@ -75,23 +75,17 @@ def fill_cooking_process_chain(
     """
     # Process Step 1
 
-    idle_state = process_step.process_state_handler.create_idle_process_state(
-        process_state_name="Idle"
-    )
-    fill_raw_materials_state = (
-        process_step.process_state_handler.create_batch_input_stream_requesting_state(
-            process_state_name="Fill raw materials"
-        )
+    idle_state = process_step.process_state_handler.create_idle_process_state(process_state_name="Idle")
+    fill_raw_materials_state = process_step.process_state_handler.create_batch_input_stream_requesting_state(
+        process_state_name="Fill raw materials"
     )
 
     cooking_state = process_step.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
         process_state_name="Cooking"
     )
 
-    discharge_goods_state = (
-        process_step.process_state_handler.create_batch_output_stream_providing_state(
-            process_state_name="Discharge"
-        )
+    discharge_goods_state = process_step.process_state_handler.create_batch_output_stream_providing_state(
+        process_state_name="Discharge"
     )
 
     # Petri net transitions
@@ -147,6 +141,4 @@ def fill_cooking_process_chain(
     )
 
     # Add internal storages (required)
-    process_step.process_state_handler.process_step_data.main_mass_balance.create_storage(
-        current_storage_level=0
-    )
+    process_step.process_state_handler.process_step_data.main_mass_balance.create_storage(current_storage_level=0)

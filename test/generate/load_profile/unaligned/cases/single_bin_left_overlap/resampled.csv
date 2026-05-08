@@ -1,0 +1,2 @@
+,load_type,start_time,end_time,energy_quantity,energy_unit,average_power_consumption,power_unit
+0,"LoadType(name='Electricity', uuid='test-uuid')",2022-01-01 05:00:00,2022-01-01 05:10:00,150.0,MJ,0.25,1.0 MW

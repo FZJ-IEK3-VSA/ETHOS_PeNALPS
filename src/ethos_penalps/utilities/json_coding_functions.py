@@ -39,12 +39,8 @@ def json_datetime_range_deserialization_function(
     date_time_range_object,
 ) -> datetimerange.DateTimeRange:
     start_and_end_dictionary = json.loads(date_time_range_object)
-    start_datetime = datetime.datetime.fromisoformat(
-        start_and_end_dictionary["start_datetime"]
-    )
-    end_datetime = datetime.datetime.fromisoformat(
-        start_and_end_dictionary["start_datetime"]
-    )
+    start_datetime = datetime.datetime.fromisoformat(start_and_end_dictionary["start_datetime"])
+    end_datetime = datetime.datetime.fromisoformat(start_and_end_dictionary["end_datetime"])
     return datetimerange.DateTimeRange(
         start_datetime=start_datetime,
         end_datetime=end_datetime,
@@ -61,7 +57,7 @@ def json_pint_unit_serialization_function(pint_unit):
 
 
 def json_pint_unit_deserialization_function(astropy_unit_dict_str) -> pint.Unit:
-    astropy_unit_dict = json.load(astropy_unit_dict_str)
+    astropy_unit_dict = json.loads(astropy_unit_dict_str)
     astropy_unit = Units.get_unit(astropy_unit_dict["unit"])
     return astropy_unit
 

@@ -45,9 +45,7 @@ class DataBaseInteractions:
 if __name__ == "__main__":
     cwd = os.getcwd()
     print("cwd:", cwd)
-    path_to_data_frame = os.path.join(
-        "example", "Blast_furnace_route", "3stream_plan.xlsx"
-    )
+    path_to_data_frame = os.path.join("example", "Blast_furnace_route", "3stream_plan.xlsx")
     path_to_database = os.path.join("example", "Blast_furnace_route", "test_db3.db")
     database_interactions = DataBaseInteractions(path_to_database)
     df = pd.read_excel(path_to_data_frame)

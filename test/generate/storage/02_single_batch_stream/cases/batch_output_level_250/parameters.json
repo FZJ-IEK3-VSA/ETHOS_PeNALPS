@@ -1,0 +1,24 @@
+{
+  "name": "batch_output_level_250",
+  "description": "Batch output only, start_storage_level=250. Level goes negative.",
+  "start_time": "2024-01-01T00:00:00",
+  "input_stream_group": {
+    "stream_specifications": []
+  },
+  "output_stream_group": {
+    "stream_specifications": [
+      {
+        "start_offset_seconds": 3600,
+        "max_batch_mass": 100,
+        "min_batch_mass": 0,
+        "batch_delay_seconds": 3600,
+        "stream_type": "BatchStream"
+      }
+    ]
+  },
+  "start_storage_level": 250,
+  "expect_full_mass_conservation": false,
+  "storage_entry_start_time": null,
+  "storage_entry_end_time": null,
+  "computed_start_storage_level": 250.0
+}

@@ -1,0 +1,31 @@
+{
+  "name": "batch_input_continuous_output_level_0",
+  "description": "Batch input, continuous output. start_storage_level=0.",
+  "start_time": "2024-01-01T00:00:00",
+  "input_stream_group": {
+    "stream_specifications": [
+      {
+        "start_offset_seconds": 1800,
+        "max_batch_mass": 200,
+        "min_batch_mass": 0,
+        "batch_delay_seconds": 1800,
+        "stream_type": "BatchStream"
+      }
+    ]
+  },
+  "output_stream_group": {
+    "stream_specifications": [
+      {
+        "start_offset_seconds": 0,
+        "max_operation_rate": null,
+        "min_operation_rate": 0,
+        "stream_type": "ContinuousStream"
+      }
+    ]
+  },
+  "start_storage_level": 0,
+  "expect_full_mass_conservation": true,
+  "storage_entry_start_time": null,
+  "storage_entry_end_time": null,
+  "computed_start_storage_level": 0.0
+}

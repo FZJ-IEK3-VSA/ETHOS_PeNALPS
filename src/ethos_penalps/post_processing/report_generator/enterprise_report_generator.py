@@ -10,20 +10,22 @@ import matplotlib
 import matplotlib.pyplot
 
 from ethos_penalps.data_classes import CurrentProcessNode, LoopCounter
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation, LoadType
+from ethos_penalps.energy.load_profile_calculator import (
+    LoadProfileHandlerSimulation,
+    LoadType,
+)
 from ethos_penalps.node_operations import ProductionOrder
 from ethos_penalps.organizational_agents.network_level import NetworkLevel
-from ethos_penalps.post_processing.load_profile_entry_post_processor import (
+from ethos_penalps.post_processing.load_profiles.load_profile_entry_post_processor import (
     LoadProfileEntryPostProcessor,
 )
-from ethos_penalps.post_processing.network_analyzer import (
-    NetworkAnalyzer,
+from ethos_penalps.post_processing.production_plan_post_processing.network_analyzer import (
+    # NetworkAnalyzer,
     ResultSelector,
 )
-from ethos_penalps.post_processing.post_processed_data_handler import (
+from ethos_penalps.post_processing.production_plan_post_processing.post_processed_data_handler import (
     PostProcessSimulationDataHandler,
 )
-from ethos_penalps.post_processing.process_summary import ProcessOverViewGenerator
 from ethos_penalps.post_processing.report_generator.carpet_plot_page import (
     CarpetPlotPageGenerator,
 )
@@ -59,6 +61,7 @@ from ethos_penalps.utilities.debugging_information import (
 )
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -97,11 +100,11 @@ class EnterpriseReportGenerator:
         )
         self.open_report_after_creation = True
         self.enterprise_name: str = enterprise_name
-        self.report_directory: str | None = None
+        self.report_directory: str | None = post_process_simulation_data_handler.report_options.path_to_results_folder
         self.list_of_carpet_plot_output_file_paths: list[str] = []
-        self.network_analyzer: NetworkAnalyzer = NetworkAnalyzer(
-            list_of_network_level=list_of_network_level
-        )
+        # self.network_analyzer: NetworkAnalyzer = NetworkAnalyzer(
+        #     list_of_network_level=list_of_network_level
+        # )
         self.result_selector: ResultSelector = ResultSelector(
             production_plan=production_plan,
             list_of_network_level=list_of_network_level,
@@ -109,15 +112,15 @@ class EnterpriseReportGenerator:
             post_process_simulation_data_handler=post_process_simulation_data_handler,
         )
 
-    def add_output_directory(self, output_directory: str | None):
-        """Manually adds a path to the report output directory.
+    # def add_output_directory(self, output_directory: str | None):
+    #     """Manually adds a path to the report output directory.
 
-        Args:
-            output_directory (str | None): Path to the report output directory.
-        """
-        if isinstance(output_directory, str):
-            Path(output_directory).mkdir(exist_ok=True)
-            self.report_directory = output_directory
+    #     Args:
+    #         output_directory (str | None): Path to the report output directory.
+    #     """
+    #     if isinstance(output_directory, str):
+    #         Path(output_directory).mkdir(exist_ok=True)
+    #         self.report_directory = output_directory
 
     def generate_report(self, report_generator_options: ReportGeneratorOptions):
         """Starts to create a HTML report from the simulation results. The
@@ -131,34 +134,22 @@ class EnterpriseReportGenerator:
         logger.info("Generation of report starts")
         LoopCounter.loop_number = "Report_creation"
         CurrentProcessNode.node_name = "Report_creator"
-        if self.report_directory is None:
-            if hasattr(PeNALPSLogger, "directory_to_log"):
-                self.report_directory = PeNALPSLogger.directory_to_log
-            else:
-                result_path_generator = ResultPathGenerator()
-                self.report_directory: str = (
-                    result_path_generator.create_result_folder_relative_to_main_file(
-                        subdirectory_name="report"
-                    )
-                )
+        self.report_directory = report_generator_options.path_to_results_folder
+
         # Create Process Overview Page
         process_overview_page_generator = ProcessOverviewPage(
             enterprise_name=self.enterprise_name,
             report_directory=self.report_directory,
             list_of_network_level=self.list_of_network_level,
             result_selector=self.result_selector,
+            load_profile_handler_simulation=self.post_process_simulation_data_handler.load_profile_handler_simulation,
         )
-        process_overview_page = (
-            process_overview_page_generator.create_process_step_overview_page(
-                report_generator_options=report_generator_options
-            )
+        process_overview_page = process_overview_page_generator.create_process_step_overview_page(
+            report_generator_options=report_generator_options
         )
         self.group_list.append(process_overview_page)
         # Create Production Plan Data Frame Page
-        if (
-            report_generator_options.production_plan_data_frame.create_data_frame_page
-            is True
-        ):
+        if report_generator_options.production_plan_data_frame.create_data_frame_page is True:
             data_frame_page_generator = DataFramePageGenerator(
                 production_plan=self.production_plan,
                 post_process_simulation_data_handler=self.post_process_simulation_data_handler,
@@ -173,9 +164,7 @@ class EnterpriseReportGenerator:
             production_plan=self.production_plan,
             post_process_simulation_data_handler=self.post_process_simulation_data_handler,
         )
-        load_profile_data_page = (
-            load_profile_data_page_generator.create_load_profile_data_page()
-        )
+        load_profile_data_page = load_profile_data_page_generator.create_load_profile_data_page()
         self.group_list.append(load_profile_data_page)
 
         # Create Data Frame Page
@@ -184,10 +173,8 @@ class EnterpriseReportGenerator:
             report_directory=self.report_directory,
             result_selector=self.result_selector,
         )
-        gantt_chart_page = (
-            gantt_chart_page_generator.create_network_level_gantt_chart_page(
-                report_generator_options=report_generator_options
-            )
+        gantt_chart_page = gantt_chart_page_generator.create_network_level_gantt_chart_page(
+            report_generator_options=report_generator_options
         )
         self.group_list.append(gantt_chart_page)
         carpet_plot_page_generator = CarpetPlotPageGenerator(
@@ -202,29 +189,27 @@ class EnterpriseReportGenerator:
 
         if self.report_directory is None:
             result_path_generator = ResultPathGenerator()
-            path_to_main_file = (
-                result_path_generator.create_path_to_file_relative_to_main_file(
-                    file_name=report_generator_options.report_name,
-                    subdirectory_name="results",
-                    file_extension=".html",
-                )
+            path_to_main_file = result_path_generator.create_path_to_file_relative_to_main_file(
+                file_name=report_generator_options.report_name,
+                subdirectory_name="results",
+                file_extension=".html",
             )
         else:
             result_path_generator = ResultPathGenerator()
-            path_to_main_file = os.path.join(
-                self.report_directory, report_generator_options.report_name + ".html"
-            )
+            path_to_main_file = os.path.join(self.report_directory, report_generator_options.report_name + ".html")
         if len(self.group_list) > 1:
             view = datapane.Select(*self.group_list)
         else:
             view = self.group_list[0]
 
-        datapane.save_report(
-            blocks=view,
-            path=path_to_main_file,
-            open=self.open_report_after_creation,
-            # layout=dp.PageLayout.SIDE,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, module="datapane")
+            datapane.save_report(
+                blocks=view,
+                path=path_to_main_file,
+                open=self.open_report_after_creation,
+                # layout=dp.PageLayout.SIDE,
+            )
 
         logger.info("Generation of report is terminated")
 

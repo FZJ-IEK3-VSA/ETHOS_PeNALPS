@@ -16,16 +16,17 @@ from ethos_penalps.data_classes import (
     StorageDataFrameMetaInformation,
     StorageProductionPlanEntry,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.stream import (
     BatchStream,
     BatchStreamProductionPlanEntry,
     ContinuousStream,
     ContinuousStreamProductionPlanEntry,
     StreamDataFrameMetaInformation,
+    StreamType,
 )
 from ethos_penalps.utilities.data_base_interactions import DataBaseInteractions
-from ethos_penalps.utilities.general_functions import ResultPathGenerator
+from ethos_penalps.utilities.general_functions import ResultPathGenerator, dataframe_from_dataclasses
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 from ethos_penalps.utilities.to_dataclass_conversions import (
     create_batch_stream_production_plan_entry,
@@ -34,6 +35,7 @@ from ethos_penalps.utilities.to_dataclass_conversions import (
     create_process_step_production_plan_entry_with_stream_state,
     create_storage_production_plan_entry,
 )
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -44,17 +46,12 @@ class ResultBaseClass:
     data of streams, process steps and storages.
     """
 
-    process_step_states_dict: dict[str, list[ProcessStepProductionPlanEntry]] = field(
-        default_factory=dict
-    )
+    process_step_states_dict: dict[str, list[ProcessStepProductionPlanEntry]] = field(default_factory=dict)
     stream_state_dict: dict[
         str,
-        list[ContinuousStreamProductionPlanEntry]
-        | list[BatchStreamProductionPlanEntry],
+        list[ContinuousStreamProductionPlanEntry] | list[BatchStreamProductionPlanEntry],
     ] = field(default_factory=dict)
-    storage_state_dict: dict[str, dict[Commodity, list[StorageProductionPlanEntry]]] = (
-        field(default_factory=dict)
-    )
+    storage_state_dict: dict[str, dict[Commodity, list[StorageProductionPlanEntry]]] = field(default_factory=dict)
 
     def save_all_simulation_results_to_sqlite(
         self,
@@ -113,14 +110,10 @@ class ResultBaseClass:
             if not os.path.exists(pathlib.Path(full_path_to_data_base).parent):
                 os.makedirs(pathlib.Path(full_path_to_data_base).parent)
 
-        data_base_handler = DataBaseInteractions(
-            path_to_database=full_path_to_data_base
-        )
+        data_base_handler = DataBaseInteractions(path_to_database=full_path_to_data_base)
         for stream_name, stream_entries in self.stream_state_dict.items():
-            stream_df = pd.DataFrame(stream_entries)
-            data_base_handler.write_to_database(
-                data_frame=stream_df, table_name=stream_name
-            )
+            stream_df = dataframe_from_dataclasses(stream_entries)
+            data_base_handler.write_to_database(data_frame=stream_df, table_name=stream_name)
         return full_path_to_data_base
 
     def save_process_state_plan_to_sqlite_db(
@@ -149,17 +142,13 @@ class ResultBaseClass:
             full_path_to_data_base = os.path.join(results_directory, file_name)
         else:
             pass
-        data_base_handler = DataBaseInteractions(
-            path_to_database=full_path_to_data_base
-        )
+        data_base_handler = DataBaseInteractions(path_to_database=full_path_to_data_base)
         for (
             process_step_name,
             process_step_entries,
         ) in self.process_step_states_dict.items():
-            stream_df = pd.DataFrame(process_step_entries)
-            data_base_handler.write_to_database(
-                data_frame=stream_df, table_name=process_step_name
-            )
+            stream_df = dataframe_from_dataclasses(process_step_entries)
+            data_base_handler.write_to_database(data_frame=stream_df, table_name=process_step_name)
         return full_path_to_data_base
 
     def restore_stream_results_from_sqlite(self, path_to_database: str):
@@ -175,12 +164,10 @@ class ResultBaseClass:
         for table_name in list_of_all_table_names:
             data_frame = data_base_interactions.read_database(table_name=table_name)
             stream_type = data_frame.loc[0, "stream_type"]
-            if stream_type == "BatchStream":
+            if stream_type == StreamType.BATCH.value:
                 entry_list = create_batch_stream_production_plan_entry(data=data_frame)
-            elif stream_type == "ContinuousStream":
-                entry_list = create_continuous_stream_production_plan_entry(
-                    data=data_frame
-                )
+            elif stream_type == StreamType.CONTINUOUS.value:
+                entry_list = create_continuous_stream_production_plan_entry(data=data_frame)
 
             self.stream_state_dict[table_name] = entry_list
 
@@ -196,11 +183,7 @@ class ResultBaseClass:
         for table_name in list_of_all_table_names:
             data_frame = data_base_interactions.read_database(table_name=table_name)
             if "total_stream_mass" in data_frame.columns:
-                entry_list = (
-                    create_process_step_production_plan_entry_with_stream_state(
-                        data=data_frame
-                    )
-                )
+                entry_list = create_process_step_production_plan_entry_with_stream_state(data=data_frame)
             else:
                 entry_list = create_process_step_production_plan_entry(data=data_frame)
 
@@ -212,47 +195,45 @@ class ResultBaseClass:
         file_name: str | None = None,
         print_file_save_path=True,
     ):
-        """Stores the stream simulation results to an xlsx file.
+        """Stores the stream simulation results to csv files in a directory.
 
         Args:
-            full_path_to_xlsx_file (str | None, optional): Path to the xlsx file. Defaults to None.
-            file_name (str | None, optional): Name of the output file. Defaults to None.
-            print_file_save_path (bool, optional): Prints the path to the xlsx file
+            full_path_to_xlsx_file (str | None, optional): Path to the output directory. Defaults to None.
+            file_name (str | None, optional): Name of the output directory. Defaults to None.
+            print_file_save_path (bool, optional): Prints the path to the output directory
                 if set to True. Defaults to True.
         """
-        logger.info("Save stream plan to xlsx starts")
-
-        iterator = 0
+        logger.info("Save stream plan to csv starts")
 
         if full_path_to_xlsx_file is None:
             if file_name is None:
                 file_name = "stream_plan_"
                 subdirectory_name = "results"
-                file_extension = ".xlsx"
+                file_extension = ".csv"
                 results_generator = ResultPathGenerator()
-                full_path_to_xlsx_file = (
-                    results_generator.create_path_to_file_relative_to_main_file(
-                        file_name=file_name,
-                        subdirectory_name=subdirectory_name,
-                        file_extension=file_extension,
-                    )
+                full_path_to_xlsx_file = results_generator.create_path_to_file_relative_to_main_file(
+                    file_name=file_name,
+                    subdirectory_name=subdirectory_name,
+                    file_extension=file_extension,
                 )
             else:
                 pass
 
         else:
             pass
-        writer = pd.ExcelWriter(full_path_to_xlsx_file, engine="xlsxwriter")
 
+        output_dir = pathlib.Path(full_path_to_xlsx_file).parent
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        iterator = 0
         for stream_entries in self.stream_state_dict.values():
-            stream_df = pd.DataFrame(stream_entries)
-            sheet_name = "stream_" + str(iterator)
-            stream_df.to_excel(writer, sheet_name=sheet_name)
+            stream_df = dataframe_from_dataclasses(stream_entries)
+            csv_path = output_dir / ("stream_" + str(iterator) + ".csv")
+            stream_df.to_csv(path_or_buf=csv_path)
             iterator = iterator + 1
-        writer.close()
-        self.path_to_stream_xlsx_file = full_path_to_xlsx_file
+        self.path_to_stream_xlsx_file = str(output_dir)
         if print_file_save_path is True:
-            print("The stream plan has been saved to:\n" + full_path_to_xlsx_file)
+            print("The stream plan has been saved to:\n" + str(output_dir))
 
 
 @dataclass
@@ -261,9 +242,7 @@ class OutputBranchProductionPlan(ResultBaseClass):
 
     def add_stream_state_entry(
         self,
-        stream_state_entry: (
-            ContinuousStreamProductionPlanEntry | BatchStreamProductionPlanEntry
-        ),
+        stream_state_entry: (ContinuousStreamProductionPlanEntry | BatchStreamProductionPlanEntry),
     ):
         """Adds a single stream entry to the production plan
 
@@ -276,9 +255,7 @@ class OutputBranchProductionPlan(ResultBaseClass):
         else:
             self.stream_state_dict[stream_state_entry.name] = [stream_state_entry]
 
-    def add_storage_entry(
-        self, process_step_name: str, storage_entry: StorageProductionPlanEntry
-    ):
+    def add_storage_entry(self, process_step_name: str, storage_entry: StorageProductionPlanEntry):
         """Adds a storage entry to the production plan
 
         Args:
@@ -292,9 +269,7 @@ class OutputBranchProductionPlan(ResultBaseClass):
         if storage_entry.commodity not in self.storage_state_dict[process_step_name]:
             self.storage_state_dict[process_step_name][storage_entry.commodity] = []
 
-        self.storage_state_dict[process_step_name][storage_entry.commodity].append(
-            storage_entry
-        )
+        self.storage_state_dict[process_step_name][storage_entry.commodity].append(storage_entry)
 
     def create_self_copy(self) -> "OutputBranchProductionPlan":
         """Creates a copy of the current OutputBranchProductionPlan
@@ -333,8 +308,7 @@ class OutputBranchProductionPlan(ResultBaseClass):
         self,
     ) -> dict[
         str,
-        list[ContinuousStreamProductionPlanEntry]
-        | list[BatchStreamProductionPlanEntry],
+        list[ContinuousStreamProductionPlanEntry] | list[BatchStreamProductionPlanEntry],
     ]:
         """Copies all stream states.
 
@@ -365,9 +339,7 @@ class OutputBranchProductionPlan(ResultBaseClass):
                 commodity,
                 storage_state_list,
             ) in commodity_storage_state_dictionary.items():
-                copy_of_storage_state_dictionary[process_step_name] = {
-                    commodity: list(storage_state_list)
-                }
+                copy_of_storage_state_dictionary[process_step_name] = {commodity: list(storage_state_list)}
         return copy_of_storage_state_dictionary
 
     def __get_list_of_all_start_and_end_times(self) -> list[datetime.datetime]:
@@ -381,9 +353,7 @@ class OutputBranchProductionPlan(ResultBaseClass):
         list_of_start_and_times = []
         if self.process_step_states_dict:
             for process_step_name in self.process_step_states_dict:
-                for process_state_entry in self.process_step_states_dict[
-                    process_step_name
-                ]:
+                for process_state_entry in self.process_step_states_dict[process_step_name]:
                     list_of_start_and_times.append(process_state_entry.start_time)
                     list_of_start_and_times.append(process_state_entry.end_time)
         if self.stream_state_dict:
@@ -422,9 +392,7 @@ class ProductionPlan(ResultBaseClass):
     path_to_stream_xlsx_file: Optional[str] = ""
     path_to_process_state_xlsx_file: Optional[str] = ""
 
-    def convert_temporary_production_plan_to_load_profile(
-        self, temporary_production_plan: OutputBranchProductionPlan
-    ):
+    def convert_temporary_production_plan_to_load_profile(self, temporary_production_plan: OutputBranchProductionPlan):
         """Converts all stream and process step entries into load profiles.
 
         Args:
@@ -434,13 +402,9 @@ class ProductionPlan(ResultBaseClass):
 
         for stream_entry_list in temporary_production_plan.stream_state_dict.values():
             for stream_entry in stream_entry_list:
-                self.load_profile_handler.create_all_load_profiles_entries_from_stream_entry(
-                    stream_entry=stream_entry
-                )
+                self.load_profile_handler.create_all_load_profiles_entries_from_stream_entry(stream_entry=stream_entry)
 
-        for (
-            process_state_entry_list
-        ) in temporary_production_plan.process_step_states_dict.values():
+        for process_state_entry_list in temporary_production_plan.process_step_states_dict.values():
             for process_state_entry in process_state_entry_list:
                 self.load_profile_handler.create_all_load_profiles_from_process_state_entry(
                     process_state_entry=process_state_entry,
@@ -479,9 +443,7 @@ class ProductionPlan(ResultBaseClass):
         """
         self.storage_state_dict[storage_name] = {commodity: list_of_storage_entries}
 
-    def add_temporary_production_plan(
-        self, temporary_production_plan: OutputBranchProductionPlan
-    ):
+    def add_temporary_production_plan(self, temporary_production_plan: OutputBranchProductionPlan):
         """Adds all entries from a temporary production plan to the final production plan.
 
         Args:
@@ -490,41 +452,30 @@ class ProductionPlan(ResultBaseClass):
         """
         for stream_name in temporary_production_plan.stream_state_dict:
             if stream_name in self.stream_state_dict:
-                self.stream_state_dict[stream_name].extend(
-                    temporary_production_plan.stream_state_dict[stream_name]
-                )
+                self.stream_state_dict[stream_name].extend(temporary_production_plan.stream_state_dict[stream_name])
             else:
-                self.stream_state_dict[stream_name] = (
-                    temporary_production_plan.stream_state_dict[stream_name]
-                )
+                self.stream_state_dict[stream_name] = temporary_production_plan.stream_state_dict[stream_name]
         for process_step_name in temporary_production_plan.process_step_states_dict:
+            new_entries = temporary_production_plan.process_step_states_dict[process_step_name]
             if process_step_name in self.process_step_states_dict:
-                self.process_step_states_dict[process_step_name].extend(
-                    temporary_production_plan.process_step_states_dict[
-                        process_step_name
-                    ]
-                )
+                existing = self.process_step_states_dict[process_step_name]
+                # Only check the boundary between existing and new entries
+                if existing and new_entries:
+                    if new_entries[0].end_time != existing[-1].start_time:
+                        raise Exception("Process step states do not align")
+                existing.extend(new_entries)
             else:
-                self.process_step_states_dict[process_step_name] = (
-                    temporary_production_plan.process_step_states_dict[
-                        process_step_name
-                    ]
-                )
+                self.process_step_states_dict[process_step_name] = new_entries
 
         for process_step_name in temporary_production_plan.storage_state_dict:
             if process_step_name not in self.storage_state_dict:
                 self.storage_state_dict[process_step_name] = {}
-            for commodity in temporary_production_plan.storage_state_dict[
-                process_step_name
-            ]:
+            for commodity in temporary_production_plan.storage_state_dict[process_step_name]:
                 if commodity not in self.storage_state_dict[process_step_name]:
                     self.storage_state_dict[process_step_name][commodity] = []
                 self.storage_state_dict[process_step_name][commodity].extend(
-                    temporary_production_plan.storage_state_dict[process_step_name][
-                        commodity
-                    ]
+                    temporary_production_plan.storage_state_dict[process_step_name][commodity]
                 )
-        self.check_process_state_consistency()
 
     # def read_xlsx_to_list_of_data_frames(
     #     self, path_to_xlsx_file: str

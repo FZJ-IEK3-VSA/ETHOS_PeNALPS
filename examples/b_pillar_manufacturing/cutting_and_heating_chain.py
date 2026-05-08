@@ -24,29 +24,21 @@ def fill_cutting_and_heating_chain(
 
     # Create process steps
     coil_cutter = process_chain.create_process_step(name="Coil Cutter")
-    roller_hearth_furnace = process_chain.create_process_step(
-        name="Roller Hearth Furnace"
-    )
+    roller_hearth_furnace = process_chain.create_process_step(name="Roller Hearth Furnace")
 
     # Create process state petri nets
     # Coil cutter
-    load_steel_strip = (
-        coil_cutter.process_state_handler.create_batch_input_stream_requesting_state(
-            process_state_name="Load"
-        )
+    load_steel_strip = coil_cutter.process_state_handler.create_batch_input_stream_requesting_state(
+        process_state_name="Load"
     )
     cut_steel_strip = coil_cutter.process_state_handler.create_intermediate_process_state_energy_based_on_stream_mass(
         process_state_name="Cut"
     )
-    discharge_strip = (
-        coil_cutter.process_state_handler.create_batch_output_stream_providing_state(
-            process_state_name="Discharge"
-        )
+    discharge_strip = coil_cutter.process_state_handler.create_batch_output_stream_providing_state(
+        process_state_name="Discharge"
     )
 
-    idle_cutter = coil_cutter.process_state_handler.create_idle_process_state(
-        process_state_name="Idle"
-    )
+    idle_cutter = coil_cutter.process_state_handler.create_idle_process_state(process_state_name="Idle")
 
     # Create transitions of petri nets
     activate_load_steel_strip = coil_cutter.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_input_stream(
@@ -81,14 +73,12 @@ def fill_cutting_and_heating_chain(
     )
 
     # Create Petri Net of Heating
-    furnace_heating_state = roller_hearth_furnace.process_state_handler.create_state_for_parallel_input_and_output_stream_with_storage(
-        process_state_name="Heating"
-    )
-    idle_furnace = (
-        roller_hearth_furnace.process_state_handler.create_idle_process_state(
-            process_state_name="Idle"
+    furnace_heating_state = (
+        roller_hearth_furnace.process_state_handler.create_state_for_parallel_input_and_output_stream_with_storage(
+            process_state_name="Heating"
         )
     )
+    idle_furnace = roller_hearth_furnace.process_state_handler.create_idle_process_state(process_state_name="Idle")
 
     activate_step_1_2 = roller_hearth_furnace.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.create_process_state_switch_at_next_discrete_event(
         start_process_state=furnace_heating_state,
@@ -171,9 +161,7 @@ def fill_cutting_and_heating_chain(
     )
 
     # Add Internal Storages (Required)
-    coil_cutter.process_state_handler.process_step_data.main_mass_balance.create_storage(
-        current_storage_level=0
-    )
+    coil_cutter.process_state_handler.process_step_data.main_mass_balance.create_storage(current_storage_level=0)
     roller_hearth_furnace.process_state_handler.process_step_data.main_mass_balance.create_storage(
         current_storage_level=0
     )

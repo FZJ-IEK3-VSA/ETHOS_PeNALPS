@@ -15,7 +15,8 @@ from ethos_penalps.petri_net.process_state import (
     InputAndOutputStreamProvidingState,
     InputStreamProvidingState,
     IntermediateState,
-    IntermediateStateBasedOnEnergy,
+    IntermediateStateBasedOnStorage,
+    IntermediateStateBasedOnStreamMass,
     OutputStreamFromStorageState,
     OutputStreamProvidingState,
     ProcessState,
@@ -41,6 +42,7 @@ from ethos_penalps.simulation_data.container_simulation_data import (
 from ethos_penalps.stream import BatchStreamState, ContinuousStreamState
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -72,9 +74,7 @@ class ProcessStateHandler:
         self.input_stream_providing_state_name: str
         self.idle_process_state_name: str
 
-    def switch_to_output_stream_providing_state(
-        self, activation_date: datetime.datetime
-    ) -> OutputStreamProvidingState:
+    def switch_to_output_stream_providing_state(self, activation_date: datetime.datetime) -> OutputStreamProvidingState:
         """Switches to the output stream providing state at the activation date.
 
         Args:
@@ -86,15 +86,9 @@ class ProcessStateHandler:
                 the output stream state.
         """
         logger.debug("Start switch to output request state")
-        self.process_step_data.time_data.set_next_process_state_switch_time(
-            next_discrete_event_time=activation_date
-        )
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
-        current_process_state = self.get_process_state(
-            state_data.current_process_state_name
-        )
+        self.process_step_data.time_data.set_next_process_state_switch_time(next_discrete_event_time=activation_date)
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
+        current_process_state = self.get_process_state(state_data.current_process_state_name)
         if isinstance(current_process_state, OutputStreamProvidingState):
             raise Exception("production process state is already implemented")
         archive_state_list = []
@@ -108,9 +102,7 @@ class ProcessStateHandler:
 
         return current_process_state
 
-    def switch_to_input_stream_requesting_state(
-        self, force_first_switch: bool = False
-    ) -> InputStreamProvidingState:
+    def switch_to_input_stream_requesting_state(self, force_first_switch: bool = False) -> InputStreamProvidingState:
         """Switches to input stream providing state.
 
 
@@ -121,12 +113,8 @@ class ProcessStateHandler:
         """
         logger.debug("Start switch to input request state")
 
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
-        current_process_state = self.get_process_state(
-            state_data.current_process_state_name
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
+        current_process_state = self.get_process_state(state_data.current_process_state_name)
 
         if force_first_switch is True:
             current_process_state = self.switch_to_previous_state()
@@ -154,12 +142,8 @@ class ProcessStateHandler:
         """
         logger.debug("Start switch to idle state")
 
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
-        current_process_state = self.get_process_state(
-            state_data.current_process_state_name
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
+        current_process_state = self.get_process_state(state_data.current_process_state_name)
         archive_state_list = []
 
         while not isinstance(current_process_state, ProcessStateIdle):
@@ -178,9 +162,7 @@ class ProcessStateHandler:
         Returns:
             bool: True if multiple transitions are possible from the current state.
         """
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
 
         switch_selector = self.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
             current_process_state_name=state_data.current_process_state_name
@@ -201,16 +183,12 @@ class ProcessStateHandler:
             datetime.datetime: Earliest date at which output stream could be provided.
         """
         logger.debug("determine earliest output stream providing date")
-        earliest_process_state_switch_date = (
-            self.process_step_data.time_data.get_last_idle_date()
-        )
+        earliest_process_state_switch_date = self.process_step_data.time_data.get_last_idle_date()
         production_state = self.switch_to_output_stream_providing_state(
             activation_date=earliest_process_state_switch_date
         )
 
-        earliest_output_date_time = (
-            self.process_step_data.time_data.get_last_process_state_switch_time()
-        )
+        earliest_output_date_time = self.process_step_data.time_data.get_last_process_state_switch_time()
         return earliest_output_date_time
 
     def switch_to_previous_state(self) -> ProcessState:
@@ -223,40 +201,26 @@ class ProcessStateHandler:
         Returns:
             ProcessState: The previous state in temporal descending direction.
         """
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
-        current_process_state = self.get_process_state(
-            state_data.current_process_state_name
-        )
-        logger.debug(
-            "State Switch starts at state: %s", current_process_state.process_state_name
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
+        current_process_state = self.get_process_state(state_data.current_process_state_name)
+        logger.debug("State Switch starts at state: %s", current_process_state.process_state_name)
+
+        current_process_state_switch_selector = (
+            self.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
+                current_process_state_name=state_data.current_process_state_name
+            )
         )
 
-        current_process_state_switch_selector = self.process_state_switch_selector_handler.get_switch_selector_to_previous_state(
-            current_process_state_name=state_data.current_process_state_name
-        )
+        current_process_state_switch: ProcessStateSwitch = current_process_state_switch_selector.select_state_switch()
 
-        current_process_state_switch: ProcessStateSwitch = (
-            current_process_state_switch_selector.select_state_switch()
-        )
-
-        next_backward_event_time = (
-            current_process_state_switch.calculate_next_event_time_backward()
-        )
+        next_backward_event_time = current_process_state_switch.calculate_next_event_time_backward()
         self.process_step_data.time_data.set_next_process_state_switch_time(
             next_discrete_event_time=next_backward_event_time
         )
-        end_state_name_of_switch = (
-            current_process_state_switch.state_connector.end_state_name
-        )
-        start_state_name_of_switch = (
-            current_process_state_switch.state_connector.start_state_name
-        )
+        end_state_name_of_switch = current_process_state_switch.state_connector.end_state_name
+        start_state_name_of_switch = current_process_state_switch.state_connector.start_state_name
         if end_state_name_of_switch is not current_process_state.process_state_name:
-            raise Exception(
-                "Current process state is not end state of process state switch"
-            )
+            raise Exception("Current process state is not end state of process state switch")
 
         self.deactivate_state(
             state_name_to_deactivate=end_state_name_of_switch,
@@ -272,9 +236,7 @@ class ProcessStateHandler:
         )
         return new_active_state
 
-    def activate_state(
-        self, state_name_to_activate: str, time_to_activate: datetime.datetime
-    ) -> ProcessState:
+    def activate_state(self, state_name_to_activate: str, time_to_activate: datetime.datetime) -> ProcessState:
         """Activates a new state in the Petri net.
 
         Args:
@@ -294,15 +256,11 @@ class ProcessStateHandler:
         self.process_step_data.state_data_container.update_current_process_state(
             new_process_state_name=state_name_to_activate
         )
-        state_to_activate = self.get_process_state(
-            process_state_name=state_name_to_activate
-        )
+        state_to_activate = self.get_process_state(process_state_name=state_name_to_activate)
         self.process_step_data.time_data.set_last_process_state_switch_time()
         return state_to_activate
 
-    def deactivate_state(
-        self, state_name_to_deactivate: str, time_to_deactivate: datetime.datetime
-    ):
+    def deactivate_state(self, state_name_to_deactivate: str, time_to_deactivate: datetime.datetime):
         """Deactivates the current state at time_to_deactivate provided. It is assumed that
         the state to be deactivated has already an end_time. Time to deactivate is then set
         and the state is stored to process state list."""
@@ -313,23 +271,15 @@ class ProcessStateHandler:
             time_to_deactivate,
         )
 
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
-        current_process_state = self.get_process_state(
-            process_state_name=state_data.current_process_state_name
-        )
-        last_process_state_switch_time = (
-            self.process_step_data.time_data.get_last_process_state_switch_time()
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
+        current_process_state = self.get_process_state(process_state_name=state_data.current_process_state_name)
+        last_process_state_switch_time = self.process_step_data.time_data.get_last_process_state_switch_time()
         process_state_state = ProcessStateData(
             process_state_name=current_process_state.process_state_name,
             start_time=time_to_deactivate,
             end_time=last_process_state_switch_time,
         )
-        self.process_step_data.state_data_container.add_process_state_state(
-            process_state_state=process_state_state
-        )
+        self.process_step_data.state_data_container.add_process_state_state(process_state_state=process_state_state)
         self.process_step_data.time_data.set_last_process_state_switch_time()
 
         # self.store_current_state_to_process_state_list()
@@ -353,9 +303,7 @@ class ProcessStateHandler:
         self.process_step_data.state_data_container.restore_process_state_data(
             state_data_to_update=simulation_state_data_at_start
         )
-        self.process_step_data.state_data_container.restore_branch_data(
-            branch_data_at_start=branch_data_at_start
-        )
+        self.process_step_data.state_data_container.restore_branch_data(branch_data_at_start=branch_data_at_start)
 
     def prepare_for_new_production_branch(
         self,
@@ -413,9 +361,7 @@ class ProcessStateHandler:
         output_stream_providing_state = self.get_process_state(
             process_state_name=self.output_stream_providing_state_name
         )
-        if isinstance(
-            output_stream_providing_state, InputAndOutputStreamProvidingState
-        ):
+        if isinstance(output_stream_providing_state, InputAndOutputStreamProvidingState):
             occurs_in_same_state = True
 
         else:
@@ -444,9 +390,7 @@ class ProcessStateHandler:
         process_state = self.process_state_dictionary[process_state_name]
         return process_state
 
-    def add_process_state(
-        self, process_state: ProcessState, add_as_current_state: bool = False
-    ):
+    def add_process_state(self, process_state: ProcessState, add_as_current_state: bool = False):
         """Adds a new process state to the Petri net.
 
         Args:
@@ -458,25 +402,19 @@ class ProcessStateHandler:
         logger.debug("Process state: %s has been added:", process_state)
         if process_state.process_state_name in self.process_state_dictionary:
             raise Exception(
-                "Process state: "
-                + process_state.process_state_name
-                + " is already in process state dictionary"
+                "Process state: " + process_state.process_state_name + " is already in process state dictionary"
             )
         self.process_state_dictionary[process_state.process_state_name] = process_state
 
         if isinstance(process_state, OutputStreamProvidingState):
             self.output_stream_providing_state_name = process_state.process_state_name
-            logger.debug(
-                "Process state has been added as output stream providing process state"
-            )
+            logger.debug("Process state has been added as output stream providing process state")
         if isinstance(process_state, ProcessStateIdle):
             self.idle_process_state_name = process_state.process_state_name
             logger.debug("Process state has been added as idle process state")
         if isinstance(process_state, InputStreamProvidingState):
             self.input_stream_providing_state_name = process_state.process_state_name
-            logger.debug(
-                "Process state has been added as input stream providing process state"
-            )
+            logger.debug("Process state has been added as input stream providing process state")
         if add_as_current_state:
             self.process_step_data.state_data_container.initialization_data_collector.add_current_process_state_name(
                 current_process_state_name=process_state.process_state_name
@@ -491,24 +429,14 @@ class ProcessStateHandler:
             ProcessStepProductionPlanEntry: New ProcessStepProductionPlanEntry.
         """
         logger.debug("Store current process state to production plan")
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
-        process_state = self.get_process_state(
-            process_state_name=state_data.current_process_state_name
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
+        process_state = self.get_process_state(process_state_name=state_data.current_process_state_name)
 
-        production_plan_entry = (
-            process_state._create_process_step_production_plan_entry()
-        )
+        production_plan_entry = process_state._create_process_step_production_plan_entry()
 
         # self.list_of_production_plan_entries.append(production_plan_entry)
-        temporary_production_plan = (
-            self.process_step_data.state_data_container.get_temporary_production_plan()
-        )
-        temporary_production_plan.add_process_state_entry(
-            production_plan_entry=production_plan_entry
-        )
+        temporary_production_plan = self.process_step_data.state_data_container.get_temporary_production_plan()
+        temporary_production_plan.add_process_state_entry(production_plan_entry=production_plan_entry)
         temporary_production_plan.check_process_state_consistency()
         self.process_step_data.state_data_container.update_temporary_production_plan(
             updated_temporary_production_plan=temporary_production_plan
@@ -573,9 +501,7 @@ class ProcessStateHandler:
         )
         return continuous_output_stream_providing_state
 
-    def create_batch_output_stream_providing_state(
-        self, process_state_name: str
-    ) -> BatchOutputStreamProvidingState:
+    def create_batch_output_stream_providing_state(self, process_state_name: str) -> BatchOutputStreamProvidingState:
         """Process state that provides a batch output stream.
 
         Args:
@@ -613,12 +539,10 @@ class ProcessStateHandler:
                 Contains the method that determines the required input stream state from
                 the output stream state.
         """
-        continuous_input_stream_requesting_state = (
-            ContinuousInputStreamRequestingStateWithStorage(
-                process_state_name=process_state_name,
-                process_step_name=self.process_step_data.process_step_name,
-                process_step_data=self.process_step_data,
-            )
+        continuous_input_stream_requesting_state = ContinuousInputStreamRequestingStateWithStorage(
+            process_state_name=process_state_name,
+            process_step_name=self.process_step_data.process_step_name,
+            process_step_data=self.process_step_data,
         )
         self.add_process_state(
             process_state=continuous_input_stream_requesting_state,
@@ -665,12 +589,10 @@ class ProcessStateHandler:
         Returns:
             BatchInputStreamRequestingStateWithStorage: Requests batch input states.
         """
-        batch_input_stream_requesting_state = (
-            BatchInputStreamRequestingStateWithStorage(
-                process_state_name=process_state_name,
-                process_step_name=self.process_step_data.process_step_name,
-                process_step_data=self.process_step_data,
-            )
+        batch_input_stream_requesting_state = BatchInputStreamRequestingStateWithStorage(
+            process_state_name=process_state_name,
+            process_step_name=self.process_step_data.process_step_name,
+            process_step_data=self.process_step_data,
         )
         self.add_process_state(
             process_state=batch_input_stream_requesting_state,
@@ -718,12 +640,10 @@ class ProcessStateHandler:
         Returns:
             BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream: _description_
         """
-        batch_input_stream_requesting_state = (
-            BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
-                process_state_name=process_state_name,
-                process_step_name=self.process_step_data.process_step_name,
-                process_step_data=self.process_step_data,
-            )
+        batch_input_stream_requesting_state = BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
+            process_state_name=process_state_name,
+            process_step_name=self.process_step_data.process_step_name,
+            process_step_data=self.process_step_data,
         )
         self.add_process_state(
             process_state=batch_input_stream_requesting_state,
@@ -731,9 +651,7 @@ class ProcessStateHandler:
         )
         return batch_input_stream_requesting_state
 
-    def create_idle_process_state(
-        self, process_state_name: str, add_as_current_state: bool = True
-    ) -> ProcessStateIdle:
+    def create_idle_process_state(self, process_state_name: str, add_as_current_state: bool = True) -> ProcessStateIdle:
         """Creates an ProcessStateIdle.
 
         Args:
@@ -756,9 +674,7 @@ class ProcessStateHandler:
         )
         return process_state_idle
 
-    def create_intermediate_process_state(
-        self, process_state_name: str
-    ) -> IntermediateState:
+    def create_intermediate_process_state(self, process_state_name: str) -> IntermediateState:
         """Creates an intermediate ProcessState that
         models additional time between two other states.
 
@@ -774,32 +690,49 @@ class ProcessStateHandler:
             process_step_name=self.process_step_data.process_step_name,
             process_step_data=self.process_step_data,
         )
-        self.add_process_state(
-            process_state=intermediate_state, add_as_current_state=False
-        )
+        self.add_process_state(process_state=intermediate_state, add_as_current_state=False)
         return intermediate_state
 
     def create_intermediate_process_state_energy_based_on_stream_mass(
         self, process_state_name: str
-    ) -> IntermediateStateBasedOnEnergy:
-        """Returns the IntermediateStateBasedOnEnergy
+    ) -> IntermediateStateBasedOnStreamMass:
+        """Returns the IntermediateStateBasedOnStreamMass
 
         Args:
-            process_state_name (str): _description_
+            process_state_name (str): Name of the new State
 
         Returns:
-            IntermediateStateBasedOnEnergy: This state models a phase of continuous energy demand between the input, output,
+            IntermediateStateBasedOnStreamMass: This state models a phase of continuous energy demand between the input, output,
                 idle state or another intermediate state.
 
         """
-        intermediate_state = IntermediateStateBasedOnEnergy(
+        intermediate_state = IntermediateStateBasedOnStreamMass(
             process_state_name=process_state_name,
             process_step_name=self.process_step_data.process_step_name,
             process_step_data=self.process_step_data,
         )
-        self.add_process_state(
-            process_state=intermediate_state, add_as_current_state=False
+        self.add_process_state(process_state=intermediate_state, add_as_current_state=False)
+        return intermediate_state
+
+    def create_intermediate_process_state_energy_based_on_storage_mass(
+        self, process_state_name: str
+    ) -> IntermediateStateBasedOnStorage:
+        """Returns the IntermediateStateBasedOnStreamMass
+
+        Args:
+            process_state_name (str): Name of the new State
+
+        Returns:
+            IntermediateStateBasedOnStreamMass: This state models a phase of continuous energy demand between the input, output,
+                idle state or another intermediate state.
+
+        """
+        intermediate_state = IntermediateStateBasedOnStorage(
+            process_state_name=process_state_name,
+            process_step_name=self.process_step_data.process_step_name,
+            process_step_data=self.process_step_data,
         )
+        self.add_process_state(process_state=intermediate_state, add_as_current_state=False)
         return intermediate_state
 
     def get_output_stream_providing_state(self) -> OutputStreamProvidingState:
@@ -823,9 +756,7 @@ class ProcessStateHandler:
                 Contains the method that determines the required input stream state from
                 the output stream state.
         """
-        input_stream_providing_state = self.get_process_state(
-            process_state_name=self.input_stream_providing_state_name
-        )
+        input_stream_providing_state = self.get_process_state(process_state_name=self.input_stream_providing_state_name)
         return input_stream_providing_state
 
     def get_idle_state(self) -> ProcessStateIdle:
@@ -835,7 +766,5 @@ class ProcessStateHandler:
             ProcessStateIdle: Models the idle phase of a ProcessStep. The ProcessStep always
                 switches back to idle when its not fulfilling any requests.
         """
-        idle_state = self.get_process_state(
-            process_state_name=self.idle_process_state_name
-        )
+        idle_state = self.get_process_state(process_state_name=self.idle_process_state_name)
         return idle_state

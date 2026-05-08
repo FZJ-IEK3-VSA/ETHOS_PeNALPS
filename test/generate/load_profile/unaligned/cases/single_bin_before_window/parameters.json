@@ -1,0 +1,8 @@
+{
+  "entry_start": "2022-01-01T04:50:00",
+  "entry_end": "2022-01-01T04:55:00",
+  "start": "2022-01-01T05:00:00",
+  "end": "2022-01-01T05:10:00",
+  "resample_frequency": "10min",
+  "expected_total_energy": 0.0
+}

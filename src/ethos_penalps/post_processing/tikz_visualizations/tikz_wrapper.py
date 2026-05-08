@@ -101,21 +101,13 @@ class TikzNode:
             str: Returns the tikz string that represents this node object.
         """
         node_string = (
-            r"\node["
-            + self.node_options
-            + "]("
-            + self.unique_identification_name
-            + "){"
-            + self.name_to_display
-            + "};"
+            r"\node[" + self.node_options + "](" + self.unique_identification_name + "){" + self.name_to_display + "};"
         )
         if add_line_break is True:
             node_string = node_string + "\n"
         return node_string
 
-    def create_node_below_of(
-        self, unique_tikz_object_name: str, add_line_break: bool = False
-    ) -> str:
+    def create_node_below_of(self, unique_tikz_object_name: str, add_line_break: bool = False) -> str:
         """Creates the string for a tikz node below another tikz node.
 
         Args:
@@ -128,20 +120,12 @@ class TikzNode:
             str: Tikz string for a node below another node.
         """
         self.node_options = (
-            self.node_options
-            + ","
-            + (
-                TikzRelativePositions.below
-                + unique_tikz_object_name
-                + TikzAnchorNames.south
-            )
+            self.node_options + "," + (TikzRelativePositions.below + unique_tikz_object_name + TikzAnchorNames.south)
         )
         node_string = self.create_node_string(add_line_break=add_line_break)
         return node_string
 
-    def create_node_above_of(
-        self, unique_tikz_object_name: str, add_line_break: bool = False
-    ) -> str:
+    def create_node_above_of(self, unique_tikz_object_name: str, add_line_break: bool = False) -> str:
         """Creates the string for a tikz node above another tikz node.
 
         Args:
@@ -154,20 +138,12 @@ class TikzNode:
             str: Tikz string for a node above another node.
         """
         self.node_options = (
-            self.node_options
-            + ","
-            + (
-                TikzRelativePositions.above
-                + unique_tikz_object_name
-                + TikzAnchorNames.north
-            )
+            self.node_options + "," + (TikzRelativePositions.above + unique_tikz_object_name + TikzAnchorNames.north)
         )
         node_string = self.create_node_string(add_line_break=add_line_break)
         return node_string
 
-    def create_node_left_of(
-        self, unique_tikz_object_name: str, add_line_break: bool = False
-    ) -> str:
+    def create_node_left_of(self, unique_tikz_object_name: str, add_line_break: bool = False) -> str:
         """Creates the string for a tikz left of another tikz node.
 
         Args:
@@ -181,20 +157,12 @@ class TikzNode:
         """
 
         self.node_options = (
-            self.node_options
-            + ","
-            + (
-                TikzRelativePositions.left
-                + unique_tikz_object_name
-                + TikzAnchorNames.west
-            )
+            self.node_options + "," + (TikzRelativePositions.left + unique_tikz_object_name + TikzAnchorNames.west)
         )
         node_string = self.create_node_string(add_line_break=add_line_break)
         return node_string
 
-    def create_node_right_of(
-        self, unique_tikz_object_name: str, add_line_break: bool = False
-    ) -> str:
+    def create_node_right_of(self, unique_tikz_object_name: str, add_line_break: bool = False) -> str:
         """Creates the string for a tikz node right of  another tikz node.
 
         Args:
@@ -207,13 +175,7 @@ class TikzNode:
             str: Tikz string for a node right of another node.
         """
         self.node_options = (
-            self.node_options
-            + ","
-            + (
-                TikzRelativePositions.right
-                + unique_tikz_object_name
-                + TikzAnchorNames.east
-            )
+            self.node_options + "," + (TikzRelativePositions.right + unique_tikz_object_name + TikzAnchorNames.east)
         )
         node_string = self.create_node_string(add_line_break=add_line_break)
         return node_string
@@ -270,9 +232,7 @@ class TikzMatrix:
         self.relative_position: str = relative_position
         self.list_of_tikz_matrix_rows: list[TikzMatrixRow] = list_of_tikz_matrix_rows
 
-        self.fixed_options: str = (
-            r"[column sep=10,row sep=10,draw, rounded corners,nodes={rectangle, anchor=center},"
-        )
+        self.fixed_options: str = r"[column sep=10,row sep=10,draw, rounded corners,nodes={rectangle, anchor=center},"
         self.postamble: str = "};\n"
 
     def add_option(self, option_string: str):
@@ -291,9 +251,7 @@ class TikzMatrix:
         """
         tikz_matrix_string = ""
         tikz_matrix_string = tikz_matrix_string + self.create_preamble()
-        tikz_matrix_string = (
-            tikz_matrix_string + self.convert_list_rows_to_list_columns()
-        )
+        tikz_matrix_string = tikz_matrix_string + self.convert_list_rows_to_list_columns()
         tikz_matrix_string = tikz_matrix_string + self.postamble
         return tikz_matrix_string
 
@@ -344,9 +302,5 @@ class TikzMatrix:
         if self.relative_node_name is None:
             position_option_string = ""
         else:
-            position_option_string = (
-                self.relative_position
-                + self.relative_node_name
-                + self.relative_node_anchor
-            )
+            position_option_string = self.relative_position + self.relative_node_name + self.relative_node_anchor
         return position_option_string

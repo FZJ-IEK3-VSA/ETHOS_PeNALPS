@@ -3,6 +3,8 @@ import numbers
 
 import pint
 
+from ethos_penalps.utilities.type_aliases import numbers_alias
+
 
 class Units:
     """This object holds all the standard Units
@@ -10,11 +12,14 @@ class Units:
     """
 
     unit_registry = pint.UnitRegistry(system="SI")
-    unit_registry.default_format = "~"
-    time_unit: pint.Unit = unit_registry.hour
-    mass_unit: pint.Unit = unit_registry.metric_ton
-    power_unit: pint.Unit = unit_registry.MW
-    energy_unit: pint.Unit = unit_registry.MJ
+    unit_registry.formatter.default_format = "~"
+    # unit_registry.default_format = "~"
+    time_unit: pint.Unit = unit_registry.Unit("hour")
+    mass_unit: pint.Unit = unit_registry.Unit("metric_ton")
+    power_unit: pint.Unit = unit_registry.Unit("MW")
+    energy_unit: pint.Unit = unit_registry.Unit("MJ")
+    mass_throughput_rate: pint.Unit = unit_registry.Unit("t/h")
+    unit_registry.define("coal_equivalent = 29761 * kJ = ce")
 
     @staticmethod
     def get_unit(unit_string: str) -> pint.Unit:
@@ -31,14 +36,12 @@ class Units:
         return Units.unit_registry.Unit(unit_string)
 
     @staticmethod
-    def compress_quantity(
-        quantity_value: numbers.Number, unit: pint.Unit
-    ) -> pint.Quantity:
+    def compress_quantity(quantity_value: numbers_alias, unit: pint.Unit) -> pint.Quantity:
         """Adapts the magnitude of the provided unit
         if necessary.
 
         Args:
-            quantity_value (numbers.Number): Value of
+            quantity_value (numbers_alias): Value of
                 the quantity.
             unit (pint.Unit): Unit of the quantity.
 
@@ -51,7 +54,7 @@ class Units:
         return output_quantity_compact
 
     @staticmethod
-    def get_value_from_quantity(quantity: pint.Quantity) -> numbers.Number:
+    def get_value_from_quantity(quantity: pint.Quantity) -> numbers_alias:
         """Returns the value from a pint quantity
 
         Args:
@@ -59,8 +62,9 @@ class Units:
                 value of interest.
 
         Returns:
-            numbers.Number: Value of the quantity provided.
+            numbers_alias: Value of the quantity provided.
         """
+
         return quantity.m
 
     @staticmethod
@@ -128,7 +132,5 @@ class Units:
 if __name__ == "__main__":
     unit_registry = pint.UnitRegistry(system="SI")
 
-    meter_quant = (0.15 * Units.unit_registry.Unit("kWh")) / (
-        650 * Units.unit_registry.Unit("gram")
-    )
+    meter_quant = (0.15 * Units.unit_registry.Unit("kWh")) / (650 * Units.unit_registry.Unit("gram"))
     print(meter_quant.to("MJ/metric_ton"))

@@ -8,7 +8,7 @@ from ethos_penalps.data_classes import (
     StaticTimePeriod,
     TemporalBranchIdentifier,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.mass_balance import MassBalance
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
@@ -42,6 +42,7 @@ from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -92,15 +93,11 @@ class ProcessStep(ProcessNode):
                 load_profile_handler=load_profile_handler,
             )
         )
-        self.production_branch_dict: dict[StaticTimePeriod, ProcessNodeCommunicator] = (
-            {}
-        )
+        self.production_branch_dict: dict[StaticTimePeriod, ProcessNodeCommunicator] = {}
         self.production_plan: ProductionPlan = production_plan
-        self.process_node_communicator: ProcessNodeCommunicator = (
-            ProcessNodeCommunicator(
-                production_plan=self.production_plan,
-                process_state_handler=self.process_state_handler,
-            )
+        self.process_node_communicator: ProcessNodeCommunicator = ProcessNodeCommunicator(
+            production_plan=self.production_plan,
+            process_state_handler=self.process_state_handler,
         )
 
     def __str__(self) -> str:
@@ -109,17 +106,9 @@ class ProcessStep(ProcessNode):
     def process_input_order(
         self,
         input_node_operation: (
-            UpstreamNewProductionOrder
-            | DownstreamValidationOrder
-            | DownstreamAdaptionOrder
-            | UpstreamAdaptionOrder
+            UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder
         ),
-    ) -> (
-        UpstreamNewProductionOrder
-        | DownstreamValidationOrder
-        | DownstreamAdaptionOrder
-        | UpstreamAdaptionOrder
-    ):
+    ) -> UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder:
         """Manages the incoming node operations. These either request a an output stream,
         an adaption of an input stream, validate that a requested input stream can be delivered
         as requested, requests that an output stream can be adapted as requested or affirms that
@@ -156,19 +145,14 @@ class ProcessStep(ProcessNode):
         )
 
         new_node_operation: (
-            UpstreamNewProductionOrder
-            | DownstreamValidationOrder
-            | DownstreamAdaptionOrder
-            | UpstreamAdaptionOrder
+            UpstreamNewProductionOrder | DownstreamValidationOrder | DownstreamAdaptionOrder | UpstreamAdaptionOrder
         )
         if isinstance(input_node_operation, DownstreamValidationOrder):
             logger.debug("An DownstreamValidationOperation is processed")
-            new_node_operation = (
-                self.process_node_communicator.process_downstream_validation_operation(
-                    downstream_validation_operation=input_node_operation,
-                    upstream_node_name=self.get_upstream_node_name(),
-                    downstream_node_name=self.get_downstream_node_name(),
-                )
+            new_node_operation = self.process_node_communicator.process_downstream_validation_operation(
+                downstream_validation_operation=input_node_operation,
+                upstream_node_name=self.get_upstream_node_name(),
+                downstream_node_name=self.get_downstream_node_name(),
             )
 
         elif isinstance(input_node_operation, UpstreamNewProductionOrder):
@@ -208,10 +192,7 @@ class ProcessStep(ProcessNode):
 
         else:
             raise Exception(
-                "Unexpected node operation "
-                + str(new_node_operation)
-                + " in process step: "
-                + str(self.name)
+                "Unexpected node operation " + str(new_node_operation) + " in process step: " + str(self.name)
             )
 
         return new_node_operation
@@ -234,12 +215,10 @@ class ProcessStep(ProcessNode):
         stream can be provided as requested.
         """
         down_stream_node_name = self.get_downstream_node_name()
-        down_stream_validation = (
-            current_production_branch.create_downstream_validation_order(
-                downstream_node_name=down_stream_node_name,
-                starting_node_name=self.name,
-                input_production_order=downstream_validation_operation,
-            )
+        down_stream_validation = current_production_branch.create_downstream_validation_order(
+            downstream_node_name=down_stream_node_name,
+            starting_node_name=self.name,
+            input_production_order=downstream_validation_operation,
         )
         logger.debug(
             "A new down stream validation operation has been created: %s",
@@ -259,12 +238,8 @@ class ProcessStep(ProcessNode):
         if not self.production_branch_dict:
             production_branch = EmptyProductionBranch()
         else:
-            last_production_branch_static_time_period = list(
-                self.production_branch_dict
-            )[-1]
-            production_branch = self.production_branch_dict[
-                last_production_branch_static_time_period
-            ]
+            last_production_branch_static_time_period = list(self.production_branch_dict)[-1]
+            production_branch = self.production_branch_dict[last_production_branch_static_time_period]
         return production_branch
 
     def get_downstream_node_name(self) -> str:
@@ -335,9 +310,7 @@ class ProcessStep(ProcessNode):
         Returns:
             str: Name of the input stream name.
         """
-        return (
-            self.process_state_handler.process_step_data.main_mass_balance.main_input_stream_name
-        )
+        return self.process_state_handler.process_step_data.main_mass_balance.main_input_stream_name
 
     def get_output_stream_name(self) -> str:
         """Returns the name the output stream.
@@ -345,6 +318,4 @@ class ProcessStep(ProcessNode):
         Returns:
             str: Name of the output stream.
         """
-        return (
-            self.process_state_handler.process_step_data.main_mass_balance.main_output_stream_name
-        )
+        return self.process_state_handler.process_step_data.main_mass_balance.main_output_stream_name

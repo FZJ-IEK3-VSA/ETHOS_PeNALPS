@@ -1,0 +1,8 @@
+{
+  "entry_start": "2021-01-01T00:00:00",
+  "entry_end": "2021-01-01T00:06:00",
+  "start": "2021-01-01T00:01:00",
+  "end": "2021-01-01T00:05:00",
+  "resample_frequency": "1min",
+  "expected_total_energy": 240.0
+}

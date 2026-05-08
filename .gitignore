@@ -1,5 +1,6 @@
 # directories
 **/__pycache__/
+__pycache__
 .ipynb_checkpoints/
 *.eggs/
 *.dist/
@@ -8,7 +9,10 @@ documentation/autoapi
 .mypy_cache
 .pytest_cache
 .VSCodeCounter/
-
+.ruff_cache/
+.tach/
+.vscode/
+.VSCodeCounter/
 # file types to ignore
 **.pyc
 **.egg-info

@@ -1,6 +1,10 @@
 import cloudpickle
 
-from ethos_penalps.data_classes import Commodity, ProcessChainIdentifier
+from ethos_penalps.data_classes import (
+    Commodity,
+    OrderProcessingType,
+    ProcessChainIdentifier,
+)
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
     DownstreamValidationOrder,
@@ -10,6 +14,7 @@ from ethos_penalps.node_operations import (
     UpstreamAdaptionOrder,
     UpstreamNewProductionOrder,
 )
+from ethos_penalps.order_distributor.base_node_distributor import OrderSource
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.sink import Sink
 from ethos_penalps.process_nodes.source import Source
@@ -18,6 +23,7 @@ from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class ProcessChainStorage(ProcessNode):
@@ -36,6 +42,7 @@ class ProcessChainStorage(ProcessNode):
         stream_handler: StreamHandler,
         production_plan: ProductionPlan,
         time_data: TimeData,
+        order_processing_type: OrderProcessingType = OrderProcessingType.AGGREGATE_AND_DISTRIBUTE,
     ) -> None:
         """
 
@@ -58,12 +65,14 @@ class ProcessChainStorage(ProcessNode):
             time_data=time_data,
         )
         self.sink: Sink
+        super().__init__(stream_handler=stream_handler, name=name)
 
-        self.name: str = name
         self.commodity: Commodity = commodity
         self.production_plan: ProductionPlan = production_plan
         self.time_data: TimeData = time_data
         self.acts_as_source: bool = True
+        self.aggregate_orders: OrderProcessingType = order_processing_type
+        self.storage_entries_have_been_created: bool = False
 
     def add_sink_from_next_network_level(
         self,
@@ -72,6 +81,7 @@ class ProcessChainStorage(ProcessNode):
         stream_handler: StreamHandler,
         production_plan: ProductionPlan,
         time_data: TimeData,
+        order_processing_type: OrderProcessingType,
     ):
         """Creates a sink from the upstream NetworkLevel
 
@@ -92,40 +102,65 @@ class ProcessChainStorage(ProcessNode):
             stream_handler=stream_handler,
             production_plan=production_plan,
             time_data=time_data,
+            order_processing_type=order_processing_type,
+        )
+
+    def add_split_factor(
+        self,
+        split_factor_float: float,
+        process_chain_identifier: ProcessChainIdentifier,
+    ):
+        self.sink.add_split_factor(
+            split_factor_float=split_factor_float,
+            process_chain_identifier=process_chain_identifier,
         )
 
     def switch_from_source_to_sink(self):
         """Switches the behavior of the process_input_order method
-        from source to sink.
+        from source to sink. The distributor lazily pulls only the
+        data it needs from the source.
         """
-        order_collection_from_source = (
-            self.source.create_production_order_collection_from_input_states()
-        )
-        self.sink.get_order_from_parent_source(
-            order_collection_from_source=order_collection_from_source
+        # Pass methods as callables to allow lazy pulling of the data. This prevents unnecessary function calls.
+        self.sink.order_distributor.receive_orders(
+            OrderSource(
+                get_order_collection=lambda: self.source.create_production_order_collection_from_input_states(),
+                get_storage_entries=lambda: self.source.create_storage_entries(assume_output_streams_as_input=True),
+            )
         )
         self.acts_as_source = False
 
     def create_storage_entries(self):
         """Creates the storage entries of this node."""
         if self.acts_as_source is True:
-            pass
-        else:
-            self.sink.stream_handler.stream_dict.update(
-                self.source.stream_handler.stream_dict
-            )
-            self.sink.create_storage_entries(
-                list_of_output_stream_states=self.source.list_of_output_stream_states
-            )
+            return None
+
+        if self.storage_entries_have_been_created is False:
+            self.sink.stream_handler.stream_dict.update(self.source.stream_handler.stream_dict)
+
+            if self.aggregate_orders is OrderProcessingType.ORDER_PARALLEL:
+                list_of_storage_entries, _, _ = self.sink.storage.create_storage_entries_from_streams(
+                    input_stream_state_list=self.sink.input_stream_state_list,
+                    output_stream_state_list=self.source.list_of_output_stream_states,
+                    storage_level_at_start="auto_offset",
+                    start_time=self.time_data.start_time_valid,
+                    end_time=self.time_data.end_time_valid,
+                )
+                self.sink.production_plan.add_list_of_storage_entries(
+                    storage_name=self.sink.name,
+                    commodity=self.commodity,
+                    list_of_storage_entries=list_of_storage_entries,
+                )
+            else:
+                self.sink.create_storage_entries(list_of_output_stream_states=self.source.list_of_output_stream_states)
+
+            self.storage_entries_have_been_created = True
 
     def process_input_order(
         self,
-        input_node_operation: (
-            DownstreamAdaptionOrder
-            | DownstreamValidationOrder
-            | UpstreamNewProductionOrder
-            | TerminateProduction
-        ),
+        input_node_operation: DownstreamAdaptionOrder
+        | DownstreamValidationOrder
+        | UpstreamNewProductionOrder
+        | TerminateProduction,
     ):
         """Either works as a Source or as a Sink depending on the progress of the simulation.
         It works as a Source as long as the downstream NetworkLevel has not terminated the
@@ -140,13 +175,15 @@ class ProcessChainStorage(ProcessNode):
             of the Process Chain is terminated.
         """
         if self.acts_as_source is True:
-            output_node_operation = self.source.process_input_order(
-                input_node_operation=input_node_operation
-            )
+            assert type(input_node_operation) is UpstreamNewProductionOrder
+            output_node_operation = self.source.process_input_order(input_node_operation=input_node_operation)
         elif self.acts_as_source is False:
-            output_node_operation = self.sink.process_input_order(
-                input_node_operation=input_node_operation
+            assert (
+                type(input_node_operation) is DownstreamAdaptionOrder
+                or type(input_node_operation) is DownstreamValidationOrder
             )
+
+            output_node_operation = self.sink.process_input_order(input_node_operation=input_node_operation)
 
         return output_node_operation
 
@@ -182,9 +219,7 @@ class ProcessChainStorage(ProcessNode):
             process_chain_identifier (ProcessChainIdentifier): Identifies the
                 process chain that the stream belongs to.
         """
-        self.sink.add_input_stream(
-            input_stream=input_stream, process_chain_identifier=process_chain_identifier
-        )
+        self.sink.add_input_stream(input_stream=input_stream, process_chain_identifier=process_chain_identifier)
 
     def initialize_sink(self):
         """Converts the streams from the source into orders,
@@ -212,9 +247,7 @@ class ProcessChainStorage(ProcessNode):
         output_stream_name = self.source.get_output_stream_name()
         return output_stream_name
 
-    def prepare_sink_for_next_chain(
-        self, process_chain_identifier: ProcessChainIdentifier
-    ):
+    def prepare_sink_for_next_chain(self, process_chain_identifier: ProcessChainIdentifier):
         """Prepares the sink for next chain. Is called to initiate the first
         or a following chain.
 
@@ -222,22 +255,16 @@ class ProcessChainStorage(ProcessNode):
             process_chain_identifier (ProcessChainIdentifier): Identifies
                 the chain that should be simulated.
         """
-        self.sink.prepare_sink_for_next_chain(
-            process_chain_identifier=process_chain_identifier
-        )
+        self.sink.prepare_sink_for_next_chain(process_chain_identifier=process_chain_identifier)
 
-    def prepare_source_for_next_chain(
-        self, process_chain_identifier: ProcessChainIdentifier
-    ):
+    def prepare_source_for_next_chain(self, process_chain_identifier: ProcessChainIdentifier):
         """Prepares the source for the next chain.
 
         Args:
             process_chain_identifier (ProcessChainIdentifier): Identifies the
                 chain that should be activated for simulation.
         """
-        self.source.prepare_source_for_next_chain(
-            process_chain_identifier=process_chain_identifier
-        )
+        self.source.prepare_source_for_next_chain(process_chain_identifier=process_chain_identifier)
 
     def check_if_sink_has_orders(self):
         """Checks if the sink has orders. No orders indicate

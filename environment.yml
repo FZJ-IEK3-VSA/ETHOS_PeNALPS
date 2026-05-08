@@ -1,4 +1,4 @@
-name: ethos_penalps
+name: ethos_penalps_env
 
 dependencies:
   - conda-forge::python >=3.10
@@ -14,10 +14,8 @@ dependencies:
   - conda-forge::networkx
   - conda-forge::openpyxl
   - conda-forge::xlsxwriter
-  - conda-forge::prospector
   - conda-forge::pytest
   - conda-forge::pip >=21.3
-  - conda-forge::black
   - conda-forge::pint
   - conda-forge::proplot
   - conda-forge::datapane
@@ -30,6 +28,10 @@ dependencies:
   - conda-forge::typeguard
   - conda-forge::dataclasses-json
   - conda-forge::jsonpickle
+  - conda-forge::types-datetimerange
+  - conda-forge::pandas-stubs
   - conda-forge::pdf2image
   - conda-forge::pytest>7.0 
   - conda-forge::pytest-xdist
+  - conda-forge::strenum
+  - conda-forge::nbconvert

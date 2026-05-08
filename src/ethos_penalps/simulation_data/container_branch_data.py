@@ -24,7 +24,7 @@ from ethos_penalps.utilities.exceptions_and_warnings import (
     IllogicalSimulationState,
     UnexpectedDataType,
 )
-from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class BranchDataContainer:
@@ -33,9 +33,9 @@ class BranchDataContainer:
     """
 
     def __init__(self) -> None:
-        self.current_branch_data: (
-            IncompleteOutputBranchData | OutputBranchData | CompleteOutputBranchData
-        ) = UninitializedOutputBranchData()
+        self.current_branch_data: IncompleteOutputBranchData | OutputBranchData | CompleteOutputBranchData = (
+            UninitializedOutputBranchData()
+        )
         self.list_of_complete_branch_data: list[CompleteOutputBranchData] = []
 
     def get_current_output_branch_identifier(self) -> OutputBranchIdentifier:
@@ -73,18 +73,14 @@ class BranchDataContainer:
         if type(previous_output_branch_data) is IncompleteOutputBranchData:
             current_stream_branch = previous_output_branch_data.current_stream_branch
             if type(current_stream_branch) is IncompleteStreamBranchData:
-                temporal_branch_identifier = (
-                    current_stream_branch.current_incomplete_input_branch.identifier
-                )
+                temporal_branch_identifier = current_stream_branch.current_incomplete_input_branch.identifier
             else:
                 raise IllogicalFunctionCall
         else:
             raise IllogicalFunctionCall
         return temporal_branch_identifier
 
-    def update_temporary_production_plan(
-        self, updated_temporary_production_plan: OutputBranchProductionPlan
-    ):
+    def update_temporary_production_plan(self, updated_temporary_production_plan: OutputBranchProductionPlan):
         """Updates the temporary production plan. It stores all the simulation results
         of a process step that are created to provide an output stream. When all
         required input stream states are validated the data is transferred to the production
@@ -94,9 +90,7 @@ class BranchDataContainer:
             updated_temporary_production_plan (OutputBranchProductionPlan): Is an updated
                 temporary production plan that contains additional information.
         """
-        self.current_branch_data.production_branch_production_plan = (
-            updated_temporary_production_plan
-        )
+        self.current_branch_data.production_branch_production_plan = updated_temporary_production_plan
 
     def get_temporary_production_plan(self) -> OutputBranchProductionPlan:
         """Returns temporary production plan that contains the simulation results
@@ -157,9 +151,7 @@ class BranchDataContainer:
 
         return self.current_branch_data
 
-    def create_new_output_branch_data(
-        self, parent_branch_data: IncompleteOutputBranchData
-    ):
+    def create_new_output_branch_data(self, parent_branch_data: IncompleteOutputBranchData):
         """Creates a new output branch data for a new stream request.
 
         Args:
@@ -172,9 +164,7 @@ class BranchDataContainer:
             self.list_of_complete_branch_data.append(self.current_branch_data)
             last_output_branch_data = self.list_of_complete_branch_data[-1]
             output_branch_number = last_output_branch_data.identifier.branch_number
-            new_output_branch_identifier = OutputBranchIdentifier(
-                branch_number=output_branch_number + 1
-            )
+            new_output_branch_identifier = OutputBranchIdentifier(branch_number=output_branch_number + 1)
 
             new_output_branch_data = OutputBranchData(
                 identifier=new_output_branch_identifier,
@@ -193,13 +183,9 @@ class BranchDataContainer:
             )
             self.current_branch_data = new_output_branch_data
         elif type(self.current_branch_data) is IncompleteOutputBranchData:
-            raise IllogicalSimulationState(
-                "A previous input branch has not been validated before "
-            )
+            raise IllogicalSimulationState("A previous input branch has not been validated before ")
         elif type(self.current_branch_data) is CompleteOutputBranchData:
-            raise IllogicalSimulationState(
-                "the current output branch is already prepared"
-            )
+            raise IllogicalSimulationState("the current output branch is already prepared")
         else:
             raise IllogicalSimulationState
 
@@ -207,9 +193,7 @@ class BranchDataContainer:
         """It converts an OutputBranchData to an IncompleteOutputBranchData"""
         previous_branch_data = self.current_branch_data
         if type(previous_branch_data) is OutputBranchData:
-            stream_branch_data = StreamBranchData(
-                identifier=StreamBranchIdentifier(stream_name=stream_name)
-            )
+            stream_branch_data = StreamBranchData(identifier=StreamBranchIdentifier(stream_name=stream_name))
 
             new_current_branch_data = IncompleteOutputBranchData(
                 identifier=previous_branch_data.identifier,
@@ -243,9 +227,7 @@ class BranchDataContainer:
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is IncompleteOutputBranchData:
             stream_branch_data = previous_output_branch_data.current_stream_branch
-            identifier = TemporalBranchIdentifier(
-                branch_number=len(stream_branch_data.list_of_complete_input_branches)
-            )
+            identifier = TemporalBranchIdentifier(branch_number=len(stream_branch_data.list_of_complete_input_branches))
             temporal_branch_data = TemporalBranchData(identifier=identifier)
             incomplete_stream_branch_data = IncompleteStreamBranchData(
                 identifier=stream_branch_data.identifier,
@@ -253,9 +235,7 @@ class BranchDataContainer:
                 current_incomplete_input_branch=temporal_branch_data,
             )
             new_current_branch_data = previous_output_branch_data.create_copy()
-            new_current_branch_data.current_stream_branch = (
-                incomplete_stream_branch_data
-            )
+            new_current_branch_data.current_stream_branch = incomplete_stream_branch_data
             self.current_branch_data = new_current_branch_data
         elif type(previous_output_branch_data) is OutputBranchData:
             raise IllogicalFunctionCall(
@@ -289,13 +269,9 @@ class BranchDataContainer:
                 )
                 stream_branch_data = StreamBranchData(
                     identifier=stream_branch_data.identifier,
-                    list_of_complete_input_branches=list(
-                        stream_branch_data.list_of_complete_input_branches
-                    ),
+                    list_of_complete_input_branches=list(stream_branch_data.list_of_complete_input_branches),
                 )
-                stream_branch_data.list_of_complete_input_branches.append(
-                    complete_temporal_branch_data
-                )
+                stream_branch_data.list_of_complete_input_branches.append(complete_temporal_branch_data)
                 new_branch_data = previous_output_branch_data.create_copy()
                 new_branch_data.current_stream_branch = stream_branch_data
                 self.current_branch_data = new_branch_data
@@ -320,14 +296,12 @@ class BranchDataContainer:
                     identifier=previous_output_branch_data.identifier,
                     parent_output_identifier=previous_output_branch_data.parent_output_identifier,
                     parent_input_identifier=previous_output_branch_data.parent_input_identifier,
-                    dict_of_complete_stream_branch=dict(
-                        previous_output_branch_data.dict_of_complete_stream_branch
-                    ),
+                    dict_of_complete_stream_branch=dict(previous_output_branch_data.dict_of_complete_stream_branch),
                     production_branch_production_plan=previous_output_branch_data.production_branch_production_plan.create_self_copy(),
                 )
-                new_output_branch_data.dict_of_complete_stream_branch[
-                    stream_branch_data.identifier.stream_name
-                ] = stream_branch_data
+                new_output_branch_data.dict_of_complete_stream_branch[stream_branch_data.identifier.stream_name] = (
+                    stream_branch_data
+                )
                 self.current_branch_data = new_output_branch_data
             else:
                 raise IllogicalSimulationState
@@ -338,12 +312,8 @@ class BranchDataContainer:
         """Converts the OutputBranchData into the CompleteOutputBranchData."""
         previous_output_branch_data = self.current_branch_data
         if type(previous_output_branch_data) is OutputBranchData:
-            start_time = (
-                previous_output_branch_data.production_branch_production_plan.determine_start_time()
-            )
-            end_time = (
-                previous_output_branch_data.production_branch_production_plan.determine_start_time()
-            )
+            start_time = previous_output_branch_data.production_branch_production_plan.determine_start_time()
+            end_time = previous_output_branch_data.production_branch_production_plan.determine_start_time()
             complete_output_branch_data = CompleteOutputBranchData(
                 start_time=start_time,
                 end_time=end_time,

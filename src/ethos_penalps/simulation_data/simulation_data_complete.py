@@ -16,7 +16,7 @@ from ethos_penalps.utilities.exceptions_and_warnings import (
     IllogicalFunctionCall,
     UnexpectedDataType,
 )
-from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 """This module contains the simulation data classes
 of each ProcessStep
@@ -47,10 +47,8 @@ class CurrentProductionStateData(SimulationData):
 
     current_process_state_name: str
     current_output_stream_state: ContinuousStreamState | BatchStreamState
-    current_storage_level: float
-    process_state_data_dictionary: dict[str, ProcessStateData] = field(
-        default_factory=dict
-    )
+    current_storage_level: numbers_alias
+    process_state_data_dictionary: dict[str, ProcessStateData] = field(default_factory=dict)
 
     def create_self_copy(self) -> "CurrentProductionStateData":
         """Creates a copy the CurrentProductionStateData.
@@ -58,9 +56,7 @@ class CurrentProductionStateData(SimulationData):
         Returns:
             CurrentProductionStateData: Copy of the current object.
         """
-        copy_of_process_state_data_dictionary = (
-            self._create_copy_of_process_state_data_dictionary()
-        )
+        copy_of_process_state_data_dictionary = self._create_copy_of_process_state_data_dictionary()
         new_data_class = CurrentProductionStateData(
             current_process_state_name=self.current_process_state_name,
             current_output_stream_state=self.current_output_stream_state,
@@ -91,9 +87,7 @@ class PreProductionStateData(CurrentProductionStateData):
             PreProductionStateData: Copy of the current state of the
                 PreProductionStateData.
         """
-        copy_of_process_state_data_dictionary = (
-            self._create_copy_of_process_state_data_dictionary()
-        )
+        copy_of_process_state_data_dictionary = self._create_copy_of_process_state_data_dictionary()
 
         self_copy = PreProductionStateData(
             current_process_state_name=self.current_process_state_name,
@@ -104,34 +98,32 @@ class PreProductionStateData(CurrentProductionStateData):
         return self_copy
 
 
-@dataclass(kw_only=True)
-class AdaptedProductionStateData(PreProductionStateData):
-    """Still in development. Is intended to identify simulation states
-    that have been intentionally altered to shift a stream state.
-    """
+# @dataclass(kw_only=True)
+# class AdaptedProductionStateData(PreProductionStateData):
+#     """Still in development. Is intended to identify simulation states
+#     that have been intentionally altered to shift a stream state.
+#     """
 
-    # def __init__(
-    #     self,
-    #     preproduction_state_data: PreProductionStateData,
-    #     adapted_output_stream_state: ContinuousStreamState | BatchStreamState,
-    # ):
-    #     super.()
-    #     self.adapted_output_stream_state: ContinuousStreamState | BatchStreamState = (
-    #         adapted_output_stream_state
-    #     )
+#     # def __init__(
+#     #     self,
+#     #     preproduction_state_data: PreProductionStateData,
+#     #     adapted_output_stream_state: ContinuousStreamState | BatchStreamState,
+#     # ):
+#     #     super.()
+#     #     self.adapted_output_stream_state: ContinuousStreamState | BatchStreamState = (
+#     #         adapted_output_stream_state
+#     #     )
 
-    def create_self_copy(self) -> "AdaptedProductionStateData":
-        copy_of_process_state_data_dictionary = (
-            self._create_copy_of_process_state_data_dictionary()
-        )
-        self_copy = AdaptedProductionStateData(
-            current_process_state_name=self.current_process_state_name,
-            current_output_stream_state=self.current_output_stream_state,
-            current_storage_level=self.current_storage_level,
-            process_state_data_dictionary=copy_of_process_state_data_dictionary,
-            adapted_output_stream_state=self.adapted_output_stream_state,
-        )
-        return self_copy
+#     def create_self_copy(self) -> "AdaptedProductionStateData":
+#         copy_of_process_state_data_dictionary = self._create_copy_of_process_state_data_dictionary()
+#         self_copy = AdaptedProductionStateData(
+#             current_process_state_name=self.current_process_state_name,
+#             current_output_stream_state=self.current_output_stream_state,
+#             current_storage_level=self.current_storage_level,
+#             process_state_data_dictionary=copy_of_process_state_data_dictionary,
+#             adapted_output_stream_state=self.adapted_output_stream_state,
+#         )
+#         return self_copy
 
 
 @dataclass(kw_only=True)
@@ -141,9 +133,7 @@ class ValidatedPostProductionStateData(PreProductionStateData):
     to indicate that it has been validated.
     """
 
-    validated_input_stream_list: list[ContinuousStreamState | BatchStreamState] = field(
-        default_factory=list
-    )
+    validated_input_stream_list: list[ContinuousStreamState | BatchStreamState] = field(default_factory=list)
 
     def create_self_copy(self) -> "ValidatedPostProductionStateData":
         """Creates a copy of the ValidatedPostProductionStateData.
@@ -152,12 +142,8 @@ class ValidatedPostProductionStateData(PreProductionStateData):
             ValidatedPostProductionStateData: Copy of the current state
                 of ValidatedPostProductionStateData.
         """
-        copy_of_process_state_data_dictionary = (
-            self._create_copy_of_process_state_data_dictionary()
-        )
-        copy_of_validated_input_stream_list = (
-            self._create_copy_of_validated_input_stream_list()
-        )
+        copy_of_process_state_data_dictionary = self._create_copy_of_process_state_data_dictionary()
+        copy_of_validated_input_stream_list = self._create_copy_of_validated_input_stream_list()
         self_copy = ValidatedPostProductionStateData(
             current_process_state_name=self.current_process_state_name,
             current_output_stream_state=self.current_output_stream_state,
@@ -196,12 +182,8 @@ class PostProductionStateData(ValidatedPostProductionStateData):
             PostProductionStateData: Copy of the current state of
                 PostProductionStateData data.
         """
-        copy_of_process_state_data_dictionary = (
-            self._create_copy_of_process_state_data_dictionary()
-        )
-        copy_of_validated_input_stream_list = (
-            self._create_copy_of_validated_input_stream_list()
-        )
+        copy_of_process_state_data_dictionary = self._create_copy_of_process_state_data_dictionary()
+        copy_of_validated_input_stream_list = self._create_copy_of_validated_input_stream_list()
         self_copy = PostProductionStateData(
             current_process_state_name=self.current_process_state_name,
             current_output_stream_state=self.current_output_stream_state,

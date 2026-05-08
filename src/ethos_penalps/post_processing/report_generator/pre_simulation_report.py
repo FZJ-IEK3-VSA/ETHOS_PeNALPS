@@ -5,6 +5,7 @@ from ethos_penalps.post_processing.enterprise_graph_for_failed_run import (
 )
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.stream_handler import StreamHandler
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class PreSimulationReport:

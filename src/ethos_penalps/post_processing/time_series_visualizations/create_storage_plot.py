@@ -1,4 +1,5 @@
 import datetime
+from typing import Literal
 
 import matplotlib
 import matplotlib.axes._axes
@@ -23,6 +24,7 @@ def create_storage_subplot(
     axes: proplot.gridspec.SubplotGrid,
     storage_meta_data_information: StorageDataFrameMetaInformation,
     subplot_number: float,
+    label_language: Literal["german", "english"] = "english",
 ):
     # x_start = 0.5
     # x_end = 1
@@ -46,15 +48,37 @@ def create_storage_subplot(
         edgecolor="black",
     )
     # axes.format(xlim=(x_axis_values[-1], x_axis_values[0]))
+    if storage_meta_data_information.plot_string is None:
+        title_string = (
+            "Storage of Process Step: "
+            + storage_meta_data_information.process_step_name
+            + " for Commodity: "
+            + str(storage_meta_data_information.commodity.name)
+        )
 
-    current_ax.set_title(
-        "Storage of Process Step: "
-        + storage_meta_data_information.process_step_name
-        + " for Commodity: "
-        + str(storage_meta_data_information.commodity.name)
-    )
+    else:
+        title_string = storage_meta_data_information.plot_string
+    current_ax.set_title(title_string)
+
+    if label_language == "english":
+        ylabel = "Storage\nlevel " + str(storage_meta_data_information.mass_unit)
+    elif label_language == "german":
+        ylabel = "Speicher-\nstand " + str(storage_meta_data_information.mass_unit)
+
+    # Anchor at 0 baseline: storage levels are non-negative, and this hides
+    # floating-point noise (e.g. -2e-4) that would otherwise become an ugly tick.
+    min_y = 0
+    max_y = max(0, max(y_axis_values)) if y_axis_values else 0
+    y_range = max_y - min_y
+    if y_range == 0:
+        y_range = 1
+    y_pad = y_range * 0.15
+    y_ticks = [min_y] if min_y == max_y else [min_y, max_y]
+
     current_ax.format(
-        ylabel="Storage\nlevel in " + str(storage_meta_data_information.mass_unit),
+        ylabel=ylabel,
+        ylim=(min_y, max_y + y_pad),
+        yticks=y_ticks,
         ytickminor=False,
         xtickminor=False,
         grid=False,
@@ -92,6 +116,4 @@ if __name__ == "__main__":
         commodity=test_commodity,
         mass_unit=Units.mass_unit,
     )
-    create_storage_subplot(
-        figure=fig, axes=axs, storage_meta_data_information=meta_inf, subplot_number=0
-    )
+    create_storage_subplot(figure=fig, axes=axs, storage_meta_data_information=meta_inf, subplot_number=0)

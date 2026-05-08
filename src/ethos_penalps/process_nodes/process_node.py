@@ -8,7 +8,7 @@ from ethos_penalps.data_classes import (
     StaticTimePeriod,
     TemporalBranchIdentifier,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.mass_balance import MassBalance
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
@@ -40,7 +40,7 @@ from ethos_penalps.stream import (
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
-from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class ProcessNode(ABC):

@@ -1,0 +1,30 @@
+{
+  "name": "output_before_input_auto_offset",
+  "description": "Output drains 100 in hour 1, input fills 100 in hour 2. start_storage_level=auto_offset.",
+  "start_time": "2024-01-01T00:00:00",
+  "input_stream_group": {
+    "stream_specifications": [
+      {
+        "start_offset_seconds": 3600,
+        "max_operation_rate": null,
+        "min_operation_rate": 0,
+        "stream_type": "ContinuousStream"
+      }
+    ]
+  },
+  "output_stream_group": {
+    "stream_specifications": [
+      {
+        "start_offset_seconds": 0,
+        "max_operation_rate": null,
+        "min_operation_rate": 0,
+        "stream_type": "ContinuousStream"
+      }
+    ]
+  },
+  "start_storage_level": "auto_offset",
+  "expect_full_mass_conservation": true,
+  "storage_entry_start_time": null,
+  "storage_entry_end_time": null,
+  "computed_start_storage_level": 10.0
+}

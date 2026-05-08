@@ -38,6 +38,7 @@ from ethos_penalps.utilities.exceptions_and_warnings import (
     IllogicalSimulationState,
 )
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -75,11 +76,9 @@ class ProcessNodeCommunicator:
         self.output_stream_state: ContinuousStreamState | BatchStreamState
         self.production_plan: ProductionPlan = production_plan
         self.process_state_handler: ProcessStateHandler = process_state_handler
-        self.process_state_navigator: ProcessStateNetworkNavigator = (
-            ProcessStateNetworkNavigator(
-                production_plan=self.production_plan,
-                process_state_handler=process_state_handler,
-            )
+        self.process_state_navigator: ProcessStateNetworkNavigator = ProcessStateNetworkNavigator(
+            production_plan=self.production_plan,
+            process_state_handler=process_state_handler,
         )
 
     def check_if_temporal_branches_are_fulfilled(self):
@@ -87,27 +86,19 @@ class ProcessNodeCommunicator:
         is  a check for a faulty simulation."""
         all_temporal_branch_are_fulfilled = True
 
-        output_branch_data = (
-            self.process_state_handler.process_step_data.state_data_container.get_output_branch_data()
-        )
+        output_branch_data = self.process_state_handler.process_step_data.state_data_container.get_output_branch_data()
         for stream_branch in output_branch_data.dict_of_complete_stream_branch.values():
             if not stream_branch.list_of_complete_input_branches:
                 raise IllogicalSimulationState("No stream branches available to check")
             for temporal_branch in stream_branch.list_of_complete_input_branches:
                 if not stream_branch.list_of_complete_input_branches:
-                    raise IllogicalSimulationState(
-                        "No temporal branches available to check"
-                    )
+                    raise IllogicalSimulationState("No temporal branches available to check")
                 if type(temporal_branch) is not CompleteTemporalBranchData:
                     all_temporal_branch_are_fulfilled = False
 
-        logger.debug(
-            "Temporal branches are fulfilled: %s", all_temporal_branch_are_fulfilled
-        )
+        logger.debug("Temporal branches are fulfilled: %s", all_temporal_branch_are_fulfilled)
         if all_temporal_branch_are_fulfilled is False:
-            raise IllogicalSimulationState(
-                "Not all temporal branches are validated even though they should be"
-            )
+            raise IllogicalSimulationState("Not all temporal branches are validated even though they should be")
 
     def check_if_stream_branch_is_fulfilled(self) -> bool:
         """Check if all different streams have been requested and can be provided
@@ -116,12 +107,8 @@ class ProcessNodeCommunicator:
         Returns:
             bool: Returns True if all Streams can be provided as requested.
         """
-        input_stream_providing_state = (
-            self.process_state_handler.get_input_stream_providing_state()
-        )
-        stream_branch_if_fulfilled = (
-            input_stream_providing_state.determine_if_stream_branch_if_fulfilled()
-        )
+        input_stream_providing_state = self.process_state_handler.get_input_stream_providing_state()
+        stream_branch_if_fulfilled = input_stream_providing_state.determine_if_stream_branch_if_fulfilled()
 
         logger.debug(
             "Stream branch is already fulfilled: %s",
@@ -136,12 +123,8 @@ class ProcessNodeCommunicator:
         Returns:
             bool: Returns true if enough input stream states have been requested.
         """
-        input_stream_providing_state = (
-            self.process_state_handler.get_input_stream_providing_state()
-        )
-        production_branch_if_fulfilled = (
-            input_stream_providing_state.determine_if_production_branch_is_fulfilled()
-        )
+        input_stream_providing_state = self.process_state_handler.get_input_stream_providing_state()
+        production_branch_if_fulfilled = input_stream_providing_state.determine_if_production_branch_is_fulfilled()
 
         logger.debug(
             "Production branch is already fulfilled: %s",
@@ -195,10 +178,8 @@ class ProcessNodeCommunicator:
             self.process_state_handler.process_step_data.state_data_container.get_incomplete_branch_data()
         )
 
-        input_stream_state = (
-            self.process_state_navigator.combine_input_and_output_stream(
-                new_input_stream_state=downstream_adaption_operation.stream_state
-            )
+        input_stream_state = self.process_state_navigator.combine_input_and_output_stream(
+            new_input_stream_state=downstream_adaption_operation.stream_state
         )
 
         upstream_production_order = UpstreamAdaptionOrder(
@@ -239,9 +220,7 @@ class ProcessNodeCommunicator:
         output_operation: DownstreamValidationOrder | UpstreamNewProductionOrder
         if stream_branch_is_fulfilled:
             self.complete_stream_branch()
-            production_branch_is_fulfilled = (
-                self.check_if_production_branch_is_fulfilled()
-            )
+            production_branch_is_fulfilled = self.check_if_production_branch_is_fulfilled()
 
             if production_branch_is_fulfilled is True:
                 output_operation = self.create_downstream_validation_order(
@@ -270,9 +249,7 @@ class ProcessNodeCommunicator:
         upstream_node_name: str,
         downstream_node_name: str,
         upstream_production_order: UpstreamNewProductionOrder,
-    ) -> (
-        UpstreamNewProductionOrder | DownstreamAdaptionOrder | DownstreamValidationOrder
-    ):
+    ) -> UpstreamNewProductionOrder | DownstreamAdaptionOrder | DownstreamValidationOrder:
         """Determines if the current node can provide the requested output stream.
         If the required state can be provided the required input is requested by a new
         UpstreamNewProductionOrder. If the requested state can not be provided an adaption
@@ -297,9 +274,7 @@ class ProcessNodeCommunicator:
         """
 
         if not isinstance(upstream_production_order, UpstreamNewProductionOrder):
-            raise Exception(
-                "Did not expect: " + upstream_production_order + " as input operation"
-            )
+            raise Exception("Did not expect: " + upstream_production_order + " as input operation")
         self.process_state_handler.prepare_for_new_production_branch(
             new_output_stream_state=upstream_production_order.stream_state,
             incomplete_output_branch_data=upstream_production_order.starting_node_output_branch_data,
@@ -309,15 +284,9 @@ class ProcessNodeCommunicator:
         )
         self.process_state_handler.process_step_data.state_data_container.prepare_new_temporal_branch()
         self.process_state_navigator.store_current_simulation_data()
-        output_stream_adaption_decider = (
-            self.process_state_navigator.determine_if_output_stream_requires_adaption()
-        )
+        output_stream_adaption_decider = self.process_state_navigator.determine_if_output_stream_requires_adaption()
 
-        new_production_order: (
-            UpstreamNewProductionOrder
-            | DownstreamAdaptionOrder
-            | DownstreamValidationOrder
-        )
+        new_production_order: UpstreamNewProductionOrder | DownstreamAdaptionOrder | DownstreamValidationOrder
         if output_stream_adaption_decider.adaption_is_necessary is True:
             logger.debug("Adaption of output stream is necessary")
 
@@ -329,9 +298,7 @@ class ProcessNodeCommunicator:
 
         elif output_stream_adaption_decider.adaption_is_necessary is False:
             logger.debug("Adaption of output stream is not necessary")
-            output_stream_providing_state = (
-                self.process_state_handler.get_output_stream_providing_state()
-            )
+            output_stream_providing_state = self.process_state_handler.get_output_stream_providing_state()
             storage_can_be_supplied_directly = (
                 output_stream_providing_state.check_if_storage_can_supply_output_directly()
             )
@@ -376,12 +343,8 @@ class ProcessNodeCommunicator:
 
         """
 
-        output_stream_providing_state = (
-            self.process_state_handler.get_output_stream_providing_state()
-        )
-        storage_can_be_supplied_directly = (
-            output_stream_providing_state.check_if_storage_can_supply_output_directly()
-        )
+        output_stream_providing_state = self.process_state_handler.get_output_stream_providing_state()
+        storage_can_be_supplied_directly = output_stream_providing_state.check_if_storage_can_supply_output_directly()
         new_production_order: DownstreamValidationOrder | UpstreamNewProductionOrder
         if storage_can_be_supplied_directly is True:
             self.process_state_navigator.provide_output_stream_from_storage()
@@ -396,9 +359,7 @@ class ProcessNodeCommunicator:
             )
 
         else:
-            input_stream_state = (
-                self.process_state_navigator.determine_input_stream_from_output_stream()
-            )
+            input_stream_state = self.process_state_navigator.determine_input_stream_from_output_stream()
 
             new_production_order = UpstreamNewProductionOrder(
                 next_node_name=upstream_node_name,
@@ -430,9 +391,7 @@ class ProcessNodeCommunicator:
 
         """
 
-        state_data = (
-            self.process_state_handler.process_step_data.state_data_container.get_pre_production_state_data()
-        )
+        state_data = self.process_state_handler.process_step_data.state_data_container.get_pre_production_state_data()
         starting_node_branch_data = (
             self.process_state_handler.process_step_data.state_data_container.get_output_branch_data()
         )
@@ -466,9 +425,7 @@ class ProcessNodeCommunicator:
             UpstreamNewProductionOrder: Order that requests an output stream of the
         upstream node.
         """
-        input_stream_state = (
-            self.process_state_navigator.determine_input_stream_from_output_stream()
-        )
+        input_stream_state = self.process_state_navigator.determine_input_stream_from_output_stream()
         incomplete_output_branch_data = (
             self.process_state_handler.process_step_data.state_data_container.get_incomplete_branch_data()
         )
@@ -483,12 +440,8 @@ class ProcessNodeCommunicator:
         return upstream_production_order
 
     def store_branch_to_production_plan(self):
-        temporary_production_plan = (
-            self.process_state_navigator.process_state_handler.process_step_data.state_data_container.get_temporary_production_plan()
-        )
-        self.production_plan.add_temporary_production_plan(
-            temporary_production_plan=temporary_production_plan
-        )
+        temporary_production_plan = self.process_state_navigator.process_state_handler.process_step_data.state_data_container.get_temporary_production_plan()
+        self.production_plan.add_temporary_production_plan(temporary_production_plan=temporary_production_plan)
 
         self.production_plan.convert_temporary_production_plan_to_load_profile(
             temporary_production_plan=temporary_production_plan

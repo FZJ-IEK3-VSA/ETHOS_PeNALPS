@@ -5,7 +5,9 @@ import pandas
 
 from ethos_penalps.data_classes import Commodity, OrderCollection
 from ethos_penalps.node_operations import ProductionOrder
+from ethos_penalps.utilities.general_functions import dataframe_from_dataclasses
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -361,6 +363,7 @@ class NOrderGenerator:
         number_of_orders: int,
         commodity: Commodity,
         time_span_between_order: datetime.timedelta = datetime.timedelta(minutes=0),
+        mass_unit: str = "metric_ton",
     ) -> None:
         """
 
@@ -382,6 +385,7 @@ class NOrderGenerator:
         self.commodity: Commodity = commodity
         self.target_mass: float = self.mass_per_order * number_of_orders
         self.time_span_between_order: datetime.timedelta = time_span_between_order
+        self.mass_unit: str = mass_unit
 
     def create_n_order_collection(
         self,
@@ -404,9 +408,10 @@ class NOrderGenerator:
                 production_deadline=current_deadline,
                 order_number=order_number,
                 commodity=self.commodity,
+                mass_unit=self.mass_unit,
             )
             current_deadline = current_deadline - self.time_span_between_order
-        order_data_frame = pandas.DataFrame(data=list(output_order_dict.values()))
+        order_data_frame = dataframe_from_dataclasses(list(output_order_dict.values()))
         order_collection = OrderCollection(
             target_mass=self.target_mass,
             commodity=self.commodity,
