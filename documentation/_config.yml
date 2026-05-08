@@ -3,7 +3,7 @@
 
 title: ETHOS.PeNALPS
 author: Julian Belina
-logo: ./visualizations/logos/fzj_logo.svg
+logo: ./visualizations/logos/jsa_header.svg
 
 # Force re-execution of notebooks on each build.
 # See https://jupyterbook.org/content/execute.html

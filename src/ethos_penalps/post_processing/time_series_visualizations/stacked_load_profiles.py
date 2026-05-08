@@ -8,8 +8,8 @@ import pandas
 import proplot
 
 from ethos_penalps.data_classes import (
-    LoadProfileMetaData,
     LoadProfileEntry,
+    LoadProfileMetaData,
     LoadType,
 )
 
@@ -26,16 +26,12 @@ def create_stacked_line_plot(
     x_axis_values = []
     iterator = 0
     label_list = []
-    for (
-        load_profile_meta_data_information
-    ) in list_of_load_profile_meta_data_information:
+    for load_profile_meta_data_information in list_of_load_profile_meta_data_information:
         y_axis_values.append([])
         # x_axis_values.append([])
         x_axis_values = []
         label_list.append(load_profile_meta_data_information.name)
-        for index, row in load_profile_meta_data_information.data_frame[
-            ::-1
-        ].iterrows():
+        for index, row in load_profile_meta_data_information.data_frame[::-1].iterrows():
             # x_axis_values[iterator].append(row["end_time"])
             # x_axis_values[iterator].append(row["start_time"])
             x_axis_values.append(row["end_time"])
@@ -68,9 +64,7 @@ def create_stacked_line_plot(
     )
     axes.legend(loc="b", label="Demand Sources", ncols=2)
     axes.set_title(load_profile_meta_data_information.load_type.name)
-    axes.set_ylabel(
-        "Power /" + str(load_profile_meta_data_information.power_unit.__str__())
-    )
+    axes.set_ylabel("Power /" + str(load_profile_meta_data_information.power_unit.__str__()))
     # figure.show()
     # figure.legend(ncols=2)
     if type(file_path) is str:

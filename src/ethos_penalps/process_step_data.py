@@ -1,7 +1,7 @@
 import datetime
 
 from ethos_penalps.data_classes import Commodity
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.mass_balance import MassBalance
 from ethos_penalps.simulation_data.container_simulation_data import (
     CurrentProductionStateData,
@@ -14,6 +14,7 @@ from ethos_penalps.storage import Storage
 from ethos_penalps.stream import BatchStreamState, ContinuousStreamState
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class ProcessStepData:
@@ -29,9 +30,7 @@ class ProcessStepData:
         self.process_step_name: str = process_step_name
         self.stream_handler: StreamHandler = stream_handler
         self.time_data: TimeData = time_data
-        self.state_data_container: ProductionProcessStateContainer = (
-            ProductionProcessStateContainer()
-        )
+        self.state_data_container: ProductionProcessStateContainer = ProductionProcessStateContainer()
         self.main_mass_balance: MassBalance
         self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
 
@@ -42,12 +41,8 @@ class ProcessStepData:
             new_time_data (TimeData): TimeData which contains the new state.
         """
         self.time_data.last_idle_time = new_time_data.last_idle_time
-        self.time_data.last_process_state_switch_time = (
-            new_time_data.last_process_state_switch_time
-        )
-        self.time_data.next_process_state_switch_time = (
-            new_time_data.next_process_state_switch_time
-        )
+        self.time_data.last_process_state_switch_time = new_time_data.last_process_state_switch_time
+        self.time_data.next_process_state_switch_time = new_time_data.next_process_state_switch_time
         if hasattr(new_time_data, "next_stream_end_time"):
             self.time_data.next_stream_end_time = new_time_data.next_stream_end_time
         else:

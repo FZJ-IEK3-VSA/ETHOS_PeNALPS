@@ -24,7 +24,7 @@ from ethos_penalps.simulation_data.simulation_data_branch import (
     UninitializedOutputBranchData,
 )
 from ethos_penalps.simulation_data.simulation_data_complete import (
-    AdaptedProductionStateData,
+    # AdaptedProductionStateData,
     CurrentProductionStateData,
     PostProductionStateData,
     PreProductionStateData,
@@ -39,13 +39,12 @@ from ethos_penalps.utilities.exceptions_and_warnings import (
     UnexpectedDataType,
 )
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
 
-class ProductionProcessStateContainer(
-    BranchDataContainer, ProcessStateNetworkContainer
-):
+class ProductionProcessStateContainer(BranchDataContainer, ProcessStateNetworkContainer):
     """This class stores the instances of the current simulation data of the ProcessStep."""
 
     def __init__(self) -> None:
@@ -66,17 +65,11 @@ class ProductionProcessStateContainer(
             PostProductionStateData,
             ValidatedPostProductionStateData,
         ):
-            self.state_data.process_state_data_dictionary[
-                process_state_state.process_state_name
-            ] = process_state_state
+            self.state_data.process_state_data_dictionary[process_state_state.process_state_name] = process_state_state
 
     def restore_process_state_data(
         self,
-        state_data_to_update: (
-            ValidatedPostProductionStateData
-            | PostProductionStateData
-            | PreProductionStateData
-        ),
+        state_data_to_update: (ValidatedPostProductionStateData | PostProductionStateData | PreProductionStateData),
     ):
         """Restores the state data to provided state.
 
@@ -210,31 +203,25 @@ class ProductionProcessStateContainer(
 
     def get_validated_pre_or_post_production_state(
         self,
-    ) -> (
-        PreProductionStateData
-        | PostProductionStateData
-        | ValidatedPostProductionStateData
-    ):
-        if not type(self.state_data) in (
+    ) -> PreProductionStateData | PostProductionStateData | ValidatedPostProductionStateData:
+        if type(self.state_data) in (
             PostProductionStateData,
             PreProductionStateData,
             ValidatedPostProductionStateData,
         ):
+            return self.state_data
+
+        else:
             raise UnexpectedDataType(
                 current_data_type=self.state_data,
                 expected_data_type=(PostProductionStateData, PreProductionStateData),
             )
-        return self.state_data
 
     def initialize_production_data(
         self,
     ):
-        current_process_state_name = (
-            self.initialization_data_collector.current_process_state_name
-        )
-        output_stream_state = (
-            self.initialization_data_collector.current_output_stream_state
-        )
+        current_process_state_name = self.initialization_data_collector.current_process_state_name
+        output_stream_state = self.initialization_data_collector.current_output_stream_state
         current_storage_level = self.initialization_data_collector.current_storage_level
         if type(self.state_data) is UninitializedCurrentStateData:
             self.state_data = PreProductionStateData(
@@ -272,9 +259,7 @@ class ProductionProcessStateContainer(
             )
             self.list_of_complete_branch_data.append(self.current_branch_data)
         elif type(previous_production_state_data) is UninitializedCurrentStateData:
-            raise IllogicalFunctionCall(
-                "Preparation for new production branch begins before initialization"
-            )
+            raise IllogicalFunctionCall("Preparation for new production branch begins before initialization")
         else:
             raise UnexpectedDataType(
                 current_data_type=previous_production_state_data,
@@ -288,12 +273,8 @@ class ProductionProcessStateContainer(
     def validate_input_stream(self):
         previous_production_state_data = self.state_data
         if type(previous_production_state_data) is PostProductionStateData:
-            new_validated_stream_list = list(
-                previous_production_state_data.validated_input_stream_list
-            )
-            new_validated_stream_list.append(
-                previous_production_state_data.current_input_stream_state
-            )
+            new_validated_stream_list = list(previous_production_state_data.validated_input_stream_list)
+            new_validated_stream_list.append(previous_production_state_data.current_input_stream_state)
             if type(new_validated_stream_list) != list:
                 raise Exception("Unexpected datatype")
             self.state_data = ValidatedPostProductionStateData(
@@ -301,21 +282,15 @@ class ProductionProcessStateContainer(
                 current_output_stream_state=previous_production_state_data.current_output_stream_state,
                 current_storage_level=previous_production_state_data.current_storage_level,
                 validated_input_stream_list=new_validated_stream_list,
-                process_state_data_dictionary=dict(
-                    previous_production_state_data.process_state_data_dictionary
-                ),
+                process_state_data_dictionary=dict(previous_production_state_data.process_state_data_dictionary),
             )
             self.complete_temporal_branch()
 
         elif type(previous_production_state_data) is PreProductionStateData:
-            raise Exception(
-                "Output stream should not ab adapted after post production state has been created "
-            )
+            raise Exception("Output stream should not ab adapted after post production state has been created ")
 
         elif type(previous_production_state_data) is UninitializedCurrentStateData:
-            raise Exception(
-                "Preparation for new production branch begins before initialization"
-            )
+            raise Exception("Preparation for new production branch begins before initialization")
         else:
             raise UnexpectedDataType(
                 current_data_type=previous_production_state_data,
@@ -333,4 +308,5 @@ class ProductionProcessStateContainer(
                 expected_data_type=(PostProductionStateData, PreProductionStateData),
             )
 
+        # assert isinstance(self.state_data, CurrentProductionStateData)
         self.state_data.process_state_data_dictionary = {}

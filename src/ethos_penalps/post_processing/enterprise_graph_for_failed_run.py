@@ -16,6 +16,7 @@ from ethos_penalps.stream import BatchStream, ContinuousStream
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 # https://graphviz.readthedocs.io/en/stable/examples.html
 # logging.basicConfig(level=os.environ.get("LOGLEVEL", "DEBUG"))
@@ -42,9 +43,7 @@ class GraphVizTableCreator:
         if hasattr(self, "table_string"):
             self.table_string = self.table_string[:-1]
 
-        graph.node(
-            table_name, graphviz.nohtml(self.table_string), shape="record", height=".1"
-        )
+        graph.node(table_name, graphviz.nohtml(self.table_string), shape="record", height=".1")
 
     def add_first_row(self, list_of_columns: list[str]):
         html_str = "{ "
@@ -120,19 +119,13 @@ class GraphVisualization:
                 process_step.process_state_handler.process_state_dictionary.keys()
             )[1]
 
-            for (
-                process_state_name
-            ) in process_step.process_state_handler.process_state_dictionary:
+            for process_state_name in process_step.process_state_handler.process_state_dictionary:
                 cluster.node(
                     name=process_state_name,
                     label=process_state_name,
                 )
             edge_tuple_list = []
-            for (
-                process_state_connector
-            ) in (
-                process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.process_state_switch_dictionary.keys()
-            ):
+            for process_state_connector in process_step.process_state_handler.process_state_switch_selector_handler.process_state_switch_handler.process_state_switch_dictionary.keys():
                 edge_tuple_list.append(
                     (
                         process_state_connector.start_state_name,
@@ -174,9 +167,7 @@ class GraphVisualization:
 
         enterprise_cluster.node(name=sink.name, color=color)
 
-    def add_stream(
-        self, stream: ContinuousStream | BatchStream, edge_colour: str = "black"
-    ):
+    def add_stream(self, stream: ContinuousStream | BatchStream, edge_colour: str = "black"):
         """Creates an edge that connects two nodes.
 
         Args:
@@ -190,9 +181,7 @@ class GraphVisualization:
         downstream_node = self.process_node_dict[downstream_node_name]
 
         if isinstance(upstream_node, ProcessStep):
-            last_process_state_in_process_step = (
-                self.last_state_of_process_step_cluster[upstream_node.name]
-            )
+            last_process_state_in_process_step = self.last_state_of_process_step_cluster[upstream_node.name]
             edge_start_node = last_process_state_in_process_step
 
             # edge_start_node = "cluster_" + upstream_node_name
@@ -204,9 +193,7 @@ class GraphVisualization:
             ltail = upstream_node.name
 
         if isinstance(downstream_node, ProcessStep):
-            first_process_state_in_process_step = (
-                self.first_state_of_process_step_cluster[downstream_node.name]
-            )
+            first_process_state_in_process_step = self.first_state_of_process_step_cluster[downstream_node.name]
             edge_end_node = first_process_state_in_process_step
             l_head = "cluster_" + downstream_node_name
 
@@ -235,9 +222,7 @@ class GraphVisualization:
         stream_state_table_creator: GraphVizTableCreator | None = None,
         node_operation_table_creator: GraphVizTableCreator | None = None,
         production_order_table_creator: GraphVizTableCreator | None = None,
-        starting_node_output_branch_data_table_creator: (
-            GraphVizTableCreator | None
-        ) = None,
+        starting_node_output_branch_data_table_creator: (GraphVizTableCreator | None) = None,
         current_node_operation_name: str | None = None,
         active_stream_name: str | None = None,
         graph_directory: str | None = None,
@@ -275,9 +260,7 @@ class GraphVisualization:
             or isinstance(node_operation_table_creator, GraphVizTableCreator)
             or isinstance(production_order_table_creator, GraphVizTableCreator)
         ):
-            with self.graph.subgraph(
-                name="cluster_additional_run_information"
-            ) as additional_information_cluster:
+            with self.graph.subgraph(name="cluster_additional_run_information") as additional_information_cluster:
                 additional_information_cluster.attr(
                     compound="true",
                     label="Additional Information",
@@ -303,9 +286,7 @@ class GraphVisualization:
                         graph=additional_information_cluster,
                         table_name="Production Order",
                     )
-                if isinstance(
-                    starting_node_output_branch_data_table_creator, GraphVizTableCreator
-                ):
+                if isinstance(starting_node_output_branch_data_table_creator, GraphVizTableCreator):
                     starting_node_output_branch_data_table_creator.create_table_node(
                         graph=additional_information_cluster,
                         table_name="starting node branch data",
@@ -347,9 +328,7 @@ class GraphVisualization:
                         color=color,
                     )
                 else:
-                    raise Exception(
-                        "Unexpected datatype in process node dict " + str(process_node)
-                    )
+                    raise Exception("Unexpected datatype in process node dict " + str(process_node))
 
         for stream in self.stream_handler.stream_dict.values():
             if active_stream_name == stream.name:
@@ -360,21 +339,17 @@ class GraphVisualization:
 
         if graph_directory is None:
             result_path_generator = ResultPathGenerator()
-            graph_directory = (
-                result_path_generator.create_path_to_file_relative_to_main_file(
-                    file_name="",
-                    subdirectory_name=self.directory_name,
-                    file_extension="",
-                )
+            graph_directory = result_path_generator.create_path_to_file_relative_to_main_file(
+                file_name="",
+                subdirectory_name=self.directory_name,
+                file_extension="",
             )
         else:
             pass
 
         if file_name is None:
             file_name = self.graph.name + "." + self.output_file_extension
-        self.path_to_output_file = os.path.join(
-            graph_directory, file_name + "." + self.output_file_extension
-        )
+        self.path_to_output_file = os.path.join(graph_directory, file_name + "." + self.output_file_extension)
 
         self.graph.render(
             directory=graph_directory,

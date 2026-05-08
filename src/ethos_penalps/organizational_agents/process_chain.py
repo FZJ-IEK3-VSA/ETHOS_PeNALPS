@@ -6,7 +6,7 @@ from ethos_penalps.data_classes import (
     LoopCounter,
     ProcessChainIdentifier,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
     DownstreamValidationOrder,
@@ -30,6 +30,7 @@ from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.debugging_information import DebuggingInformationLogger
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -108,9 +109,7 @@ class ProcessChain:
                 if process_node_name in self.production_plan.process_step_states_dict:
                     pass
                 else:
-                    self.production_plan.process_step_states_dict[process_node_name] = (
-                        []
-                    )
+                    self.production_plan.process_step_states_dict[process_node_name] = []
         for stream_name in self.stream_handler.stream_dict:
             if stream_name in self.production_plan.stream_state_dict:
                 pass
@@ -133,20 +132,14 @@ class ProcessChain:
         for process_node in self.process_node_dict.values():
             if isinstance(process_node, ProcessStep):
                 process_step_name = process_node.name
-                for (
-                    process_state
-                ) in (
-                    process_node.process_state_handler.process_state_dictionary.values()
-                ):
+                for process_state in process_node.process_state_handler.process_state_dictionary.values():
                     self.load_profile_handler.add_process_state_energy_data(
                         process_step_name=process_step_name,
                         process_state_name=process_state.process_state_name,
                         process_state_energy_data=process_state.process_state_energy_data,
                     )
 
-    def add_process_node(
-        self, process_node_to_add: ProcessStep | Source | Sink | ProcessChainStorage
-    ):
+    def add_process_node(self, process_node_to_add: ProcessStep | Source | Sink | ProcessChainStorage):
         """Adds a process node object to the process_node_dict of EnterpriseStructure to
         consider the node during the simulation.
 
@@ -160,9 +153,7 @@ class ProcessChain:
         """
         if process_node_to_add.name in self.process_node_dict:
             raise Exception(
-                "Process node with name: "
-                + str(process_node_to_add.name)
-                + " is already in process node dictionary"
+                "Process node with name: " + str(process_node_to_add.name) + " is already in process node dictionary"
             )
         self.process_node_dict[process_node_to_add.name] = process_node_to_add
         if isinstance(process_node_to_add, Sink):
@@ -219,9 +210,7 @@ class ProcessChain:
             raise Exception("No sink has been set yet")
         return self.sink
 
-    def create_process_chain_production_plan(
-        self, max_number_of_iterations: float | None = None
-    ):
+    def create_process_chain_production_plan(self, max_number_of_iterations: float | None = None):
         """The method generates a production plan that confidently satisfies all
         orders in the Sink object for each process step between the Source and
         Sink object. Nodes in the ProcessChain create and receive NodeOperations
@@ -239,9 +228,7 @@ class ProcessChain:
         Raises:
             Exception: Raises an exception if the maximum number of iterations is surpassed.
         """
-        logger.info(
-            "Create production plan of: %s", self.process_chain_identifier.chain_name
-        )
+        logger.info("Create production plan of: %s", self.process_chain_identifier.chain_name)
         # Loops over each order in the list
         self.initialize_production_plan()
         current_node = self.get_sink()
@@ -249,9 +236,7 @@ class ProcessChain:
         # Starts the first production iteration which does not required a node operation
         current_node.check_if_sink_has_orders()
         current_node_operation = current_node.plan_production()
-        current_node = self.get_node_from_node_operation(
-            node_operation=current_node_operation
-        )
+        current_node = self.get_node_from_node_operation(node_operation=current_node_operation)
         assert type(current_node) is ProcessStep, (
             ("The next node after sink: " + self.get_sink().name)
             + " is not a ProcessStep. It is of type:"
@@ -262,12 +247,10 @@ class ProcessChain:
         # loops over current node list
         while not isinstance(current_node_operation, TerminateProduction):
             logger.debug(current_node)
-            logger.debug("Input node operation is: %s", str(current_node_operation))
-            logger.debug("Loop counter is: %s", str(LoopCounter.loop_number))
+            logger.debug("Input node operation is: %s", current_node_operation)
+            logger.debug("Loop counter is: %s", LoopCounter.loop_number)
 
-            self.debugging_information_logger.add_node_operation(
-                node_operation=current_node_operation
-            )
+            self.debugging_information_logger.add_node_operation(node_operation=current_node_operation)
             current_node_operation: (
                 UpstreamNewProductionOrder
                 | DownstreamValidationOrder
@@ -278,10 +261,10 @@ class ProcessChain:
                 input_node_operation=current_node_operation,
             )
 
-            logger.debug("Output node operation: %s", str(current_node_operation))
+            logger.debug("Output node operation: %s", current_node_operation)
 
-            current_node: Source | Sink | ProcessStep | ProcessChainStorage | None = (
-                self.get_node_from_node_operation(node_operation=current_node_operation)
+            current_node: Source | Sink | ProcessStep | ProcessChainStorage | None = self.get_node_from_node_operation(
+                node_operation=current_node_operation
             )
 
             if hasattr(current_node, "name"):
@@ -294,16 +277,12 @@ class ProcessChain:
                         "Maximum number of iterations has been reached: %s",
                         max_number_of_iterations,
                     )
-                    raise Exception(
-                        "Production could no be planned in maximum number of iterations"
-                    )
+                    raise Exception("Production could no be planned in maximum number of iterations")
             LoopCounter.loop_number = LoopCounter.loop_number + 1
 
         logger.info("Creation of production plan is terminated")
 
-    def get_node_from_node_operation(
-        self, node_operation: NodeOperation
-    ) -> ProcessNode | None:
+    def get_node_from_node_operation(self, node_operation: NodeOperation) -> ProcessNode | None:
         """Returns a target ProcessNode object of a NodeOperation Object.
             If its TerminateProduction Operation None is returned to
             indicate the end of the simulation of the ProcessChain.
@@ -317,13 +296,8 @@ class ProcessChain:
         """
         logger.debug("get node_operation has been called")
         if isinstance(node_operation.next_node_name, str):
-            node = self.get_process_node(
-                process_node_name=node_operation.next_node_name
-            )
-        elif (
-            isinstance(node_operation, TerminateProduction)
-            and node_operation.next_node_name is None
-        ):
+            node = self.get_process_node(process_node_name=node_operation.next_node_name)
+        elif isinstance(node_operation, TerminateProduction) and node_operation.next_node_name is None:
             node = None
 
         else:
@@ -336,7 +310,7 @@ class ProcessChain:
 
         return node
 
-    def add_sink(self, sink: Sink | ProcessChainStorage):
+    def add_sink(self, sink: Sink | ProcessChainStorage, split_factor: float | None = None):
         """Adds the Sink or ProcessChainStorage that replaced the Sink
             in the ProcessChain
 
@@ -345,6 +319,11 @@ class ProcessChain:
                 of the ProcessChain.
         """
         self.sink = sink
+        if split_factor is not None:
+            self.sink.add_split_factor(
+                split_factor_float=split_factor,
+                process_chain_identifier=self.process_chain_identifier,
+            )
         self.add_process_node(process_node_to_add=sink)
 
     def add_source(self, source: Source | ProcessChainStorage):
@@ -358,9 +337,7 @@ class ProcessChain:
         self.add_process_node(process_node_to_add=source)
         self.source = source
 
-    def get_list_of_process_step_names(
-        self, include_sink: bool = False, include_source: bool = False
-    ) -> list[str]:
+    def get_list_of_process_step_names(self, include_sink: bool = False, include_source: bool = False) -> list[str]:
         """Returns a list of the names of the ProcessChain.
 
         Args:
@@ -377,9 +354,7 @@ class ProcessChain:
         sink = self.get_sink()
         if include_sink is True:
             list_of_main_production_route_objects.append(sink.name)
-        first_stream = sink.get_stream_to_process_chain(
-            process_chain_identifier=self.process_chain_identifier
-        )
+        first_stream = sink.get_stream_to_process_chain(process_chain_identifier=self.process_chain_identifier)
 
         list_of_main_production_route_objects.append(first_stream.name)
         upstream_node_name = first_stream.get_upstream_node_name()
@@ -392,9 +367,7 @@ class ProcessChain:
             logger.debug("Stream name: %s", main_input_stream_name)
             list_of_main_production_route_objects.append(main_input_stream_name)
 
-            main_input_stream = self.stream_handler.get_stream(
-                stream_name=main_input_stream_name
-            )
+            main_input_stream = self.stream_handler.get_stream(stream_name=main_input_stream_name)
             upstream_node_name = main_input_stream.get_upstream_node_name()
             list_of_main_production_route_objects.append(upstream_node_name)
             logger.debug("Upstream node name: %s", upstream_node_name)

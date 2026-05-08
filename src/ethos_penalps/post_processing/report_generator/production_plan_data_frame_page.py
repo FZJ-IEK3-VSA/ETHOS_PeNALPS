@@ -2,7 +2,7 @@ import datapane
 import pandas
 
 from ethos_penalps.data_classes import EmptyMetaDataInformation
-from ethos_penalps.post_processing.post_processed_data_handler import (
+from ethos_penalps.post_processing.production_plan_post_processing.post_processed_data_handler import (
     PostProcessSimulationDataHandler,
 )
 from ethos_penalps.post_processing.report_generator.report_options import (
@@ -15,7 +15,9 @@ from ethos_penalps.stream import (
     ContinuousStream,
     ContinuousStreamProductionPlanEntry,
 )
+from ethos_penalps.utilities.general_functions import dataframe_from_dataclasses
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -56,31 +58,20 @@ class DataFramePageGenerator:
             in the production plan.
         """
         stream_state_block_list = []
-        if (
-            report_generator_options.production_plan_data_frame.include_stream_data_frames
-            is True
-        ):
+        if report_generator_options.production_plan_data_frame.include_stream_data_frames is True:
             logger.info("Start generation of page with stream data frames")
             stream_data_frame_list = list(
-                (
-                    self.post_process_simulation_data_handler.dict_of_stream_meta_data_data_frames.values()
-                )
+                (self.post_process_simulation_data_handler.dict_of_stream_meta_data_data_frames.values())
             )
             for stream_data_frame_meta_information in stream_data_frame_list:
-                if isinstance(
-                    stream_data_frame_meta_information, EmptyMetaDataInformation
-                ):
+                if isinstance(stream_data_frame_meta_information, EmptyMetaDataInformation):
                     stream_data_frame_and_summary_group.append(
-                        datapane.HTML(
-                            "No results are stored for: "
-                            + str(stream_data_frame_meta_information.name)
-                        )
+                        datapane.HTML("No results are stored for: " + str(stream_data_frame_meta_information.name))
                     )
                 elif stream_data_frame_meta_information.data_frame.empty:
                     stream_data_frame_and_summary_group.append(
                         datapane.HTML(
-                            "No results are stored for: "
-                            + str(stream_data_frame_meta_information.stream_name)
+                            "No results are stored for: " + str(stream_data_frame_meta_information.stream_name)
                         )
                     )
                 else:
@@ -92,31 +83,20 @@ class DataFramePageGenerator:
                         )
                     )
 
-                    if (
-                        stream_data_frame_meta_information.stream_type
-                        == BatchStream.stream_type
-                    ):
+                    if stream_data_frame_meta_information.stream_type == BatchStream.stream_type:
                         total_stream_mass = (
                             stream_data_frame_meta_information.data_frame.loc[
-                                :, "batch_mass_value"
+                                #:, "batch_mass_value"
+                                :,
+                                "total_mass",
                             ]
                         ).sum()
-                    elif (
-                        stream_data_frame_meta_information.stream_type
-                        == ContinuousStream.stream_type
-                    ):
-                        total_stream_mass = (
-                            stream_data_frame_meta_information.data_frame.loc[
-                                :, "total_mass"
-                            ]
-                        ).sum()
+                    elif stream_data_frame_meta_information.stream_type == ContinuousStream.stream_type:
+                        total_stream_mass = (stream_data_frame_meta_information.data_frame.loc[:, "total_mass"]).sum()
                     else:
                         raise Exception("Unexpected stream data type")
                     stream_data_frame_and_summary_group.append(
-                        datapane.HTML(
-                            "The total mass of all streams is: "
-                            + str(total_stream_mass)
-                        )
+                        datapane.HTML("The total mass of all streams is: " + str(total_stream_mass))
                     )
                     stream_state_block_list.append(
                         datapane.Group(
@@ -125,9 +105,7 @@ class DataFramePageGenerator:
                         )
                     )
         if stream_state_block_list:
-            stream_state_data_frame_selector = datapane.Select(
-                blocks=stream_state_block_list, label="Stream States"
-            )
+            stream_state_data_frame_selector = datapane.Select(blocks=stream_state_block_list, label="Stream States")
         else:
             stream_state_data_frame_selector = None
 
@@ -148,18 +126,13 @@ class DataFramePageGenerator:
             in the production plan.
         """
         process_state_block_list = []
-        if (
-            report_generator_options.production_plan_data_frame.include_process_step_data_frames
-            is True
-        ):
+        if report_generator_options.production_plan_data_frame.include_process_step_data_frames is True:
             logger.info("Start generation of page with process state data frames")
 
             process_state_data_frame_list = list(
                 self.post_process_simulation_data_handler.dict_of_process_step_data_frames.values()
             )
-            for (
-                process_state_data_frame_meta_information
-            ) in process_state_data_frame_list:
+            for process_state_data_frame_meta_information in process_state_data_frame_list:
                 if process_state_data_frame_meta_information.data_frame.empty:
                     pass
                 else:
@@ -170,13 +143,9 @@ class DataFramePageGenerator:
                         )
                     )
         if len(process_state_block_list) > 1:
-            process_state_data_frame_selector = datapane.Select(
-                blocks=process_state_block_list, label="Process States"
-            )
+            process_state_data_frame_selector = datapane.Select(blocks=process_state_block_list, label="Process States")
         elif len(process_state_block_list) == 1:
-            process_state_data_frame_selector = datapane.Group(
-                blocks=process_state_block_list, label="Process States"
-            )
+            process_state_data_frame_selector = datapane.Group(blocks=process_state_block_list, label="Process States")
         else:
             process_state_data_frame_selector = None
 
@@ -198,15 +167,12 @@ class DataFramePageGenerator:
         """
         logger.info("Start generation storage state data frame page")
         storage_state_block_list = []
-        if (
-            report_generator_options.production_plan_data_frame.include_storage_data_frames
-            is True
-        ):
+        if report_generator_options.production_plan_data_frame.include_storage_data_frames is True:
             # storage_block_list = []
             storage_state_dictionary = self.production_plan.storage_state_dict
             for process_step_name in storage_state_dictionary:
                 for commodity in storage_state_dictionary[process_step_name]:
-                    storage_data_frame = pandas.DataFrame(
+                    storage_data_frame = dataframe_from_dataclasses(
                         storage_state_dictionary[process_step_name][commodity]
                     )
                     storage_state_block_list.append(
@@ -223,17 +189,13 @@ class DataFramePageGenerator:
                 label="Storage States",
             )
         elif len(storage_state_block_list) == 1:
-            process_state_data_frame_selector = datapane.Group(
-                blocks=storage_state_block_list, label="Storage States"
-            )
+            process_state_data_frame_selector = datapane.Group(blocks=storage_state_block_list, label="Storage States")
         else:
             process_state_data_frame_selector = None
 
         return process_state_data_frame_selector
 
-    def create_data_frame_page(
-        self, report_generator_options: ReportGeneratorOptions
-    ) -> datapane.Group:
+    def create_data_frame_page(self, report_generator_options: ReportGeneratorOptions) -> datapane.Group:
         """_summary_
 
         Args:
@@ -247,22 +209,22 @@ class DataFramePageGenerator:
         """
         logger.info("Create generate production plan data page")
         data_frame_block_list = []
-        process_state_data_frame_selector = (
-            self.create_process_state_data_frame_selector(
-                report_generator_options=report_generator_options
-            )
+        process_state_data_frame_selector = self.create_process_state_data_frame_selector(
+            report_generator_options=report_generator_options
         )
-        if isinstance(process_state_data_frame_selector, datapane.Select):
+        if isinstance(process_state_data_frame_selector, datapane.Select) or isinstance(
+            process_state_data_frame_selector, datapane.Group
+        ):
             data_frame_block_list.append("# Process step data frames")
             data_frame_block_list.append(process_state_data_frame_selector)
         else:
-            data_frame_block_list.append(
-                "# No process step  data frames have been created"
-            )
+            data_frame_block_list.append("# No process step  data frames have been created")
         stream_state_data_frame_selector = self.create_stream_state_data_frame_selector(
             report_generator_options=report_generator_options
         )
-        if isinstance(stream_state_data_frame_selector, datapane.Select):
+        if isinstance(stream_state_data_frame_selector, datapane.Select) or isinstance(
+            stream_state_data_frame_selector, datapane.Group
+        ):
             data_frame_block_list.append("# Stream data frames")
             data_frame_block_list.append(stream_state_data_frame_selector)
         else:
@@ -271,7 +233,9 @@ class DataFramePageGenerator:
         storage_data_frame_selector = self.create_storage_state_data_frame_page(
             report_generator_options=report_generator_options
         )
-        if isinstance(storage_data_frame_selector, datapane.Select):
+        if isinstance(storage_data_frame_selector, datapane.Select) or isinstance(
+            storage_data_frame_selector, datapane.Group
+        ):
             data_frame_block_list.append("# Storage data frames")
             data_frame_block_list.append(storage_data_frame_selector)
         else:

@@ -1,16 +1,20 @@
+import datetime
+import json
 from dataclasses import dataclass, fields
 from typing import Any
 
 import pandas
 
 from ethos_penalps.data_classes import (
+    LoadProfileEntry,
+    LoadType,
     ProcessStepProductionPlanEntry,
     StorageProductionPlanEntry,
 )
 from ethos_penalps.stream import (
     BatchStreamProductionPlanEntry,
     ContinuousStreamProductionPlanEntry,
-    ProcessStepProductionPlanEntryWithInputStreamState,
+    ProcessStepProductionPlanEntryWithMass,
 )
 
 
@@ -28,6 +32,23 @@ def create_dataclass(data: pandas.Series, factory: Any) -> Any:
     return factory(**{f.name: data[f.name] for f in fields(factory)})
 
 
+def _create_dataclass_list_from_dataframe(data: pandas.DataFrame, factory: Any) -> list:
+    """Creates a list of dataclass instances from a DataFrame using itertuples.
+
+    This is significantly faster than using iterrows() because itertuples()
+    avoids creating a new Series object per row.
+
+    Args:
+        data (pandas.DataFrame): DataFrame to convert.
+        factory (Any): Dataclass constructor.
+
+    Returns:
+        list: List of dataclass instances.
+    """
+    field_names = [f.name for f in fields(factory)]
+    return [factory(**{name: getattr(row, name) for name in field_names}) for row in data.itertuples(index=False)]
+
+
 def create_batch_stream_production_plan_entry(
     data: pandas.DataFrame,
 ) -> list[BatchStreamProductionPlanEntry]:
@@ -43,10 +64,7 @@ def create_batch_stream_production_plan_entry(
         list[BatchStreamProductionPlanEntry]: List of BatchStreamProductionPlanEntry
             that was stored in a data frame.
     """
-    return [
-        create_dataclass(row, BatchStreamProductionPlanEntry)
-        for ind, row in data.iterrows()
-    ]
+    return _create_dataclass_list_from_dataframe(data, BatchStreamProductionPlanEntry)
 
 
 def create_continuous_stream_production_plan_entry(
@@ -64,10 +82,7 @@ def create_continuous_stream_production_plan_entry(
         list[ContinuousStreamProductionPlanEntry]: List of ContinuousStreamProductionPlanEntry
             that was stored in a data frame.
     """
-    return [
-        create_dataclass(row, ContinuousStreamProductionPlanEntry)
-        for ind, row in data.iterrows()
-    ]
+    return _create_dataclass_list_from_dataframe(data, ContinuousStreamProductionPlanEntry)
 
 
 def create_process_step_production_plan_entry(
@@ -85,10 +100,7 @@ def create_process_step_production_plan_entry(
         list[ProcessStepProductionPlanEntry]: List of ProcessStepProductionPlanEntry
             that was stored in a data frame.
     """
-    return [
-        create_dataclass(row, ProcessStepProductionPlanEntry)
-        for ind, row in data.iterrows()
-    ]
+    return _create_dataclass_list_from_dataframe(data, ProcessStepProductionPlanEntry)
 
 
 def create_storage_production_plan_entry(
@@ -107,15 +119,12 @@ def create_storage_production_plan_entry(
         list[StorageProductionPlanEntry]: List of StorageProductionPlanEntry
             that was stored in a data frame.
     """
-    return [
-        create_dataclass(row, StorageProductionPlanEntry)
-        for ind, row in data.iterrows()
-    ]
+    return _create_dataclass_list_from_dataframe(data, StorageProductionPlanEntry)
 
 
 def create_process_step_production_plan_entry_with_stream_state(
     data: pandas.DataFrame,
-) -> list[ProcessStepProductionPlanEntryWithInputStreamState]:
+) -> list[ProcessStepProductionPlanEntryWithMass]:
     """Creates a list of StorageProductionPlanEntry based
     on a data frame that was created from a list of
     ProcessStepProductionPlanEntryWithInputStreamState.
@@ -128,7 +137,30 @@ def create_process_step_production_plan_entry_with_stream_state(
         list[ProcessStepProductionPlanEntryWithInputStreamState]: List of ProcessStepProductionPlanEntryWithInputStreamState
             that was stored in a data frame.
     """
-    return [
-        create_dataclass(row, ProcessStepProductionPlanEntryWithInputStreamState)
-        for ind, row in data.iterrows()
-    ]
+    return _create_dataclass_list_from_dataframe(data, ProcessStepProductionPlanEntryWithMass)
+
+
+def create_load_profile_entry(
+    data: pandas.DataFrame,
+) -> list[LoadProfileEntry]:
+    """Creates a list of LoadProfileEntry based
+    on a data frame that was created from a list of
+    LoadProfileEntry.
+
+    Args:
+        data (pandas.DataFrame): Data frame that was created from a list of
+    LoadProfileEntry.
+
+
+    Returns:
+        list[LoadProfileEntry]: List of LoadProfileEntry
+            that was stored in a data frame.
+    """
+    return _create_dataclass_list_from_dataframe(data, LoadProfileEntry)
+
+
+def create_load_type_from_string(input_string: str) -> LoadType:
+    input_string = input_string.replace("'", '"')
+    load_type_dict = json.loads(s=input_string)
+    load_type = LoadType(name=load_type_dict["name"], uuid=load_type_dict["uuid"])
+    return load_type

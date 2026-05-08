@@ -222,30 +222,22 @@ class SortedProcessChainLevel:
 
     def __post_init__(self):
         """Converts the input data into a structured form."""
-        self.unique_chain_name = (
-            self.tikz_name_handler.create_unique_tikz_identification_name(
-                input_name=self.process_chain.process_chain_identifier.chain_name
-            )
+        self.unique_chain_name = self.tikz_name_handler.create_unique_tikz_identification_name(
+            input_name=self.process_chain.process_chain_identifier.chain_name
         )
         self.sorted_process_step_list: ProcessNode = []
         self.list_of_tikz_process_steps: TikzNode = []
         self.list_of_optional_sinks = []
         self.list_of_optional_sources = []
         self.dictionary_of_tikz_process_node_names: dict[str, str] = {}
-        self.dictionary_of_tikz_process_node_names[self.main_sink.name] = (
-            self.unique_sink_name
-        )
-        self.dictionary_of_tikz_process_node_names[self.main_source.name] = (
-            self.unique_source_name
-        )
+        self.dictionary_of_tikz_process_node_names[self.main_sink.name] = self.unique_sink_name
+        self.dictionary_of_tikz_process_node_names[self.main_source.name] = self.unique_source_name
         for process_node in self.process_chain.process_node_dict.values():
             if type(process_node) is ProcessStep:
                 self.sorted_process_step_list.append(process_node)
 
-                unique_process_node_name = (
-                    self.tikz_name_handler.create_unique_tikz_identification_name(
-                        input_name=process_node.name
-                    )
+                unique_process_node_name = self.tikz_name_handler.create_unique_tikz_identification_name(
+                    input_name=process_node.name
                 )
                 self.list_of_tikz_process_steps.append(
                     TikzNode(
@@ -254,9 +246,7 @@ class SortedProcessChainLevel:
                         node_options="ProcessStepNode",
                     )
                 )
-                self.dictionary_of_tikz_process_node_names[process_node.name] = (
-                    unique_process_node_name
-                )
+                self.dictionary_of_tikz_process_node_names[process_node.name] = unique_process_node_name
         self.process_step_chain_length = len(self.sorted_process_step_list)
 
 
@@ -269,16 +259,12 @@ class SortedNetworkLevel:
     previous_source_row: SourceRow | None
 
     def __post_init__(self):
-        self.unique_name = (
-            self.tikz_name_handler.create_unique_tikz_identification_name(
-                input_name=str(self.network_level.uuid)
-            )
+        self.unique_name = self.tikz_name_handler.create_unique_tikz_identification_name(
+            input_name=str(self.network_level.uuid)
         )
 
-        unique_source_name: str = (
-            self.tikz_name_handler.create_unique_tikz_identification_name(
-                input_name=self.network_level.main_source.name
-            )
+        unique_source_name: str = self.tikz_name_handler.create_unique_tikz_identification_name(
+            input_name=self.network_level.main_source.name
         )
         self.source_row: SourceAndSinkRow | SourceRow = SourceRow(
             main_source=self.network_level.main_source,
@@ -287,10 +273,8 @@ class SortedNetworkLevel:
         )
 
         if self.previous_source_row is None:
-            unique_sink_name: str = (
-                self.tikz_name_handler.create_unique_tikz_identification_name(
-                    input_name=self.network_level.main_sink.name
-                )
+            unique_sink_name: str = self.tikz_name_handler.create_unique_tikz_identification_name(
+                input_name=self.network_level.main_sink.name
             )
             self.sink_row = SinkRow(
                 main_sink=self.network_level.main_sink,
@@ -315,9 +299,7 @@ class SortedNetworkLevel:
                 unique_source_name=self.source_row.unique_identification_name,
                 unique_sink_name=self.sink_row.unique_identification_name,
             )
-            list_process_step_chain_length.append(
-                sorted_process_chain_level.process_step_chain_length
-            )
+            list_process_step_chain_length.append(sorted_process_chain_level.process_step_chain_length)
 
             self.list_of_sorted_process_chains.append(sorted_process_chain_level)
 
@@ -357,9 +339,7 @@ class NetworkLevelMatrix:
 
     def __post_init__(self):
         self.list_of_filled_process_chain: list[FilledProcessStepChain] = []
-        for (
-            sorted_process_chain
-        ) in self.sorted_network_level.list_of_sorted_process_chains:
+        for sorted_process_chain in self.sorted_network_level.list_of_sorted_process_chains:
             filled_process_chain = FilledProcessStepChain(
                 name_to_display=sorted_process_chain.process_chain.process_chain_identifier.chain_name,
                 maximum_chain_length=self.sorted_network_level.maximum_chain_length,
@@ -437,22 +417,14 @@ class EnterpriseGraphBuilderTikz:
         """
 
         list_of_sorted_network_level = self.create_list_of_sorted_network_level()
-        network_node_string = self.create_network_level_nodes(
-            list_of_sorted_network_level=list_of_sorted_network_level
-        )
-        title_node_string = self.create_title_string(
-            list_of_sorted_network_level=list_of_sorted_network_level
-        )
+        network_node_string = self.create_network_level_nodes(list_of_sorted_network_level=list_of_sorted_network_level)
+        title_node_string = self.create_title_string(list_of_sorted_network_level=list_of_sorted_network_level)
         stream_string_section = self.create_network_level_edges(
             list_of_sorted_network_level=list_of_sorted_network_level
         )
 
         self.full_document_string = (
-            document_preamble
-            + network_node_string
-            + title_node_string
-            + stream_string_section
-            + document_postamble
+            document_preamble + network_node_string + title_node_string + stream_string_section + document_postamble
         )
 
         self.save_tex_file(full_path=full_path)
@@ -480,9 +452,7 @@ class EnterpriseGraphBuilderTikz:
             previous_sorted_network_level = sorted_network_level
         return list_of_sorted_network_level
 
-    def create_network_level_nodes(
-        self, list_of_sorted_network_level: list[SortedNetworkLevel]
-    ) -> str:
+    def create_network_level_nodes(self, list_of_sorted_network_level: list[SortedNetworkLevel]) -> str:
         """Creates the tex string paragraph which contains all nodes.
 
         Args:
@@ -495,22 +465,12 @@ class EnterpriseGraphBuilderTikz:
         node_section_string = ""
         for sorted_network_level in list_of_sorted_network_level:
             if type(sorted_network_level.sink_row) is SinkRow:
-                node_section_string = (
-                    node_section_string
-                    + sorted_network_level.sink_row.create_tikz_string()
-                )
+                node_section_string = node_section_string + sorted_network_level.sink_row.create_tikz_string()
             elif type(sorted_network_level.sink_row) is SourceAndSinkRow:
                 pass
-            network_level_matrix = self.create_network_level_matrix(
-                sorted_network_level=sorted_network_level
-            )
-            node_section_string = (
-                node_section_string + network_level_matrix.create_tikz_matrix_string()
-            )
-            node_section_string = (
-                node_section_string
-                + sorted_network_level.source_row.create_tikz_string()
-            )
+            network_level_matrix = self.create_network_level_matrix(sorted_network_level=sorted_network_level)
+            node_section_string = node_section_string + network_level_matrix.create_tikz_matrix_string()
+            node_section_string = node_section_string + sorted_network_level.source_row.create_tikz_string()
 
         # title_node = self.create_title_node()
         # node_section_string = node_section_string + title_node.create_node_above_of(
@@ -519,9 +479,7 @@ class EnterpriseGraphBuilderTikz:
         # )
         return node_section_string
 
-    def create_title_string(
-        self, list_of_sorted_network_level: list[SortedNetworkLevel]
-    ) -> str:
+    def create_title_string(self, list_of_sorted_network_level: list[SortedNetworkLevel]) -> str:
         """Creates the title string section of the text document.
 
         Args:
@@ -561,9 +519,7 @@ class EnterpriseGraphBuilderTikz:
 
         return network_level_matrix
 
-    def create_network_level_edges(
-        self, list_of_sorted_network_level: list[SortedNetworkLevel]
-    ) -> str:
+    def create_network_level_edges(self, list_of_sorted_network_level: list[SortedNetworkLevel]) -> str:
         """Creates the edges string section for tex document.
 
         Args:
@@ -575,38 +531,25 @@ class EnterpriseGraphBuilderTikz:
         """
         stream_string_section = ""
         for sorted_network_level in list_of_sorted_network_level:
-            for (
-                sorted_process_chain
-            ) in sorted_network_level.list_of_sorted_process_chains:
-                for (
-                    stream
-                ) in (
-                    sorted_process_chain.process_chain.stream_handler.stream_dict.values()
-                ):
+            for sorted_process_chain in sorted_network_level.list_of_sorted_process_chains:
+                for stream in sorted_process_chain.process_chain.stream_handler.stream_dict.values():
                     if type(stream) is BatchStream:
                         edge_option = "dashed"
                     else:
                         edge_option = ""
 
-                    unique_start_process_node_name = (
-                        sorted_process_chain.dictionary_of_tikz_process_node_names[
-                            stream.static_data.start_process_step_name
-                        ]
-                    )
-                    unique_target_process_node_name = (
-                        sorted_process_chain.dictionary_of_tikz_process_node_names[
-                            stream.static_data.end_process_step_name
-                        ]
-                    )
+                    unique_start_process_node_name = sorted_process_chain.dictionary_of_tikz_process_node_names[
+                        stream.static_data.start_process_step_name
+                    ]
+                    unique_target_process_node_name = sorted_process_chain.dictionary_of_tikz_process_node_names[
+                        stream.static_data.end_process_step_name
+                    ]
                     stream_edge = ForwardEdge(
                         start_node_name=unique_start_process_node_name,
                         target_node_name=unique_target_process_node_name,
                         edge_options=edge_option,
                     )
-                    stream_string_section = (
-                        stream_string_section
-                        + stream_edge.create_tikz_string(add_line_break=True)
-                    )
+                    stream_string_section = stream_string_section + stream_edge.create_tikz_string(add_line_break=True)
         return stream_string_section
 
     def create_title_node(self) -> TikzNode:
@@ -616,10 +559,8 @@ class EnterpriseGraphBuilderTikz:
         Returns:
             TikzNode: Title node object
         """
-        unique_identification_name = (
-            self.tikz_name_handler.create_unique_tikz_identification_name(
-                input_name=self.title_node_identifier
-            )
+        unique_identification_name = self.tikz_name_handler.create_unique_tikz_identification_name(
+            input_name=self.title_node_identifier
         )
         tikz_node = TikzNode(
             name_to_display=self.enterprise_name,
@@ -635,6 +576,7 @@ class EnterpriseGraphBuilderTikz:
         Returns:
             str: Returns the path to the pdf.
         """
+
         subprocess.run(
             [
                 "tectonic",
@@ -645,7 +587,10 @@ class EnterpriseGraphBuilderTikz:
                 self.path_to_tex_file,
             ],
             check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
+
         path_to_pdf = self.path_to_tex_file[:-4] + ".pdf"
 
         return path_to_pdf

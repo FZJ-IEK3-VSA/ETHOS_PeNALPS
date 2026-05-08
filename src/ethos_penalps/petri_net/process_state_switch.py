@@ -10,6 +10,7 @@ from ethos_penalps.simulation_data.container_simulation_data import (
 )
 from ethos_penalps.stream import BatchStreamState, ContinuousStreamState
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -54,13 +55,9 @@ class ProcessStateSwitchDelay(ProcessStateSwitch):
             delay (datetime.timedelta): The static delay after the process state switch occurs.
         """
         if not isinstance(state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
 
         self.process_step_data: ProcessStepData = process_step_data
         self.state_connector: StateConnector = state_connector
@@ -74,9 +71,7 @@ class ProcessStateSwitchDelay(ProcessStateSwitch):
         for each storage of the process step
         """
 
-        next_event_time = (
-            self.process_step_data.time_data.last_process_state_switch_time - self.delay
-        )
+        next_event_time = self.process_step_data.time_data.last_process_state_switch_time - self.delay
         logger.debug(
             "Next event time is at: %s and last process state switch time is at: %s",
             next_event_time,
@@ -103,13 +98,9 @@ class ProcessStateSwitchAtOutputStreamProvided(ProcessStateSwitch):
                 this switch should be an output stream providing state.
         """
         if not isinstance(state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
 
         self.process_step_data: ProcessStepData = process_step_data
         self.state_connector: StateConnector = state_connector
@@ -128,18 +119,12 @@ class ProcessStateSwitchAtOutputStreamProvided(ProcessStateSwitch):
                 output stream state.
         """
         if not isinstance(self.state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(self.state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         logger.debug("ProcessStateSwitchAtOutputStreamProvided")
 
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
         next_event_time = state_data.current_output_stream_state.start_time
         logger.debug(
             "Next event time is at: %s and last process state switch time is at: %s at process step: %s with the current process state: %s",
@@ -171,13 +156,9 @@ class ProcessStateSwitchAtInputStreamProvided(ProcessStateSwitch):
                 this switch should be an input stream providing state.
         """
         if not isinstance(state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
 
         self.process_step_data: ProcessStepData = process_step_data
         self.state_connector: StateConnector = state_connector
@@ -196,16 +177,10 @@ class ProcessStateSwitchAtInputStreamProvided(ProcessStateSwitch):
                 of the input stream state.
         """
         if not isinstance(self.state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(self.state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_or_post_production_state_data()
-        )
+            raise Exception("A name of typ string should be supplied for process state identification")
+        state_data = self.process_step_data.state_data_container.get_validated_or_post_production_state_data()
         if isinstance(state_data, ValidatedPostProductionStateData):
             next_event_time = state_data.validated_input_stream_list[-1].start_time
         elif isinstance(state_data, PostProductionStateData):
@@ -245,13 +220,9 @@ class ProcessStateSwitchAfterInputAndOutputStream(ProcessStateSwitch):
 
         """
         if not isinstance(state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
 
         self.process_step_data: ProcessStepData = process_step_data
         self.state_connector: StateConnector = state_connector
@@ -272,16 +243,10 @@ class ProcessStateSwitchAfterInputAndOutputStream(ProcessStateSwitch):
                 start at the same time, the earlier start date is chosen.
         """
         if not isinstance(self.state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(self.state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_or_post_production_state_data()
-        )
+            raise Exception("A name of typ string should be supplied for process state identification")
+        state_data = self.process_step_data.state_data_container.get_validated_or_post_production_state_data()
         if isinstance(state_data, PostProductionStateData):
             next_event_time = min(
                 state_data.current_input_stream_state.start_time,
@@ -326,13 +291,9 @@ class ProcessStateSwitchAtNextDiscreteEvent(ProcessStateSwitch):
                 this switch should be an idle state.
         """
         if not isinstance(state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
 
         self.process_step_data: ProcessStepData = process_step_data
         self.state_connector: StateConnector = state_connector
@@ -350,19 +311,11 @@ class ProcessStateSwitchAtNextDiscreteEvent(ProcessStateSwitch):
                 occur so that the output stream sate can be delivered just in time.
         """
         if not isinstance(self.state_connector.start_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
+            raise Exception("A name of typ string should be supplied for process state identification")
         if not isinstance(self.state_connector.end_state_name, str):
-            raise Exception(
-                "A name of typ string should be supplied for process state identification"
-            )
-        next_event_time = (
-            self.process_step_data.time_data.get_next_process_state_switch_time()
-        )
-        state_data = (
-            self.process_step_data.state_data_container.get_pre_or_post_production_state_data()
-        )
+            raise Exception("A name of typ string should be supplied for process state identification")
+        next_event_time = self.process_step_data.time_data.get_next_process_state_switch_time()
+        state_data = self.process_step_data.state_data_container.get_pre_or_post_production_state_data()
         logger.debug(
             "Next event time is at: %s and last process state switch time is at: %s at process step: %s with the current process state: %s",
             next_event_time,

@@ -1,0 +1,9 @@
+{
+  "start": "2021-01-01T00:00:00",
+  "end": "2021-01-01T00:15:00",
+  "n_entries": 50,
+  "max_energy": 500.0,
+  "seed": 7,
+  "resample_frequency": "1.25min",
+  "expected_total_energy": 13012.418495647458
+}

@@ -22,6 +22,7 @@ from ethos_penalps.stream import (
     ContinuousStreamState,
 )
 from ethos_penalps.utilities.general_functions import get_new_uuid
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 @dataclass
@@ -44,9 +45,7 @@ class UpstreamNewProductionOrder(NodeOperation):
     operation_type: str = "Upstream new production order"
 
     def __post_init__(self):
-        if not isinstance(
-            self.starting_node_output_branch_data, IncompleteOutputBranchData
-        ):
+        if not isinstance(self.starting_node_output_branch_data, IncompleteOutputBranchData):
             raise Exception("Wrong data type")
 
 
@@ -65,13 +64,9 @@ class UpstreamAdaptionOrder(NodeOperation):
     operation_type: str = "Upstream adaption order"
 
     def __post_init__(self):
-        if not isinstance(
-            self.starting_node_output_branch_data, IncompleteOutputBranchData
-        ):
+        if not isinstance(self.starting_node_output_branch_data, IncompleteOutputBranchData):
             raise Exception("Wrong data type")
-        if not isinstance(
-            self.target_node_output_branch_data, IncompleteOutputBranchData
-        ):
+        if not isinstance(self.target_node_output_branch_data, IncompleteOutputBranchData):
             raise Exception("Wrong data type")
 
 

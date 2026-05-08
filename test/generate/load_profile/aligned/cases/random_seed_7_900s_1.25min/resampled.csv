@@ -1,0 +1,13 @@
+,load_type,start_time,end_time,energy_quantity,energy_unit,average_power_consumption,power_unit
+0,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:00:00,2021-01-01 00:01:15,1612.8830676741438,MJ,21.505107568988585,1.0 MW
+1,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:01:15,2021-01-01 00:02:30,1531.612276704436,MJ,20.421497022725813,1.0 MW
+2,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:02:30,2021-01-01 00:03:45,1038.18972132614,MJ,13.842529617681867,1.0 MW
+3,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:03:45,2021-01-01 00:05:00,1666.850460400804,MJ,22.224672805344053,1.0 MW
+4,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:05:00,2021-01-01 00:06:15,1054.2454196532713,MJ,14.05660559537695,1.0 MW
+5,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:06:15,2021-01-01 00:07:30,1174.7214920418717,MJ,15.662953227224955,1.0 MW
+6,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:07:30,2021-01-01 00:08:45,872.4098992991176,MJ,11.632131990654901,1.0 MW
+7,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:08:45,2021-01-01 00:10:00,812.8833448363107,MJ,10.838444597817476,1.0 MW
+8,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:10:00,2021-01-01 00:11:15,657.9085217279844,MJ,8.772113623039791,1.0 MW
+9,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:11:15,2021-01-01 00:12:30,1172.0454469927042,MJ,15.62727262656939,1.0 MW
+10,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:12:30,2021-01-01 00:13:45,420.97504378893393,MJ,5.613000583852452,1.0 MW
+11,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:13:45,2021-01-01 00:15:00,997.6938012017396,MJ,13.302584016023195,1.0 MW

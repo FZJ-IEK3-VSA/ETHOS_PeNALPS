@@ -1,10 +1,10 @@
 import datetime
 import json
 import logging
-import numbers
 import os
 from abc import ABC
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Union
 
 import datetimerange
@@ -33,10 +33,16 @@ from ethos_penalps.utilities.json_coding_functions import (
     json_timedelta_deserialization_function,
     json_timedelta_serialization_function,
 )
+from ethos_penalps.utilities.type_aliases import numbers_alias
 from ethos_penalps.utilities.units import Units
 
 
-@dataclass(kw_only=True, frozen=True)
+class StreamType(Enum):
+    BATCH = "BatchStream"
+    CONTINUOUS = "ContinuousStream"
+
+
+@dataclass(kw_only=True, slots=True)
 class BaseStreamState(DataClassJsonMixin):
     """A StreamState represents a discrete activity of the stream."""
 
@@ -65,8 +71,12 @@ class BaseStreamState(DataClassJsonMixin):
             decoder=json_datetime_range_deserialization_function,
         )
     )
-    """DateTimeRange of the discrete activity.
-    """
+
+    def __post_init__(self):
+        from ethos_penalps.utilities.general_functions import datetime_to_seconds
+
+        self.start_time_seconds: numbers_alias = datetime_to_seconds(self.start_time)
+        self.end_time_seconds: numbers_alias = datetime_to_seconds(self.end_time)
 
 
 # @dataclass(kw_only=True)
@@ -81,7 +91,7 @@ class StreamStaticData(DataClassJsonMixin):
     start_process_step_name: str
     end_process_step_name: str
     commodity: Commodity
-    mass_unit: str = Units.mass_unit.__str__()
+    mass_unit: str = str(Units.mass_unit)
     name_to_display: str | None = None
 
 
@@ -96,27 +106,32 @@ class StreamEnergyData(DataClassJsonMixin):
     """This dictionary contains all LoadTypes that are consumed by the stream.
     The key is the unique id of the LoadType.
     """
-    dict_stream_load_energy_data: dict[str, StreamLoadEnergyData] = field(
-        default_factory=dict
-    )
+    dict_stream_load_energy_data: dict[str, StreamLoadEnergyData] = field(default_factory=dict)
     """Dictionary that has LoadType uuid as a key and the StreamLoadEnergyData
     to calculate the LoadProfileEntry for the respective LoadType.
     """
 
-    def add_stream_load_energy_data(
-        self, stream_load_energy_data: StreamLoadEnergyData
-    ):
+    def add_stream_load_energy_data(self, stream_load_energy_data: StreamLoadEnergyData):
         """Adds the StreamLoadEnergyData for a specific LoadType.
 
         Args:
             stream_load_energy_data (StreamLoadEnergyData): StreamLoadEnergyData for a specific LoadType.
         """
-        self.load_dict[stream_load_energy_data.load_type.uuid] = (
-            stream_load_energy_data.load_type
-        )
-        self.dict_stream_load_energy_data[stream_load_energy_data.load_type.uuid] = (
-            stream_load_energy_data
-        )
+        self.load_dict[stream_load_energy_data.load_type.uuid] = stream_load_energy_data.load_type
+        self.dict_stream_load_energy_data[stream_load_energy_data.load_type.uuid] = stream_load_energy_data
+
+
+@dataclass(kw_only=True, slots=True)
+class StreamProductionPlanEntry(DataClassJsonMixin):
+    name: str
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    duration: datetime.timedelta = field(metadata=config())
+    commodity: str
+    mass_unit: str
+    total_mass: numbers_alias = field(metadata=config())
+    stream_type: str
+    name_to_display: str | None
 
 
 @dataclass(kw_only=True)
@@ -129,54 +144,50 @@ class BatchStreamStaticData(StreamStaticData):
         metadata=config(
             encoder=json_timedelta_serialization_function,
             decoder=json_timedelta_deserialization_function,
-            mm_field=datetime.timedelta,
         )
     )
     """Determines the time between start time and end time
     of the stream. Must be greater than zero.
     """
-    minimum_batch_mass_value: numbers.Number = field(
-        default=0, metadata=config(mm_field=numbers.Number)
-    )
+    minimum_batch_mass_value: numbers_alias = field(default=0, metadata=config())
     """Determines the minimum batch mass that must be transferred
     by the batch stream.
     """
-    maximum_batch_mass_value: numbers.Number = field(
+    maximum_batch_mass_value: numbers_alias = field(
         default=float("inf"),
-        metadata=config(mm_field=numbers.Number),
+        metadata=config(),
     )
     """Defies the stream type. Must not be changed.
     """
-    stream_type: str = "BatchStream"
+    stream_type: str = StreamType.BATCH.value
+
+    def __post_init__(self):
+        self.delay_seconds: numbers_alias = self.delay.total_seconds()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(kw_only=True, slots=True)
 class BatchStreamState(BaseStreamState):
     """A StreamState represents a discrete activity of the BatchStream."""
 
-    batch_mass_value: numbers.Number = field(metadata=config(mm_field=numbers.Number))
+    batch_mass_value: numbers_alias = field(metadata=config())
 
 
-@dataclass(frozen=True, slots=True)
-class BatchStreamProductionPlanEntry(DataClassJsonMixin):
+@dataclass(kw_only=True, slots=True)
+class BatchStreamProductionPlanEntry(StreamProductionPlanEntry):
     """Simulation Result for a discrete time span of the BatchStream."""
 
-    name: str
-    commodity: str
-    start_time: datetime.datetime
-    end_time: datetime.datetime
-    duration: datetime.timedelta = field(metadata=config(mm_field=datetime.timedelta))
-    delay: datetime.timedelta = field(metadata=config(mm_field=datetime.timedelta))
-    batch_mass_value: numbers.Number = field(metadata=config(mm_field=numbers.Number))
-    batch_mass_unit: str
-    minimum_batch_mass_value: numbers.Number = field(
-        metadata=config(mm_field=numbers.Number)
-    )
-    maximum_batch_mass_value: numbers.Number = field(
-        metadata=config(mm_field=numbers.Number)
-    )
+    delay: datetime.timedelta = field(metadata=config())
+    minimum_batch_mass_value: numbers_alias = field(metadata=config())
+    maximum_batch_mass_value: numbers_alias = field(metadata=config())
     stream_type: str
     name_to_display: str | None
+
+    def __post_init__(self):
+        from ethos_penalps.utilities.general_functions import datetime_to_seconds
+
+        self.start_time_seconds: numbers_alias = datetime_to_seconds(self.start_time)
+        self.end_time_seconds_time_seconds: numbers_alias = datetime_to_seconds(self.end_time)
+        self.duration_seconds: numbers_alias = self.duration.total_seconds()
 
 
 @dataclass
@@ -190,7 +201,7 @@ class BatchStream(DataClassJsonMixin):
 
     static_data: BatchStreamStaticData
 
-    stream_type = "BatchStream"
+    stream_type = StreamType.BATCH.value
 
     def __post_init__(self):
         self.name = (
@@ -200,22 +211,20 @@ class BatchStream(DataClassJsonMixin):
             + "_"
             + self.static_data.commodity.name
         )
-        self.stream_energy_data: StreamEnergyData = StreamEnergyData(
-            stream_name=self.name
-        )
+        self.stream_energy_data: StreamEnergyData = StreamEnergyData(stream_name=self.name)
 
     def create_stream_energy_data(
         self,
-        specific_energy_demand: numbers.Number,
+        specific_energy_demand: numbers_alias,
         load_type: LoadType,
-        mass_unit: str = Units.mass_unit.__str__(),
-        energy_unit: str = Units.energy_unit.__str__(),
+        mass_unit: str = str(Units.mass_unit),
+        energy_unit: str = str(Units.energy_unit),
     ):
         """Creates the data that is required to determine the energy demand of a
         Stream for a specific LoadType.
 
         Args:
-            specific_energy_demand (numbers.Number): Value for the mass specific energy
+            specific_energy_demand (numbers_alias): Value for the mass specific energy
                 demand.
             load_type (LoadType): LoadType representing the energy type that is consumed
                 by the Stream.
@@ -231,13 +240,9 @@ class BatchStream(DataClassJsonMixin):
             mass_unit=mass_unit,
             energy_unit=energy_unit,
         )
-        self.stream_energy_data.add_stream_load_energy_data(
-            stream_load_energy_data=stream_load_energy_data
-        )
+        self.stream_energy_data.add_stream_load_energy_data(stream_load_energy_data=stream_load_energy_data)
 
-    def create_production_plan_entry(
-        self, state: BatchStreamState
-    ) -> BatchStreamProductionPlanEntry:
+    def create_production_plan_entry(self, state: BatchStreamState) -> BatchStreamProductionPlanEntry:
         """Creates the ResultProductionPlanEntry
 
         Args:
@@ -254,30 +259,25 @@ class BatchStream(DataClassJsonMixin):
             end_time=state.end_time,
             duration=state.end_time - state.start_time,
             delay=self.static_data.delay,
-            batch_mass_value=state.batch_mass_value,
-            batch_mass_unit=self.static_data.mass_unit,
+            total_mass=state.batch_mass_value,
+            mass_unit=self.static_data.mass_unit,
             minimum_batch_mass_value=self.static_data.minimum_batch_mass_value,
             maximum_batch_mass_value=self.static_data.maximum_batch_mass_value,
-            stream_type="BatchStream",
+            stream_type=StreamType.BATCH.value,
             name_to_display=self.static_data.name_to_display,
         )
         return new_production_plan_entry
 
-    def get_produced_amount(self, state: BatchStreamState) -> numbers.Number:
+    def get_produced_amount(self, state: BatchStreamState) -> numbers_alias:
         """Returns the produced mass of the BatchStreamState.
 
         Args:
             state (BatchStreamState): BatchStreamState to be analyzed.
 
         Returns:
-            numbers.Number: Mass of the BatchStreamState.
+            numbers_alias: Mass of the BatchStreamState.
         """
-        if not isinstance(state, BatchStreamState):
-            raise UnexpectedDataType(
-                current_data_type=state, expected_data_type=BatchStreamState
-            )
-        produced_amount = state.batch_mass_value
-        return produced_amount
+        return state.batch_mass_value
 
     def get_time_frame_overlap_share(
         self,
@@ -326,7 +326,7 @@ class BatchStream(DataClassJsonMixin):
         stream_state: BatchStreamState,
         is_input_stream: bool,
         target_date_range: datetimerange.DateTimeRange,
-    ) -> numbers.Number:
+    ) -> numbers_alias:
         """Returns the mass that is transferred by the stream state
         within the target_date_range. The mass is transferred in a discrete
         manner at the start date and end date. At the start date the complete
@@ -342,16 +342,13 @@ class BatchStream(DataClassJsonMixin):
                 is analyzed for the transferred mass.
 
         Returns:
-            numbers.Number: The total transferred mass within the target_date_range.
+            numbers_alias: The total transferred mass within the target_date_range.
         """
         if is_input_stream is True:
             mass_transfer_time = stream_state.end_time
         else:
             mass_transfer_time = stream_state.start_time
-        if (
-            mass_transfer_time in target_date_range
-            and target_date_range.timedelta == datetime.timedelta(hours=0)
-        ):
+        if mass_transfer_time in target_date_range and target_date_range.timedelta == datetime.timedelta(hours=0):
             overlap_share = 1
         else:
             overlap_share = 0
@@ -359,15 +356,13 @@ class BatchStream(DataClassJsonMixin):
         mass_share = overlap_share * stream_state.batch_mass_value
         return mass_share
 
-    def create_batch_state(
-        self, end_time: datetime.datetime, batch_mass_value: numbers.Number
-    ) -> BatchStreamState:
+    def create_batch_state(self, end_time: datetime.datetime, batch_mass_value: numbers_alias) -> BatchStreamState:
         """Creates a new batch state based on the end time and batch mass value.
 
         Args:
             end_time (datetime.datetime): End time of the new batch stream
                 state.
-            batch_mass_value (numbers.Number): Mass that is transferred during
+            batch_mass_value (numbers_alias): Mass that is transferred during
                 the period of the state.
 
         Returns:
@@ -380,25 +375,21 @@ class BatchStream(DataClassJsonMixin):
             start_time=start_time,
             end_time=end_time,
             batch_mass_value=batch_mass_value,
-            date_time_range=datetimerange.DateTimeRange(
-                start_datetime=start_time, end_datetime=end_time
-            ),
+            date_time_range=datetimerange.DateTimeRange(start_datetime=start_time, end_datetime=end_time),
         )
         return batch_stream_state
 
-    def consider_maximum_batch_mass(
-        self, target_batch_mass: numbers.Number
-    ) -> numbers.Number:
+    def consider_maximum_batch_mass(self, target_batch_mass: numbers_alias) -> numbers_alias:
         """Check if the desired maximum batch mass can be returned.
         Returns desired mass if its within boundaries. If desired mass
         is bigger than maximum, the maximum value is returned.
 
         Args:
-            target_batch_mass (numbers.Number): Mass that should be checked
+            target_batch_mass (numbers_alias): Mass that should be checked
                 for feasibility against the static data.
 
         Returns:
-            numbers.Number: Equal the target_batch_mass if it is smaller
+            numbers_alias: Equal the target_batch_mass if it is smaller
                 than the static batch mass. Equals the maximum batch mass
                 if the target batch mass is greater than the maximum batch
                 mass.
@@ -435,7 +426,7 @@ class BatchStream(DataClassJsonMixin):
         target_start_date: datetime.datetime,
         target_end_date: datetime.datetime,
         state: BatchStreamState,
-    ) -> numbers.Number:
+    ) -> numbers_alias:
         """Returns the mass of stream state that was produced
         between start date and end date provided as arguments.
 
@@ -449,33 +440,21 @@ class BatchStream(DataClassJsonMixin):
 
 
         Returns:
-            numbers.Number: Total mass of the stream state.
+            numbers_alias: Total mass of the stream state.
         """
         state_start_date = state.start_time
         state_end_date = state.end_time
         state_time_difference = state_end_date - state_start_date
         target_time_difference = target_end_date - target_start_date
         produced_mass = self.get_produced_amount(state=state)
-        if check_if_date_1_is_before_date_2(
-            date_1=target_start_date, date_2=state_start_date
-        ):
-            raise Exception(
-                "Tried to separate state in a time before the state has started"
-            )
-        if check_if_date_1_is_before_date_2(
-            date_1=state_end_date, date_2=target_end_date
-        ):
-            raise Exception(
-                "Tried to separate state in a time frame after the state has ended"
-            )
-        mass_between_target_start_and_end_time = produced_mass * (
-            target_time_difference / state_time_difference
-        )
+        if check_if_date_1_is_before_date_2(date_1=target_start_date, date_2=state_start_date):
+            raise Exception("Tried to separate state in a time before the state has started")
+        if check_if_date_1_is_before_date_2(date_1=state_end_date, date_2=target_end_date):
+            raise Exception("Tried to separate state in a time frame after the state has ended")
+        mass_between_target_start_and_end_time = produced_mass * (target_time_difference / state_time_difference)
         return mass_between_target_start_and_end_time
 
-    def json_dumps_state(
-        self, stream_state: BatchStreamState, path_to_save_folder: str = ""
-    ):
+    def json_dumps_state(self, stream_state: BatchStreamState, path_to_save_folder: str = ""):
         """Dumps the stream state to a json file.
 
         Args:
@@ -485,12 +464,9 @@ class BatchStream(DataClassJsonMixin):
         file_name = stream_state.name + ".json"
         output_path = os.path.join(path_to_save_folder, file_name)
         json_string = stream_state.to_json()
-        # batch_stream_dict.pop("date_time_range", None)
 
         with open(output_path, "w", encoding="utf8") as output_file:
             output_file.write(json_string)
-        # with open(output_path, "w", encoding="utf8") as output_file:
-        #     json.dump(batch_stream_dict, output_file, ensure_ascii=False)
 
     def json_load_state(self, path_to_file: str = ""):
         """Loads the stream state from a json file.
@@ -504,76 +480,50 @@ class BatchStream(DataClassJsonMixin):
         """
         with open(path_to_file, "r", encoding="utf8") as input_file:
             json_string = input_file.read()
-        # with open(path_to_file, "w", encoding="utf8") as input_file:
-        #     batch_stream_dict: dict = json.load(
-        #         batch_stream_dict, input_file, ensure_ascii=False
-        #     )
-        # date_time_range = datetimerange.DateTimeRange(
-        #     start_datetime=batch_stream_dict["start_time"],
-        #     end_datetime=batch_stream_dict["end_time"],
-        # )
-        # batch_stream_dict["date_time_range"] = date_time_range
+
         batch_stream_state = BatchStreamState.from_json(json_string)
         return batch_stream_state
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(kw_only=True, slots=True)
 class ContinuousStreamState(BaseStreamState):
-    total_mass: numbers.Number = field(metadata=config(mm_field=numbers.Number))
-    current_operation_rate: numbers.Number = field(
-        metadata=config(mm_field=numbers.Number)
-    )
+    total_mass: numbers_alias = field(metadata=config())
+    current_operation_rate: numbers_alias = field(metadata=config())
 
 
 @dataclass(kw_only=True)
 class ContinuousStreamStaticData(StreamStaticData):
-    minimum_operation_rate: numbers.Number = field(
+    minimum_operation_rate: numbers_alias = field(
         default=0,
-        metadata=config(mm_field=numbers.Number),
+        metadata=config(),
     )
     """This rate defines the minimum rate at which
     mass can be transferred by this stream.
     """
-    maximum_operation_rate: numbers.Number = field(
+    maximum_operation_rate: numbers_alias = field(
         default=float("inf"),
-        metadata=config(mm_field=numbers.Number),
+        metadata=config(),
     )
     """This rate defines the maximum rate at which
     mass can be transferred by this stream.
     """
-    time_unit: datetime.timedelta = field(
-        default=datetime.timedelta(hours=1),
-        metadata=config(
-            encoder=json_timedelta_serialization_function,
-            decoder=json_timedelta_deserialization_function,
-            mm_field=datetime.timedelta,
-        ),
-    )
+    operation_rate_unit: str = str(Units.mass_throughput_rate)
     """Determines the denominator unit of the
     operation rate.
     """
-    stream_type: str = "ContinuousStream"
+    stream_type: str = StreamType.CONTINUOUS.value
     """Defines the object type. Must no be changed.
     """
 
 
-@dataclass(frozen=True, slots=True)
-class ContinuousStreamProductionPlanEntry(DataClassJsonMixin):
+@dataclass(kw_only=True, slots=True)
+class ContinuousStreamProductionPlanEntry(StreamProductionPlanEntry):
     """Represents a single discrete simulation result for a stream."""
 
-    name: str
-    start_time: datetime.datetime
-    end_time: datetime.datetime
-    duration: datetime.timedelta
-    commodity: str
-    current_operation_rate_value: numbers.Number
+    current_operation_rate_value: numbers_alias
     current_operation_rate_unit: str
-    mass_unit: str
-    minimum_operation_rate: numbers.Number
-    maximum_operation_rate: numbers.Number
-    total_mass: numbers.Number
-    stream_type: str
-    name_to_display: str
+    minimum_operation_rate: numbers_alias
+    maximum_operation_rate: numbers_alias
 
 
 @dataclass
@@ -583,7 +533,7 @@ class ContinuousStream(DataClassJsonMixin):
     end time of a ContinuousStreamState."""
 
     static_data: ContinuousStreamStaticData
-    stream_type = "ContinuousStream"
+    stream_type = StreamType.CONTINUOUS.value
 
     def __post_init__(
         self,
@@ -595,22 +545,20 @@ class ContinuousStream(DataClassJsonMixin):
             + "_"
             + self.static_data.commodity.name
         )
-        self.stream_energy_data: StreamEnergyData = StreamEnergyData(
-            stream_name=self.name
-        )
+        self.stream_energy_data: StreamEnergyData = StreamEnergyData(stream_name=self.name)
 
     def create_stream_energy_data(
         self,
-        specific_energy_demand: numbers.Number,
+        specific_energy_demand: numbers_alias,
         load_type: LoadType,
-        mass_unit: str = Units.mass_unit.__str__(),
-        energy_unit: str = Units.energy_unit.__str__(),
+        mass_unit: str = str(Units.mass_unit),
+        energy_unit: str = str(Units.energy_unit),
     ):
         """Creates the data that is required to determine the energy demand of a
         Stream for a specific LoadType.
 
         Args:
-            specific_energy_demand (numbers.Number): Value for the mass specific energy
+            specific_energy_demand (numbers_alias): Value for the mass specific energy
                 demand.
             load_type (LoadType): LoadType representing the energy type that is consumed
                 by the Stream.
@@ -626,25 +574,23 @@ class ContinuousStream(DataClassJsonMixin):
             mass_unit=mass_unit,
             energy_unit=energy_unit,
         )
-        self.stream_energy_data.add_stream_load_energy_data(
-            stream_load_energy_data=stream_load_energy_data
-        )
+        self.stream_energy_data.add_stream_load_energy_data(stream_load_energy_data=stream_load_energy_data)
 
     def create_stream_state_for_commodity_amount(
         self,
-        commodity_amount: numbers.Number,
+        commodity_amount: numbers_alias,
         end_time: datetime.datetime,
-        operation_rate: numbers.Number = float("inf"),
+        operation_rate: numbers_alias = float("inf"),
     ) -> ContinuousStreamState:
         """Creates a stream state based on the end time, commodity mass
         and operation rate.
 
 
         Args:
-            commodity_amount (numbers.Number): Total commodity amount of the output
+            commodity_amount (numbers_alias): Total commodity amount of the output
                 stream state.
             end_time (datetime.datetime): End time of the stream state.
-            operation_rate (numbers.Number, optional): Operation rate of the
+            operation_rate (numbers_alias, optional): Operation rate of the
                 stream state. Defaults to float("inf").
 
         Returns:
@@ -661,17 +607,13 @@ class ContinuousStream(DataClassJsonMixin):
                 self.static_data.name_to_display,
             )
 
-        operation_rate_is_within_boundaries = (
-            self.check_if_operation_rate_is_within_boundaries(
-                operation_rate_to_check=operation_rate
-            )
+        operation_rate_is_within_boundaries = self.check_if_operation_rate_is_within_boundaries(
+            operation_rate_to_check=operation_rate
         )
         if operation_rate_is_within_boundaries is False:
             raise Exception("Operation is not within boundaries")
 
-        start_time = end_time - datetime.timedelta(
-            hours=commodity_amount / operation_rate
-        )
+        start_time = end_time - datetime.timedelta(hours=commodity_amount / operation_rate)
 
         continuous_stream_state = ContinuousStreamState(
             name=self.name,
@@ -679,9 +621,7 @@ class ContinuousStream(DataClassJsonMixin):
             start_time=start_time,
             total_mass=commodity_amount,
             current_operation_rate=operation_rate,
-            date_time_range=datetimerange.DateTimeRange(
-                start_datetime=start_time, end_datetime=end_time
-            ),
+            date_time_range=datetimerange.DateTimeRange(start_datetime=start_time, end_datetime=end_time),
         )
         return continuous_stream_state
 
@@ -689,7 +629,7 @@ class ContinuousStream(DataClassJsonMixin):
         self,
         numerator_date_range: datetimerange.DateTimeRange,
         denominator_date_range: datetimerange.DateTimeRange,
-    ) -> numbers.Number:
+    ) -> numbers_alias:
         """Determines the time share of two date ranges.
 
         Args:
@@ -697,17 +637,14 @@ class ContinuousStream(DataClassJsonMixin):
             denominator_date_range (datetimerange.DateTimeRange): Time share in the denominator.
 
         Returns:
-            numbers.Number: Time share of the numerator in the denominator. Can be between 0 and 1.
+            numbers_alias: Time share of the numerator in the denominator. Can be between 0 and 1.
         """
         # if denominator_date_range.get_timedelta_second() == 0:
         #     overlap_share = 0
         # else:
         if denominator_date_range.is_intersection(numerator_date_range):
             intersection = denominator_date_range.intersection(x=numerator_date_range)
-            overlap_share = (
-                intersection.get_timedelta_second()
-                / denominator_date_range.get_timedelta_second()
-            )
+            overlap_share = intersection.get_timedelta_second() / denominator_date_range.get_timedelta_second()
 
         else:
             overlap_share = 0
@@ -717,7 +654,7 @@ class ContinuousStream(DataClassJsonMixin):
         self,
         numerator_date_range: datetimerange.DateTimeRange,
         stream_state: ContinuousStreamState,
-    ) -> numbers.Number:
+    ) -> numbers_alias:
         """Returns the mass of the stream that was produced during the
         numerator date range.
 
@@ -728,24 +665,19 @@ class ContinuousStream(DataClassJsonMixin):
                 for the mass in the numerator date range.
 
         Returns:
-            numbers.Number: Mass produced in the numerator date range.
+            numbers_alias: Mass produced in the numerator date range.
         """
         denominator_date_range = stream_state.date_time_range
         if denominator_date_range.is_intersection(numerator_date_range):
             intersection = denominator_date_range.intersection(x=numerator_date_range)
-            overlap_share = (
-                intersection.get_timedelta_second()
-                / denominator_date_range.get_timedelta_second()
-            )
+            overlap_share = intersection.get_timedelta_second() / denominator_date_range.get_timedelta_second()
 
         else:
             overlap_share = 0
         mass_share = overlap_share * stream_state.total_mass
         return mass_share
 
-    def create_production_plan_entry(
-        self, state: ContinuousStreamState
-    ) -> ContinuousStreamProductionPlanEntry:
+    def create_production_plan_entry(self, state: ContinuousStreamState) -> ContinuousStreamProductionPlanEntry:
         """Creates a stream simulation result from a simulation result.
         The simulation results contains additional information that was not
         required during the simulation.
@@ -765,20 +697,18 @@ class ContinuousStream(DataClassJsonMixin):
             commodity=self.static_data.commodity.name,
             current_operation_rate_value=state.current_operation_rate,
             mass_unit=self.static_data.mass_unit,
-            current_operation_rate_unit=str(self.static_data.mass_unit)
-            + "\\"
-            + str(self.static_data.time_unit),
+            current_operation_rate_unit=str(self.static_data.operation_rate_unit),
             minimum_operation_rate=self.static_data.minimum_operation_rate,
             maximum_operation_rate=self.static_data.maximum_operation_rate,
             total_mass=state.current_operation_rate
-            * ((state.end_time - state.start_time) / self.static_data.time_unit),
-            stream_type="ContinuousStream",
+            * ((state.end_time - state.start_time) / datetime.timedelta(hours=1)),
+            stream_type=StreamType.CONTINUOUS.value,
             name_to_display=self.static_data.name_to_display,
         )
 
         return production_plan_entry
 
-    def get_produced_amount(self, state: ContinuousStreamState) -> numbers.Number:
+    def get_produced_amount(self, state: ContinuousStreamState) -> numbers_alias:
         """Returns the total mass of the stream state.
 
         Args:
@@ -786,24 +716,16 @@ class ContinuousStream(DataClassJsonMixin):
                 mass of interest.
 
         Returns:
-            numbers.Number: Total mass of the input stream state.
+            numbers_alias: Total mass of the input stream state.
         """
-        if not isinstance(state, ContinuousStreamState):
-            raise UnexpectedDataType(
-                current_data_type=state, expected_data_type=ContinuousStreamState
-            )
-            # raise Exception("Wrong input data type for stream state: " + str(state))
-
         return state.total_mass
 
-    def check_if_operation_rate_is_within_boundaries(
-        self, operation_rate_to_check: numbers.Number
-    ) -> bool:
+    def check_if_operation_rate_is_within_boundaries(self, operation_rate_to_check: numbers_alias) -> bool:
         """Checks if operation rate is within the limits of the
         static data of a stream.
 
         Args:
-            operation_rate_to_check (numbers.Number): Operation rate
+            operation_rate_to_check (numbers_alias): Operation rate
                 that should be checked.
 
         Returns:
@@ -812,24 +734,16 @@ class ContinuousStream(DataClassJsonMixin):
         """
         if self.static_data.maximum_operation_rate == float("inf"):
             operation_rate_is_within_boundaries = True
-        elif isinstance(self.static_data.maximum_operation_rate, numbers.Number):
+        elif isinstance(self.static_data.maximum_operation_rate, float | int):
             if operation_rate_to_check > self.static_data.maximum_operation_rate:
                 operation_rate_to_check = self.static_data.maximum_operation_rate
                 operation_rate_is_within_boundaries = False
-            elif (
-                operation_rate_to_check <= self.static_data.maximum_operation_rate
-                and operation_rate_to_check >= 0
-            ):
+            elif operation_rate_to_check <= self.static_data.maximum_operation_rate and operation_rate_to_check >= 0:
                 operation_rate_is_within_boundaries = True
             elif operation_rate_to_check < 0:
-                raise Exception(
-                    "Input stream operation rate has been set to "
-                    + str(operation_rate_to_check)
-                )
+                raise Exception("Input stream operation rate has been set to " + str(operation_rate_to_check))
             else:
-                raise Exception(
-                    "Unexpected data in comparison of maximum and current operation rate"
-                )
+                raise Exception("Unexpected data in comparison of maximum and current operation rate")
         else:
             raise Exception(
                 "Unexpected datatype for maximum operation rate: "
@@ -843,8 +757,8 @@ class ContinuousStream(DataClassJsonMixin):
     def determine_start_time(
         self,
         end_time: datetime.datetime,
-        operation_rate: numbers.Number,
-        total_transported_mass: numbers.Number,
+        operation_rate: numbers_alias,
+        total_transported_mass: numbers_alias,
     ) -> datetime.datetime:
         """Determine the start time of the stream state
         based on the end_time, operation rate and the total
@@ -852,17 +766,15 @@ class ContinuousStream(DataClassJsonMixin):
 
         Args:
             end_time (datetime.datetime): End time of the state.
-            operation_rate (numbers.Number): Rate at which mass is transferred
+            operation_rate (numbers_alias): Rate at which mass is transferred
                 during stream state.
-            total_transported_mass (numbers.Number): Total produced
+            total_transported_mass (numbers_alias): Total produced
                 mass of the stream state.
 
         Returns:
             datetime.datetime: Start time that was defined based on the arguments.
         """
-        start_time = end_time - datetime.timedelta(
-            hours=total_transported_mass / operation_rate
-        )
+        start_time = end_time - datetime.timedelta(hours=total_transported_mass / operation_rate)
         logging.debug(
             "The end time is: %s , start_time:%s operation rate: %s and the total transported mass: %s ",
             end_time,
@@ -872,63 +784,59 @@ class ContinuousStream(DataClassJsonMixin):
         )
         return start_time
 
-    def determine_stream_state_mass(
-        self,
-        end_time: datetime.datetime,
-        start_time: datetime.datetime,
-        current_operation_rate: numbers.Number | None,
-    ) -> numbers.Number:
-        """Returns the total mass that is produced at the current operation rate
-        during the period defined.
+    # def determine_stream_state_mass(
+    #     self,
+    #     end_time: datetime.datetime,
+    #     start_time: datetime.datetime,
+    #     current_operation_rate: numbers_alias,
+    # ) -> numbers_alias:
+    #     """Returns the total mass that is produced at the current operation rate
+    #     during the period defined.
 
-        Args:
-            end_time (datetime.datetime): End time of the period to be analyzed.
-            start_time (datetime.datetime): Start time of the period to be analyzed.
-            current_operation_rate (numbers.Number | None): Rate at which mass is transferred.
+    #     Args:
+    #         end_time (datetime.datetime): End time of the period to be analyzed.
+    #         start_time (datetime.datetime): Start time of the period to be analyzed.
+    #         current_operation_rate (numbers_alias | None): Rate at which mass is transferred.
 
-        Returns:
-            numbers.Number: Total mass that is produced during the period.
-        """
-        time_difference_date_time: datetime.timedelta = end_time - start_time
-        time_difference_float: numbers.Number = (
-            time_difference_date_time / self.static_data.time_unit
-        )
-        produced_amount: numbers.Number = time_difference_float * current_operation_rate
-        return produced_amount
+    #     Returns:
+    #         numbers_alias: Total mass that is produced during the period.
+    #     """
+    #     time_difference_date_time: datetime.timedelta = end_time - start_time
+    #     time_difference_float: numbers_alias = time_difference_date_time / self.static_data.operation_rate_unit
+    #     produced_amount: numbers_alias = time_difference_float * current_operation_rate
+    #     return produced_amount
 
-    def create_continuous_stream_state(
-        self,
-        end_time: datetime.datetime,
-        start_time: datetime.datetime,
-        current_operation_rate: numbers.Number | None,
-    ) -> ContinuousStreamState:
-        """Creates a continuous stream state for the time period and operation
-        rate that is provided by the input arguments.
+    # def create_continuous_stream_state(
+    #     self,
+    #     end_time: datetime.datetime,
+    #     start_time: datetime.datetime,
+    #     current_operation_rate: numbers_alias,
+    # ) -> ContinuousStreamState:
+    #     """Creates a continuous stream state for the time period and operation
+    #     rate that is provided by the input arguments.
 
-        Args:
-            end_time (datetime.datetime): End time of the stream state.
-            start_time (datetime.datetime): Start time of the stream state.
-            current_operation_rate (numbers.Number | None): Operation rate
-                of the stream state.
+    #     Args:
+    #         end_time (datetime.datetime): End time of the stream state.
+    #         start_time (datetime.datetime): Start time of the stream state.
+    #         current_operation_rate (numbers_alias | None): Operation rate
+    #             of the stream state.
 
-        Returns:
-            ContinuousStreamState: New stream state.
-        """
-        produced_amount = self.determine_stream_state_mass(
-            end_time=end_time,
-            start_time=start_time,
-            current_operation_rate=current_operation_rate,
-        )
-        return ContinuousStreamState(
-            name=self.name,
-            start_time=start_time,
-            end_time=end_time,
-            total_mass=produced_amount,
-            current_operation_rate=current_operation_rate,
-            date_time_range=datetimerange.DateTimeRange(
-                start_datetime=start_time, end_datetime=end_time
-            ),
-        )
+    #     Returns:
+    #         ContinuousStreamState: New stream state.
+    #     """
+    #     produced_amount = self.determine_stream_state_mass(
+    #         end_time=end_time,
+    #         start_time=start_time,
+    #         current_operation_rate=current_operation_rate,
+    #     )
+    #     return ContinuousStreamState(
+    #         name=self.name,
+    #         start_time=start_time,
+    #         end_time=end_time,
+    #         total_mass=produced_amount,
+    #         current_operation_rate=current_operation_rate,
+    #         date_time_range=datetimerange.DateTimeRange(start_datetime=start_time, end_datetime=end_time),
+    #     )
 
     def get_upstream_node_name(self) -> str:
         """Returns the name of the start node of the stream.
@@ -951,7 +859,7 @@ class ContinuousStream(DataClassJsonMixin):
         target_start_date: datetime.datetime,
         target_end_date: datetime.datetime,
         state: ContinuousStreamState,
-    ) -> numbers.Number:
+    ) -> numbers_alias:
         """Returns the mass that was produced by the stream state
         in the given period.
 
@@ -970,33 +878,21 @@ class ContinuousStream(DataClassJsonMixin):
                 after the end of the stream state.
 
         Returns:
-            numbers.Number: Value of the produced mass.
+            numbers_alias: Value of the produced mass.
         """
         state_start_date = state.start_time
         state_end_date = state.end_time
         state_time_difference = state_end_date - state_start_date
         target_time_difference = target_end_date - target_start_date
         produced_mass = self.get_produced_amount(state=state)
-        if check_if_date_1_is_before_date_2(
-            date_1=target_start_date, date_2=state_start_date
-        ):
-            raise Exception(
-                "Tried to separate state in a time before the state has started"
-            )
-        if check_if_date_1_is_before_date_2(
-            date_1=state_end_date, date_2=target_end_date
-        ):
-            raise Exception(
-                "Tried to separate state in a time frame after the state has ended"
-            )
-        mass_between_target_start_and_end_time = produced_mass * (
-            target_time_difference / state_time_difference
-        )
+        if check_if_date_1_is_before_date_2(date_1=target_start_date, date_2=state_start_date):
+            raise Exception("Tried to separate state in a time before the state has started")
+        if check_if_date_1_is_before_date_2(date_1=state_end_date, date_2=target_end_date):
+            raise Exception("Tried to separate state in a time frame after the state has ended")
+        mass_between_target_start_and_end_time = produced_mass * (target_time_difference / state_time_difference)
         return mass_between_target_start_and_end_time
 
-    def json_dumps_state(
-        self, stream_state: ContinuousStreamState, path_to_save_folder: str = ""
-    ):
+    def json_dumps_state(self, stream_state: ContinuousStreamState, path_to_save_folder: str = ""):
         """Dumps a streams tate to a json file.
 
         Args:
@@ -1033,17 +929,13 @@ class ContinuousStream(DataClassJsonMixin):
 
 
 @dataclass(kw_only=True, frozen=True)
-class ProcessStepProductionPlanEntryWithInputStreamState(
-    ProcessStepProductionPlanEntry
-):
+class ProcessStepProductionPlanEntryWithMass(ProcessStepProductionPlanEntry):
     """
     Discrete simulation state that couples an input stream
     to the respective simulation process state.
     """
 
-    stream_start_time: datetime.datetime
-    stream_end_time: datetime.datetime
-    total_stream_mass: numbers.Number
+    relevant_mass: numbers_alias
 
 
 @dataclass
@@ -1060,3 +952,4 @@ class StreamDataFrameMetaInformation(DataClassJsonMixin):
     mass_unit: str
     commodity: Commodity
     name_to_display: str
+    plot_string: str | None = None

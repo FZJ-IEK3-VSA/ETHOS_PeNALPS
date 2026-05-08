@@ -1,15 +1,17 @@
 import datetime
-import numbers
+import uuid
 import warnings
+from abc import ABC
 from dataclasses import dataclass, field, fields
+from enum import Flag, auto
 from typing import Optional
 
 import pandas
-import pint
 from dataclasses_json import DataClassJsonMixin, config, dataclass_json
 
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedBehaviorWarning
 from ethos_penalps.utilities.general_functions import get_new_uuid
+from ethos_penalps.utilities.type_aliases import numbers_alias
 from ethos_penalps.utilities.units import Units
 
 
@@ -31,6 +33,13 @@ class Commodity(DataClassJsonMixin):
         return "Commodity: " + self.name
 
 
+class OrderProcessingType(Flag):
+    AGGREGATE_AND_DISTRIBUTE = auto()
+    DISTRIBUTE = auto()
+    ORDER_TO_CHAIN_SPLITTER = auto()
+    ORDER_PARALLEL = auto()
+
+
 @dataclass(frozen=True, eq=True, slots=True)
 class LoadType(DataClassJsonMixin):
     """Represents an energy carrier like electricity or natural
@@ -45,7 +54,7 @@ class LoadType(DataClassJsonMixin):
     """
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(kw_only=True, eq=True, slots=True)
 class ProcessStateData(DataClassJsonMixin):
     """Intermediate simulation data that represents
     a discrete state of the process step during the
@@ -55,6 +64,12 @@ class ProcessStateData(DataClassJsonMixin):
     process_state_name: str
     start_time: datetime.datetime
     end_time: datetime.datetime
+
+    def __post_init__(self):
+        from ethos_penalps.utilities.general_functions import datetime_to_seconds
+
+        self.start_time_seconds: float = datetime_to_seconds(self.start_time)
+        self.end_time_seconds: float = datetime_to_seconds(self.end_time)
 
 
 @dataclass
@@ -70,14 +85,58 @@ class EmptyMetaDataInformation:
 
 
 @dataclass()
-class ProductEnergyData(DataClassJsonMixin):
+class StreamProductEnergyLoadData(DataClassJsonMixin):
+    """Summarizes the specific energy demand that is
+    required for an end product. It considers previous
+    energy demand and conversion factors from previous
+    steps."""
+
+    stream_name: str
+    specific_energy_demand: numbers_alias
+    load_type: LoadType
+    mass_unit: str = str(Units.energy_unit)
+    energy_unit: str = str(Units.energy_unit)
+
+
+@dataclass()
+class ProcessStepProductEnergyLoadData(DataClassJsonMixin):
+    """Summarizes the specific energy demand that is
+    required for an end product. It considers previous
+    energy demand and conversion factors from previous
+    steps."""
+
+    specific_energy_demand: numbers_alias
+    load_type: LoadType
+    mass_unit: str = str(Units.energy_unit)
+    energy_unit: str = str(Units.energy_unit)
+
+
+@dataclass()
+class FinalProductEnergySummaryLoad(DataClassJsonMixin):
     """Summarizes the specific energy demand that is
     required for an end product. It considers previous
     energy demand and conversion factors from previous
     steps."""
 
     product_commodity: Commodity
-    specific_energy_demand: float
+    specific_energy_demand: numbers_alias
+    load_type: str
+    specific_energy_unit: str
+    total_mass_value: str
+    total_mass_unit: str
+    energy_value_total: numbers_alias
+    energy_unit_total: str
+
+
+@dataclass()
+class FinalProductEnergyData(DataClassJsonMixin):
+    """Summarizes the specific energy demand that is
+    required for an end product. It considers previous
+    energy demand and conversion factors from previous
+    steps."""
+
+    product_commodity: Commodity
+    specific_energy_demand: numbers_alias
     load_type: LoadType
     mass_unit: str = str(Units.energy_unit)
     energy_unit: str = str(Units.energy_unit)
@@ -90,7 +149,7 @@ class StreamLoadEnergyData(DataClassJsonMixin):
     """
 
     stream_name: str
-    specific_energy_demand: float
+    specific_energy_demand: numbers_alias
     load_type: LoadType
     mass_unit: str = str(Units.mass_unit)
     energy_unit: str = str(Units.energy_unit)
@@ -111,9 +170,7 @@ class LoadProfileEntry(DataClassJsonMixin):
     average_power_consumption: float
     power_unit: str
 
-    def _adjust_power_unit(
-        self, new_power_value: float, new_power_unit: str
-    ) -> "LoadProfileEntry":
+    def _adjust_power_unit(self, new_power_value: float, new_power_unit: str) -> "LoadProfileEntry":
         """Converts the power quantity to a
         new value and unit.
 
@@ -141,7 +198,7 @@ class LoopCounter:
     during the simulation.
     """
 
-    loop_number: float | str = "Loop has not started"
+    loop_number: int | str = "Loop has not started"
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
@@ -154,7 +211,7 @@ class ProcessStepProductionPlanEntry(DataClassJsonMixin):
     process_state_name: str
     start_time: datetime.datetime
     end_time: datetime.datetime
-    duration: str
+    duration: datetime.timedelta
     process_state_type: str
 
 
@@ -167,9 +224,9 @@ class StorageProductionPlanEntry(DataClassJsonMixin):
     process_step_name: str
     start_time: datetime.datetime
     end_time: datetime.datetime
-    duration: str
-    storage_level_at_start: float
-    storage_level_at_end: float
+    duration: datetime.timedelta
+    storage_level_at_start: numbers_alias
+    storage_level_at_end: numbers_alias
     commodity: Commodity
 
 
@@ -195,6 +252,7 @@ class ProcessStepDataFrameMetaInformation:
     list_of_process_state_names: list[str]
     first_start_time: datetime.datetime
     last_end_time: datetime.datetime
+    plot_string: str | None = None
 
 
 @dataclass
@@ -210,6 +268,7 @@ class StorageDataFrameMetaInformation:
     first_start_time: datetime.datetime
     last_end_time: datetime.datetime
     mass_unit: str
+    plot_string: str | None = None
 
 
 @dataclass
@@ -293,6 +352,23 @@ class ProductionOrder:
     production_deadline: datetime.datetime
     order_number: float
     commodity: Commodity
+    mass_unit: str
+    global_unique_identifier: str = field(default_factory=get_new_uuid)
+    produced_mass: float = 0
+
+
+@dataclass
+class ProductionOrderWithTransferDuration:
+    """Represents an Order for a product
+    that should be produced during the simulation."""
+
+    production_target: float
+    production_deadline: datetime.datetime
+    production_start_time: datetime.datetime
+    transfer_duration: datetime.timedelta
+    order_number: float
+    commodity: Commodity
+    mass_unit: str
     global_unique_identifier: str = field(default_factory=get_new_uuid)
     produced_mass: float = 0
 
@@ -325,9 +401,7 @@ class OrderCollection:
             for current_field in fields(ProductionOrder):
                 list_of_order_field_names.append(current_field.name)
 
-            self.order_data_frame: pandas.DataFrame = pandas.DataFrame(
-                columns=list_of_order_field_names
-            )
+            self.order_data_frame: pandas.DataFrame = pandas.DataFrame(columns=list_of_order_field_names)
         else:
             self.order_data_frame: pandas.DataFrame = order_data_frame
         self.deadline_column_name: str = "production_deadline"
@@ -340,9 +414,7 @@ class OrderCollection:
         Args:
             ascending (bool, optional): Determines the order direction. Defaults to True.
         """
-        self.order_data_frame.sort_values(
-            self.deadline_column_name, inplace=True, ascending=ascending
-        )
+        self.order_data_frame.sort_values(self.deadline_column_name, inplace=True, ascending=ascending)
         self.order_data_frame.reset_index(inplace=True, drop=True)
 
     def append_order_collection(self, order_collection: "OrderCollection"):
@@ -354,9 +426,67 @@ class OrderCollection:
         """
         if self.commodity != order_collection.commodity:
             warnings.warn("Tried to append order collection with different commodity.")
-        self.order_data_frame = pandas.concat(
-            [self.order_data_frame, order_collection.order_data_frame]
-        )
+        self.order_data_frame = pandas.concat([self.order_data_frame, order_collection.order_data_frame])
+        new_sum = self.target_mass + order_collection.target_mass
+        self.target_mass = new_sum
+
+
+class OrderWithMassTransferDurationCollection:
+    """Combines multiple order that should be passed
+    to a sink.
+    """
+
+    def __init__(
+        self,
+        target_mass: float,
+        commodity: Commodity,
+        order_data_frame: pandas.DataFrame | None = None,
+    ) -> None:
+        """
+
+        Args:
+            target_mass (float): Total mass of all orders
+            commodity (Commodity): Commodity of all orders.
+                All orders must have the same commodity
+            order_data_frame (pandas.DataFrame | None, optional):
+                The data frame is created from a list of ProductionOrder
+                Defaults to None.
+        """
+        self.target_mass: float = target_mass
+        self.commodity: Commodity = commodity
+        if order_data_frame is None:
+            list_of_order_field_names = []
+            for current_field in fields(ProductionOrderWithTransferDuration):
+                list_of_order_field_names.append(current_field.name)
+
+            self.order_data_frame: pandas.DataFrame = pandas.DataFrame(columns=list_of_order_field_names)
+        else:
+            self.order_data_frame: pandas.DataFrame = order_data_frame
+        self.deadline_column_name: str = "production_deadline"
+        self.production_target_column_name: str = "production_target"
+        self.order_number_column_name: str = "order_number"
+        self.transfer_duration_name: str = "transfer_duration"
+        self.production_start_time_name: str = "production_start_time"
+
+    def sort_orders_by_deadline(self, ascending: bool = True):
+        """Sorts the orders in the data frame by their deadline.
+
+        Args:
+            ascending (bool, optional): Determines the order direction. Defaults to True.
+        """
+        self.order_data_frame.sort_values(self.deadline_column_name, inplace=True, ascending=ascending)
+        self.order_data_frame.reset_index(inplace=True, drop=True)
+
+    def append_order_collection(self, order_collection: "OrderWithMassTransferDurationCollection"):
+        """Appends another Order collection to the current collection.
+
+        Args:
+            order_collection (OrderCollection): New collection that should
+                be appended.
+        """
+        if self.commodity != order_collection.commodity:
+            warnings.warn("Tried to append order collection with different commodity.")
+        self.order_data_frame = pandas.concat([self.order_data_frame, order_collection.order_data_frame])
         new_sum = self.target_mass + order_collection.target_mass
         self.target_mass = new_sum
 
@@ -368,7 +498,7 @@ class ProcessStateEnergyLoadData(DataClassJsonMixin):
 
     process_state_name: str
     process_step_name: str
-    specific_energy_demand: float
+    specific_energy_demand: numbers_alias
     load_type: LoadType
     mass_unit: str = str(Units.mass_unit)
     energy_unit: str = str(Units.energy_unit)
@@ -383,17 +513,27 @@ class ProcessStateEnergyLoadDataBasedOnStreamMass(ProcessStateEnergyLoadData):
     stream_name: str
 
 
+@dataclass(kw_only=True)
+class ProcessStateEnergyLoadDataBasedOnStorageMass(ProcessStateEnergyLoadData):
+    """Appends the stream name that provides the mass that is the basis
+    to create a lod profile from the process state.
+    """
+
+    stream_name: str
+
+
 @dataclass
 class ProductionOrderMetadata(DataClassJsonMixin):
     """Provides the orders of a sink and additional
     meta information about it.
     """
 
+    order_name: str
     data_frame: pandas.DataFrame
-    list_of_aggregated_production_order: list[list[numbers.Number]]
+    list_of_aggregated_production_order: list[list[numbers_alias]]
     list_of_unique_deadlines: list[datetime.datetime]
     commodity: Commodity
-    total_order_mass: numbers.Number
+    total_order_mass: numbers_alias
     earliest_deadline: datetime.datetime
     latest_deadline: datetime.datetime
 
@@ -407,13 +547,9 @@ class ProcessStateEnergyData:
     process_step_name: str
     process_state_name: str
     dict_of_loads: dict[str, LoadType] = field(default_factory=dict)
-    dict_of_load_energy_data: dict[str, ProcessStateEnergyLoadData] = field(
-        default_factory=dict
-    )
+    dict_of_load_energy_data: dict[str, ProcessStateEnergyLoadData] = field(default_factory=dict)
 
-    def add_process_state_energy_load_data(
-        self, process_state_energy_load_data: ProcessStateEnergyLoadData
-    ):
+    def add_process_state_energy_load_data(self, process_state_energy_load_data: ProcessStateEnergyLoadData):
         """Adds the ProcessStateEnergyLoadData for a specific LoadType.
 
         Args:
@@ -421,12 +557,8 @@ class ProcessStateEnergyData:
                 the information that is required to determine the energy demand
                 of a process sate for a specific LoadType.
         """
-        self.dict_of_loads[process_state_energy_load_data.load_type.uuid] = (
-            process_state_energy_load_data.load_type
-        )
-        self.dict_of_load_energy_data[process_state_energy_load_data.load_type.uuid] = (
-            process_state_energy_load_data
-        )
+        self.dict_of_loads[process_state_energy_load_data.load_type.uuid] = process_state_energy_load_data.load_type
+        self.dict_of_load_energy_data[process_state_energy_load_data.load_type.uuid] = process_state_energy_load_data
 
     def get_dict_of_loads(self) -> dict[str, LoadType]:
         """Returns a dictionary that contains all LoadTypes
@@ -463,6 +595,21 @@ class ListOfLoadProfileEntryMetaData:
 
 
 @dataclass
+class LoadProfileDataFrameStats:
+    """Statistics extracted from a load profile DataFrame."""
+
+    first_start_time: datetime.datetime
+    last_end_time: datetime.datetime
+    load_type: "LoadType"
+    power_unit: str
+    energy_unit: str
+    maximum_energy: float
+    maximum_power: float
+    minimum_power: float
+    total_energy: float
+
+
+@dataclass
 class LoadProfileMetaData(DataClassJsonMixin):
     """Provides a list of LoadProfileEntry, a data frame
     from this list and meta data about this list.
@@ -479,7 +626,10 @@ class LoadProfileMetaData(DataClassJsonMixin):
     energy_unit: str
     maximum_energy: float
     maximum_power: float
+    minimum_power: float
     total_energy: float
+    plot_string: str | None = None
+    minimum_power_display: float | None = None
 
 
 @dataclass(kw_only=True)
@@ -497,9 +647,36 @@ class LoadProfileMetaDataResampled:
     energy_unit: str
     total_energy: float
     maximum_power: float
+    minimum_power: float
     load_type: LoadType
     time_step: datetime.timedelta
     resample_frequency: str
+    first_start_time: datetime.datetime
+    last_end_time: datetime.datetime
+    plot_string: str | None = None
+    minimum_power_display: float | None = None
+
+
+@dataclass
+class LoadProfileMetaDataFromDisk(DataClassJsonMixin):
+    """Provides a list of LoadProfileEntry, a data frame
+    from this list and meta data about this list.
+    """
+
+    name: str
+    object_type: str
+    data_frame: pandas.DataFrame
+    first_start_time: datetime.datetime
+    last_end_time: datetime.datetime
+    load_type: LoadType
+    power_unit: str
+    energy_unit: str
+    maximum_energy: float
+    maximum_power: float
+    minimum_power: float
+    total_energy: float
+    plot_string: str | None = None
+    minimum_power_display: float | None = None
 
 
 @dataclass(kw_only=True)

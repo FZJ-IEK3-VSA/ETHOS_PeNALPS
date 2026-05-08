@@ -1,0 +1,10 @@
+,load_type,start_time,end_time,energy_quantity,energy_unit,average_power_consumption,power_unit
+0,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:00:00,2021-01-01 00:00:15,10.0,MJ,0.6666666666666666,MW
+1,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:00:15,2021-01-01 00:01:00,20.0,MJ,0.4444444444444444,MW
+2,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:01:00,2021-01-01 00:01:20,30.0,MJ,1.5,MW
+3,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:01:20,2021-01-01 00:01:30,40.0,MJ,4.0,MW
+4,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:01:30,2021-01-01 00:02:00,50.0,MJ,1.6666666666666667,MW
+5,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:02:00,2021-01-01 00:03:00,60.0,MJ,1.0,MW
+6,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:03:00,2021-01-01 00:03:25,70.0,MJ,2.8,MW
+7,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:03:25,2021-01-01 00:04:20,80.0,MJ,1.4545454545454546,MW
+8,"LoadType(name='Electricity', uuid='test-uuid')",2021-01-01 00:04:20,2021-01-01 00:05:00,90.0,MJ,2.25,MW

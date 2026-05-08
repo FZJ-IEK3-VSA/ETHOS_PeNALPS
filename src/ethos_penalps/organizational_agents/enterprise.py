@@ -3,16 +3,17 @@ import numbers
 
 import cloudpickle
 
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.organizational_agents.network_level import NetworkLevel
 from ethos_penalps.organizational_agents.process_chain import ProcessChain
-from ethos_penalps.post_processing.post_processed_data_handler import (
+from ethos_penalps.post_processing.production_plan_post_processing.post_processed_data_handler import (
     PostProcessSimulationDataHandler,
 )
 from ethos_penalps.post_processing.report_generator.enterprise_report_generator import (
     EnterpriseReportGenerator,
 )
 from ethos_penalps.post_processing.report_generator.report_options import (
+    ReportGeneratorOptions,
     standard_simulation_report,
 )
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
@@ -26,6 +27,7 @@ from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -67,9 +69,7 @@ class Enterprise:
         self.list_of_network_level: list[NetworkLevel] = []
         self.time_data: TimeData = time_data
         self.location: str = location
-        self.load_profile_handler: LoadProfileHandlerSimulation = (
-            LoadProfileHandlerSimulation()
-        )
+        self.load_profile_handler: LoadProfileHandlerSimulation = LoadProfileHandlerSimulation()
         self.production_plan = ProductionPlan(
             load_profile_handler=self.load_profile_handler,
             process_step_states_dict={},
@@ -78,12 +78,14 @@ class Enterprise:
         self.name: str = name
 
     def start_simulation(
-        self, number_of_iterations_in_chain: numbers.Number | None = None
+        self,
+        number_of_iterations_in_chain: int | None = None,
+        create_storage_entries: bool = True,
     ):
         """Start the simulation after the enterprise model has been fully defined.
 
         Args:
-            number_of_iterations_in_chain (numbers.Number | None, optional): Can set a maximum number of internal
+            number_of_iterations_in_chain (numbers_alias | None, optional): Can set a maximum number of internal
                 simulation iterations. This can be useful to stop ill defined simulations. Defaults to None.
         """
         self._prepare_process_chains_for_simulation()
@@ -91,22 +93,26 @@ class Enterprise:
             main_sink = network_level.get_main_sink()
             main_sink.initialize_sink()
             for process_chain in network_level.list_of_process_chains:
-                try:
-                    main_sink.prepare_sink_for_next_chain(
-                        process_chain_identifier=process_chain.process_chain_identifier
-                    )
-                    main_source = network_level.get_main_source()
-                    main_source.prepare_source_for_next_chain(
-                        process_chain_identifier=process_chain.process_chain_identifier
-                    )
-                    process_chain.create_process_chain_production_plan(
-                        max_number_of_iterations=number_of_iterations_in_chain
-                    )
-                except:
-                    process_chain.create_failed_report()
+                # try:
+                main_sink.prepare_sink_for_next_chain(process_chain_identifier=process_chain.process_chain_identifier)
+                current_source = process_chain.source
+                current_source.prepare_source_for_next_chain(
+                    process_chain_identifier=process_chain.process_chain_identifier
+                )
+                process_chain.create_process_chain_production_plan(
+                    max_number_of_iterations=number_of_iterations_in_chain
+                )
+                # except:
+                #     process_chain.create_failed_report()
 
-            network_level.main_sink.create_storage_entries()
-            network_level.main_source.create_storage_entries()
+            logger.info("Start to create storage entries")
+            if create_storage_entries is True:
+                network_level.main_sink.create_storage_entries()
+                if network_level.main_source.storage_entries_have_been_created is False:
+                    network_level.main_source.create_storage_entries()
+                for current_source in network_level.list_of_secondary_sources:
+                    current_source.create_storage_entries()
+            logger.info("Creating storage entries is terminated")
 
     def pickle_sink(
         self,
@@ -221,10 +227,45 @@ class Enterprise:
         for network_level in self.list_of_network_level:
             network_level.combine_stream_handler_from_chains()
             for stream in network_level.stream_handler.stream_dict.values():
-                output_stream_handler.add_stream(
-                    new_stream=stream, overwrite_stream=True
-                )
+                output_stream_handler.add_stream(new_stream=stream, overwrite_stream=True)
         return output_stream_handler
+
+    def create_simulation_report(self, report_options: ReportGeneratorOptions):
+
+        if report_options.gantt_charts.plot_start_time is None or report_options.gantt_charts.plot_end_time is None:
+            raise MisconfigurationError(
+                """No start or end time has been set for the gantt chart. These must be
+                set manually"""
+            )
+        if report_options.carpet_plot_options.start_date is None or report_options.carpet_plot_options.end_date is None:
+            raise MisconfigurationError("No start or end time has been set for the carpet plot")
+
+        if report_options.path_to_results_folder is None:
+            if hasattr(PeNALPSLogger, "directory_to_log"):
+                report_options.path_to_results_folder = PeNALPSLogger.directory_to_log
+            else:
+                result_path_generator = ResultPathGenerator()
+                report_options.path_to_results_folder: str = (
+                    result_path_generator.create_result_folder_relative_to_main_file(subdirectory_name="report")
+                )
+        post_process_simulation_data_handler = PostProcessSimulationDataHandler(
+            production_plan=self.production_plan,
+            report_options=report_options,
+        )
+        logger.info("Start to post process load profiles")
+        post_process_simulation_data_handler.start_post_processing()
+        if report_options.store_production_orders_to_csv is True:
+            post_process_simulation_data_handler.store_production_orders_to_csv(
+                list_of_network_level=self.list_of_network_level,
+            )
+        report_generator = EnterpriseReportGenerator(
+            production_plan=self.production_plan,
+            enterprise_name=self.name,
+            list_of_network_level=self.list_of_network_level,
+            post_process_simulation_data_handler=post_process_simulation_data_handler,
+        )
+        logger.info("Start to create report")
+        report_generator.generate_report(report_generator_options=report_options)
 
     def create_post_simulation_report(
         self,
@@ -235,6 +276,7 @@ class Enterprise:
         x_axis_time_delta: datetime.timedelta,
         resample_frequency: str = "5min",
         number_of_columns: int = 2,
+        results_folder: str | None = None,
     ):
         """Creates a HTML report from the simulation results. It contains:
 
@@ -277,6 +319,8 @@ class Enterprise:
                 Defaults to "5min".
 
             number_of_columns (int, optional): Sets the number of columns for the carpet plots. Defaults to 2.
+            results_folder (str, None): Path to the folder where results shall be stored. If set to
+                None a folder relative to the main file will be created. Defaults to None.
         """
 
         number_of_periods = (end_date - start_date) / x_axis_time_delta
@@ -289,29 +333,20 @@ class Enterprise:
             )
 
         if not number_of_periods.is_integer():
-            raise Exception(
-                """(end_date - start_date)/x_axis_time_delta must be an integer to create the carpet plots.
-                  number of periods."""
-                + " start_date is: "
+            raise MisconfigurationError(
+                """The x_axis_time_delta must be an integer multiple of end_date - start_date to create the carpet plots."""
+                + " The following values were provided start_date: "
                 + str(start_date)
                 + " end_date: "
                 + str(end_date)
                 + " x_axis_time_delta: "
                 + str(x_axis_time_delta)
             )
-        standard_simulation_report.full_process_gantt_chart.plot_start_time = (
-            gantt_chart_start_date
-        )
-        standard_simulation_report.full_process_gantt_chart.plot_end_time = (
-            gantt_chart_end_date
-        )
-        standard_simulation_report.full_process_gantt_chart.include_storage_gantt_charts = (
-            True
-        )
-        standard_simulation_report.production_plan_data_frame.include_storage_data_frames = (
-            True
-        )
-        standard_simulation_report.full_process_gantt_chart.include_load_profiles = True
+        standard_simulation_report.gantt_charts.plot_start_time = gantt_chart_start_date
+        standard_simulation_report.gantt_charts.plot_end_time = gantt_chart_end_date
+        standard_simulation_report.gantt_charts.include_storage_gantt_charts = True
+        standard_simulation_report.production_plan_data_frame.include_storage_data_frames = True
+        standard_simulation_report.gantt_charts.include_load_profiles = True
         standard_simulation_report.carpet_plot_options.add_time_data(
             start_date=start_date,
             end_date=end_date,
@@ -321,12 +356,26 @@ class Enterprise:
         )
         standard_simulation_report.debug_log_page.include = False
 
+        if standard_simulation_report.path_to_results_folder is None:
+            if hasattr(PeNALPSLogger, "directory_to_log"):
+                standard_simulation_report.path_to_results_folder = PeNALPSLogger.directory_to_log
+            if results_folder is not None:
+                standard_simulation_report.path_to_results_folder = results_folder
+            else:
+                result_path_generator = ResultPathGenerator()
+                standard_simulation_report.path_to_results_folder: str = (
+                    result_path_generator.create_result_folder_relative_to_main_file(subdirectory_name="report")
+                )
         post_process_simulation_data_handler = PostProcessSimulationDataHandler(
             production_plan=self.production_plan,
             report_options=standard_simulation_report,
         )
         logger.info("Start to post process load profiles")
         post_process_simulation_data_handler.start_post_processing()
+        if standard_simulation_report.store_production_orders_to_csv is True:
+            post_process_simulation_data_handler.store_production_orders_to_csv(
+                list_of_network_level=self.list_of_network_level,
+            )
         report_generator = EnterpriseReportGenerator(
             production_plan=self.production_plan,
             enterprise_name=self.name,
@@ -334,6 +383,4 @@ class Enterprise:
             post_process_simulation_data_handler=post_process_simulation_data_handler,
         )
         logger.info("Start to create report")
-        report_generator.generate_report(
-            report_generator_options=standard_simulation_report
-        )
+        report_generator.generate_report(report_generator_options=standard_simulation_report)

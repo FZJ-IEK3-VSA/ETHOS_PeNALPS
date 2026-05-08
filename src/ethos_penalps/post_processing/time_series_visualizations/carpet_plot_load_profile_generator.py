@@ -1,5 +1,7 @@
 import datetime
+import math
 import warnings
+from typing import Literal
 
 import matplotlib.dates
 import matplotlib.figure
@@ -9,18 +11,18 @@ import numpy
 import pandas
 import pint
 import seaborn
-import math
+from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
 from ethos_penalps.data_classes import (
     CarpetPlotMatrix,
     CarpetPlotMatrixEmpty,
     EmptyLoadProfileMetadata,
-    LoadProfileMetaDataResampled,
-    LoadProfileMetaData,
     LoadProfileEntry,
+    LoadProfileMetaData,
+    LoadProfileMetaDataResampled,
     LoadType,
 )
-from ethos_penalps.post_processing.load_profile_entry_post_processor import (
+from ethos_penalps.post_processing.load_profiles.load_profile_entry_post_processor import (
     ListOfLoadProfileEntryAnalyzer,
     LoadProfileEntryPostProcessor,
 )
@@ -83,7 +85,6 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             a load profile carpet plot.
         """
         if list_of_load_profile_entries:
-
             # Check if the start date, end date and x axis time delta are well defined.
             total_time_period = end_date_time_series - start_date_time_series
             if total_time_period <= datetime.timedelta(hours=0):
@@ -109,22 +110,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
                 object_type=object_type,
             )
             assert type(list_of_load_profile_meta_data) is LoadProfileMetaData
-            list_of_load_profile_meta_data_resampled = (
-                self.resample_load_profile_meta_data(
-                    load_profile_meta_data=list_of_load_profile_meta_data,
-                    start_date=start_date_time_series,
-                    end_date=end_date_time_series,
-                    x_axis_time_period_timedelta=x_axis_time_period_timedelta,
-                    resample_frequency=resample_frequency,
-                )
+            list_of_load_profile_meta_data_resampled = self.resample_load_profile_meta_data(
+                load_profile_meta_data=list_of_load_profile_meta_data,
+                start_date=start_date_time_series,
+                end_date=end_date_time_series,
+                resample_frequency=resample_frequency,
             )
 
             carpet_plot_matrix: CarpetPlotMatrix | CarpetPlotMatrixEmpty
-            if (
-                type(list_of_load_profile_meta_data_resampled)
-                is LoadProfileMetaDataResampled
-            ):
-
+            if type(list_of_load_profile_meta_data_resampled) is LoadProfileMetaDataResampled:
                 carpet_plot_matrix = self.convert_load_profile_meta_data_to_carpet_plot_matrix(
                     load_profile_meta_data_resampled=list_of_load_profile_meta_data_resampled,
                     x_axis_period_time_delta=x_axis_time_period_timedelta,
@@ -134,18 +128,11 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
                     object_name=object_name,
                 )
 
-            elif (
-                type(list_of_load_profile_meta_data_resampled)
-                is EmptyLoadProfileMetadata
-            ):
-                logger.debug(
-                    "The homogenization yielded an empty load profile data frame"
-                )
+            elif type(list_of_load_profile_meta_data_resampled) is EmptyLoadProfileMetadata:
+                logger.debug("The homogenization yielded an empty load profile data frame")
                 carpet_plot_matrix = CarpetPlotMatrixEmpty(object_name=object_name)
         else:
-            logger.debug(
-                "An empty list of load profiles has been passed to te load profile processor"
-            )
+            logger.debug("An empty list of load profiles has been passed to te load profile processor")
             carpet_plot_matrix = CarpetPlotMatrixEmpty(object_name=object_name)
 
         return carpet_plot_matrix
@@ -191,19 +178,14 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         input_data_frame.index = input_data_frame.loc[:, "start_time"]
 
         # Check if separation into time periods is possible
-        input_data_frame["start_time"] = pandas.to_datetime(
-            input_data_frame["start_time"]
-        )
+        input_data_frame["start_time"] = pandas.to_datetime(input_data_frame["start_time"])
         input_data_frame["end_time"] = pandas.to_datetime(input_data_frame["end_time"])
         start_time = input_data_frame["start_time"].min()
         end_time = input_data_frame["end_time"].max()
         number_of_periods = (end_time - start_time) / x_axis_period_time_delta
         if number_of_periods <= 0:
             raise Exception(
-                "No positive number periods. Start time: "
-                + str(start_time)
-                + " End time: "
-                + str(end_time)
+                "No positive number periods. Start time: " + str(start_time) + " End time: " + str(end_time)
             )
 
         if not number_of_periods.is_integer():
@@ -218,22 +200,13 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             )
 
         duration_of_a_single_load_profile_entry = (
-            input_data_frame["end_time"].iloc[0]
-            - input_data_frame["start_time"].iloc[0]
+            input_data_frame["end_time"].iloc[0] - input_data_frame["start_time"].iloc[0]
         )
         start_time_of_period = start_time
-        end_time_of_period = (
-            start_time_of_period
-            + x_axis_period_time_delta
-            - duration_of_a_single_load_profile_entry
-        )
+        end_time_of_period = start_time_of_period + x_axis_period_time_delta - duration_of_a_single_load_profile_entry
         # Determine Index of new data_frame
-        energy_quantity_data_frame = input_data_frame.loc[
-            :, "average_power_consumption"
-        ]
-        first_row_index = energy_quantity_data_frame[
-            start_time_of_period:end_time_of_period
-        ].index
+        energy_quantity_data_frame = input_data_frame.loc[:, "average_power_consumption"]
+        first_row_index = energy_quantity_data_frame[start_time_of_period:end_time_of_period].index
 
         new_index_list = []
 
@@ -245,21 +218,15 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         # Split dataframe into
         list_of_pandas_series = []
         for current_period in range(int(number_of_periods)):
-            new_row = energy_quantity_data_frame[
-                start_time_of_period:end_time_of_period
-            ]
+            new_row = energy_quantity_data_frame[start_time_of_period:end_time_of_period]
             new_row.index = new_index_list
 
             row_name = end_time_of_period
             new_row = new_row.rename(row_name)
             list_of_pandas_series.append(new_row)
-            start_time_of_period = (
-                end_time_of_period + duration_of_a_single_load_profile_entry
-            )
+            start_time_of_period = end_time_of_period + duration_of_a_single_load_profile_entry
             end_time_of_period = (
-                start_time_of_period
-                + x_axis_period_time_delta
-                - duration_of_a_single_load_profile_entry
+                start_time_of_period + x_axis_period_time_delta - duration_of_a_single_load_profile_entry
             )
         output_data_frame = pandas.concat(list_of_pandas_series, axis=1)
         carpet_plot_matrix = CarpetPlotMatrix(
@@ -277,9 +244,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
 
         return carpet_plot_matrix
 
-    def get_energy_amount_from_data_frame(
-        self, load_profile_data_frame: pandas.DataFrame
-    ) -> float:
+    def get_energy_amount_from_data_frame(self, load_profile_data_frame: pandas.DataFrame) -> float:
         """Return the total energy from the data frame.
 
         Args:
@@ -325,9 +290,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
 
         return total_energy_converted_value
 
-    def get_common_load_type(
-        self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
-    ) -> LoadType:
+    def get_common_load_type(self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]) -> LoadType:
         """Returns the common load type of the list of carpet plot matrices.
 
         Args:
@@ -350,9 +313,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         #     )
         return unique_list_of_load_types[0]
 
-    def get_common_energy_unit_string(
-        self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]
-    ) -> str:
+    def get_common_energy_unit_string(self, list_of_carpet_plot_matrices: list[CarpetPlotMatrix]) -> str:
         """Returns the common energy unit string from all carpet plot matrices.
 
         Args:
@@ -413,6 +374,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         self,
         list_of_carpet_plot_matrices: list[CarpetPlotMatrix],
         combined_matrix_name: str,
+        combined_load_type: LoadType | None = None,
     ) -> CarpetPlotMatrix:
         """Sums a list of CarpetPlotMatrices to a single CarpetPlotMatrix. The
 
@@ -437,12 +399,8 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             current_carpet_plot_matrix = converted_list_of_carpet_plot_matrices[0]
         else:
             for current_index in range(len(converted_list_of_carpet_plot_matrices) - 1):
-                current_carpet_plot_matrix = converted_list_of_carpet_plot_matrices[
-                    iterator
-                ]
-                list_of_total_energy_demand.append(
-                    current_carpet_plot_matrix.total_energy_demand
-                )
+                current_carpet_plot_matrix = converted_list_of_carpet_plot_matrices[iterator]
+                list_of_total_energy_demand.append(current_carpet_plot_matrix.total_energy_demand)
                 current_df = current_df.add(current_carpet_plot_matrix.data_frame)
                 iterator = iterator + 1
 
@@ -450,9 +408,12 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         combined_energy_unit = self.get_common_energy_unit_string(
             list_of_carpet_plot_matrices=list_of_carpet_plot_matrices
         )
-        common_load_type = self.get_common_load_type(
-            list_of_carpet_plot_matrices=list_of_carpet_plot_matrices
-        )
+        if isinstance(combined_load_type, LoadType):
+            common_load_type = combined_load_type
+
+        else:
+            common_load_type = self.get_common_load_type(list_of_carpet_plot_matrices=list_of_carpet_plot_matrices)
+
         carpet_plot_matrix = CarpetPlotMatrix(
             data_frame=current_df,
             start_date_time_series=current_carpet_plot_matrix.start_date_time_series,
@@ -498,9 +459,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
                 target_power_unit=compressed_quantity.u,
             )
         else:
-            logger.debug(
-                "Maximum power is in a reasonable range. No compression necessary."
-            )
+            logger.debug("Maximum power is in a reasonable range. No compression necessary.")
         return carpet_plot_load_profile_matrix
 
     def convert_power_of_carpet_plot_matrix(
@@ -517,12 +476,12 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         Returns:
             CarpetPlotMatrix: Converted CarpetPlotMatrix
         """
-        comparison_quantity = (
-            1 * Units.get_unit(unit_string=carpet_plot_load_profile_matrix.power_unit)
-        ) / (1 * target_power_unit)
+        comparison_quantity = (1 * Units.get_unit(unit_string=carpet_plot_load_profile_matrix.power_unit)) / (
+            1 * target_power_unit
+        )
         multiplication_factor = comparison_quantity.to_reduced_units()
-        carpet_plot_load_profile_matrix.data_frame = (
-            carpet_plot_load_profile_matrix.data_frame.mul(multiplication_factor.m)
+        carpet_plot_load_profile_matrix.data_frame = carpet_plot_load_profile_matrix.data_frame.mul(
+            multiplication_factor.m
         )
         carpet_plot_load_profile_matrix.power_unit = str(target_power_unit)
         return carpet_plot_load_profile_matrix
@@ -530,6 +489,11 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
     def plot_load_profile_carpet_from_data_frame_matrix(
         self,
         carpet_plot_load_profile_matrix: CarpetPlotMatrix,
+        target_unit_total_energy: str | None = None,
+        add_title: bool = True,
+        color_bar_location: Literal["right", "top"] = "right",
+        language: Literal["german", "english"] = "english",
+        figure_width_height_tuple: None | tuple[float, float] = None,
     ) -> matplotlib.figure.Figure:
         """Create load profile carpet plot from CarpetPlotMatrix object
 
@@ -540,18 +504,23 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         Returns:
             matplotlib.figure.Figure: The plotted seaborn figure.
         """
-
-        # Create figure
-        figure, axes = matplotlib.pyplot.subplots(1, 1)
-        axes.minorticks_off()
-
-        x_axis_whole_period = (
-            carpet_plot_load_profile_matrix.x_axis_time_period_timedelta
-        )
-        carpet_plot_load_profile_matrix = (
-            self.compress_power_of_carpet_plot_matrix_if_necessary(
-                carpet_plot_load_profile_matrix=carpet_plot_load_profile_matrix
+        if language != "german" and language != "english":
+            raise Exception(
+                "Unsuported language selected. Use either german or english. Instead: "
+                + str(language)
+                + " has been selected."
             )
+        # Create figure
+
+        figure, axes = matplotlib.pyplot.subplots(1, 1)
+        if isinstance(figure_width_height_tuple, tuple):
+            figure.set_size_inches(w=figure_width_height_tuple[0], h=figure_width_height_tuple[1])
+        axes.set_facecolor("xkcd:salmon")
+        # axes.minorticks_off()
+
+        x_axis_whole_period = carpet_plot_load_profile_matrix.x_axis_time_period_timedelta
+        carpet_plot_load_profile_matrix = self.compress_power_of_carpet_plot_matrix_if_necessary(
+            carpet_plot_load_profile_matrix=carpet_plot_load_profile_matrix
         )
 
         # Determine format of x and y ticks,and x and y axis label
@@ -561,25 +530,34 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             # Shows hours on the x axis
             x_axis_time_format = "%m.%d:%H"  # Displays month.day:hour
             y_axis_time_format = "%M:%S"  # Displays minute:seconds
-            y_axis_label_string = "Time in minute:second"
-            x_axis_label_string = "Time in month.day:hour"
-        elif x_axis_whole_period <= datetime.timedelta(
-            days=1
-        ) and x_axis_whole_period > datetime.timedelta(hours=1):
+            if language == "english":
+                y_axis_label_string = "Time in minute:second"
+                x_axis_label_string = "Time in month.day:hour"
+            elif language == "german":
+                y_axis_label_string = "Zeit in Minute:Sekunde"
+                x_axis_label_string = "Zeit in Monat.Tag:Stunde"
+        elif x_axis_whole_period <= datetime.timedelta(days=1) and x_axis_whole_period > datetime.timedelta(hours=1):
             # Shows days on the x axis
             x_axis_time_format = "%m.%d"  # Displays month.day
             y_axis_time_format = "%H:%M"  # Displays hour:minute
-            y_axis_label_string = "Time in Hour:Minute"
-            x_axis_label_string = "Time in Month.Day"
+            if language == "english":
+                y_axis_label_string = "Time in Hour:Minute"
+                x_axis_label_string = "Time in Month.Day"
+            elif language == "german":
+                y_axis_label_string = "Zeit in Stunde:Minute"
+                x_axis_label_string = "Zeit in Monat.Tag"
 
-        elif x_axis_whole_period <= datetime.timedelta(
-            weeks=1
-        ) and x_axis_whole_period > datetime.timedelta(days=1):
+        elif x_axis_whole_period <= datetime.timedelta(weeks=1) and x_axis_whole_period > datetime.timedelta(days=1):
             # Shows week numbers on the x axis
             x_axis_time_format = "%V"  # Displays week numbers
             y_axis_time_format = "%a:%H"  # Shows weekday as string:hour
-            y_axis_label_string = "Time in Weekday"
-            x_axis_label_string = "Time in calendar week"
+            if language == "english":
+                y_axis_label_string = "Time in Weekday"
+                x_axis_label_string = "Time in calendar week"
+            elif language == "german":
+                y_axis_label_string = "Zeit in Wochentag"
+                x_axis_label_string = "Zeit in Kalenderwoche"
+
         else:
             pass
         converted_index = []
@@ -589,9 +567,7 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             if isinstance(index_entry, datetime.datetime):
                 a = index_entry.to_pydatetime()
                 py_date_time_entry = index_entry.to_pydatetime(a)
-                converted_index.append(
-                    str(py_date_time_entry.strftime(y_axis_time_format))
-                )
+                converted_index.append(str(py_date_time_entry.strftime(y_axis_time_format)))
             else:
                 converted_index.append(index_entry)
 
@@ -601,24 +577,31 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
             if isinstance(row_entry, datetime.datetime):
                 a = row_entry.to_pydatetime()
                 py_date_time_entry = row_entry.to_pydatetime(a)
-                converted_row_index.append(
-                    py_date_time_entry.strftime(x_axis_time_format)
-                )
+                converted_row_index.append(py_date_time_entry.strftime(x_axis_time_format))
             else:
                 converted_row_index.append(row_entry)
 
         load_profile_matrix_data_frame.columns = converted_row_index
 
-        color_bar_label = (
-            "Average Power in " + carpet_plot_load_profile_matrix.power_unit
-        )
+        if language == "english":
+            color_bar_label = "Average Power in " + carpet_plot_load_profile_matrix.power_unit
+        elif language == "german":
+            color_bar_label = "Durchschnittliche Leistung in " + carpet_plot_load_profile_matrix.power_unit
         searborn_plot = seaborn.heatmap(
             load_profile_matrix_data_frame,
             cmap="coolwarm",
             ax=axes,
             center=0,
-            cbar_kws={"label": color_bar_label},
+            linewidths=0.0,
+            linecolor=None,
+            cbar_kws={
+                "label": color_bar_label,
+                "location": color_bar_location,
+                "use_gridspec": "False",
+                "format": "%.1f",
+            },
             xticklabels="auto",
+            rasterized=True,
         )
 
         # Set x, y label and x ticks and y ticks
@@ -626,23 +609,36 @@ class CarpetPlotLoadProfileGenerator(LoadProfileEntryPostProcessor):
         matplotlib.pyplot.ylabel(y_axis_label_string)
         matplotlib.pyplot.yticks(rotation=0)
         matplotlib.pyplot.xticks(rotation=45, ha="right")
+        matplotlib.pyplot.locator_params(
+            axis="y",
+            nbins=20,
+        )
+        matplotlib.pyplot.locator_params(axis="x", nbins=13)
+        searborn_plot.yaxis.set_minor_locator(AutoMinorLocator())
+        searborn_plot.xaxis.set_minor_locator(AutoMinorLocator())
+        # axes.xaxis.set_major_locator(MultipleLocator(20))  # show every 5th tick
 
-        # Set title
         total_energy_demand = carpet_plot_load_profile_matrix.total_energy_demand
-        energy_unit = Units.get_unit(
-            unit_string=carpet_plot_load_profile_matrix.energy_unit
-        )
-        total_energy_quantity = Units.compress_quantity(
-            unit=energy_unit,
-            quantity_value=total_energy_demand,
-        )
-        matplotlib.pyplot.title(
-            label=str(round(total_energy_quantity.m, 2))
-            + " "
-            + create_subscript_string_matplotlib(
-                base=str(total_energy_quantity.u),
-                subscripted_text=str(carpet_plot_load_profile_matrix.load_type.name),
+        energy_unit = Units.get_unit(unit_string=carpet_plot_load_profile_matrix.energy_unit)
+        # Set title
+        if add_title is True:
+            if target_unit_total_energy is None:
+                total_energy_quantity = Units.compress_quantity(
+                    unit=energy_unit,
+                    quantity_value=total_energy_demand,
+                )
+            else:
+                total_energy_quantity = (total_energy_demand * Units.get_unit(unit_string=energy_unit)).to(
+                    target_unit_total_energy
+                )
+
+            matplotlib.pyplot.title(
+                label=str(round(total_energy_quantity.m, 2))
+                + " "
+                + create_subscript_string_matplotlib(
+                    base=str(total_energy_quantity.u),
+                    subscripted_text=str(carpet_plot_load_profile_matrix.load_type.name),
+                )
             )
-        )
 
         return figure

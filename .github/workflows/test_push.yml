@@ -1,0 +1,23 @@
+name: Test conda-forge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["dev", "main"]
+
+jobs:
+  TestPushCondaForgeDev:
+    name: Test conda-forge development version on ${{ matrix.runner_tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner_tag: ["self-hosted"]
+    uses: FZJ-IEK3-VSA/.github/.github/workflows/run_conda_forge_test.yml@v1
+    secrets: inherit
+    with:
+      runner_tag: ${{ matrix.runner_tag }}
+      requirements_file_name: environment.yml
+      multiprocessing_pytest_string: "-n auto"
+

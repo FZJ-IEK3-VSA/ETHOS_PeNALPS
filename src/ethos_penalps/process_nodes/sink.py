@@ -1,16 +1,19 @@
 import datetime
-from abc import ABC, abstractmethod
+from enum import Flag, auto
+from typing import Literal
 
 from ethos_penalps.data_classes import (
     Commodity,
     OrderCollection,
+    OrderProcessingType,
     OutputBranchIdentifier,
     ProcessChainIdentifier,
     StaticTimePeriod,
+    StorageProductionPlanEntry,
     StreamBranchIdentifier,
     TemporalBranchIdentifier,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.node_operations import (
     DownstreamAdaptionOrder,
     DownstreamValidationOrder,
@@ -19,6 +22,16 @@ from ethos_penalps.node_operations import (
     TerminateProduction,
     UpstreamAdaptionOrder,
     UpstreamNewProductionOrder,
+)
+from ethos_penalps.order_distributor.base_node_distributor import (
+    OrderDistributor,
+)
+from ethos_penalps.order_distributor.order_aggregator_and_distributor import (
+    OrderAggregatorAndDistributor,
+)
+from ethos_penalps.order_distributor.order_to_chain_splitter import OrderToChainSplitter
+from ethos_penalps.order_distributor.parallel_order_aggregator import (
+    ParallelOrderAggregator,
 )
 from ethos_penalps.petri_net.process_state_handler import ProcessStateHandler
 from ethos_penalps.process_node_communicator import EmptyProductionBranch
@@ -45,12 +58,10 @@ from ethos_penalps.stream import (
     ContinuousStreamState,
 )
 from ethos_penalps.stream_handler import StreamHandler
-from ethos_penalps.stream_node_distributor import (
-    OrderDistributor,
-)
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import MisconfigurationError
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -68,6 +79,7 @@ class Sink(ProcessNode):
         production_plan: ProductionPlan,
         time_data: TimeData,
         order_collection: OrderCollection | None = None,
+        order_processing_type: OrderProcessingType = OrderProcessingType.AGGREGATE_AND_DISTRIBUTE,
     ) -> None:
         """
 
@@ -88,9 +100,7 @@ class Sink(ProcessNode):
         super().__init__(stream_handler=stream_handler, name=name)
         self.commodity: Commodity = commodity
         if order_collection is None:
-            self.order_collection: OrderCollection = OrderCollection(
-                target_mass=0, commodity=commodity
-            )
+            self.order_collection: OrderCollection = OrderCollection(target_mass=0, commodity=commodity)
         else:
             self.order_collection: OrderCollection = order_collection
         self.input_stream_state_list: list[ContinuousStreamState] = []
@@ -100,11 +110,12 @@ class Sink(ProcessNode):
         self.temporal_branch_number: float = 0
         self.current_production_branch_identifier: OutputBranchIdentifier
         self.current_temporal_branch_identifier: TemporalBranchIdentifier
-        self.order_distributor: OrderDistributor = OrderDistributor(
-            stream_handler=self.stream_handler,
-            production_order_collection=self.order_collection,
-            node_name=name,
+        self.order_distributor: (
+            OrderAggregatorAndDistributor | OrderDistributor | OrderToChainSplitter | ParallelOrderAggregator
+        ) = self._select_order_distributor(
+            order_processing_type=order_processing_type,
         )
+
         self.storage: BaseStorage = BaseStorage(
             process_step_name=name,
             commodity=commodity,
@@ -116,16 +127,75 @@ class Sink(ProcessNode):
     def __str__(self) -> str:
         return "Sink: " + self.name
 
+    def _select_order_distributor(
+        self,
+        order_processing_type: OrderProcessingType,
+    ) -> OrderAggregatorAndDistributor | OrderDistributor | OrderToChainSplitter | ParallelOrderAggregator:
+        order_distributor: (
+            OrderAggregatorAndDistributor | OrderDistributor | OrderToChainSplitter | ParallelOrderAggregator
+        )
+        if order_processing_type == OrderProcessingType.AGGREGATE_AND_DISTRIBUTE:
+            order_distributor = OrderAggregatorAndDistributor(
+                stream_handler=self.stream_handler,
+                production_order_collection=self.order_collection,
+                node_name=self.name,
+            )
+        elif order_processing_type == OrderProcessingType.DISTRIBUTE:
+            order_distributor = OrderDistributor(
+                stream_handler=self.stream_handler,
+                production_order_collection=self.order_collection,
+                node_name=self.name,
+            )
+        elif order_processing_type == OrderProcessingType.ORDER_TO_CHAIN_SPLITTER:
+            order_distributor = OrderToChainSplitter(
+                stream_handler=self.stream_handler,
+                production_order_collection=self.order_collection,
+                node_name=self.name,
+            )
+        elif order_processing_type == OrderProcessingType.ORDER_PARALLEL:
+            order_distributor = ParallelOrderAggregator(
+                stream_handler=self.stream_handler,
+                production_order_collection=self.order_collection,
+                node_name=self.name,
+            )
+        else:
+            raise Exception(
+                "Received unexpected Order Processing Type "
+                + str(order_processing_type)
+                + " in sink: "
+                + str(self.name)
+            )
+        return order_distributor
+
+    def add_split_factor(
+        self,
+        split_factor_float: float,
+        process_chain_identifier: ProcessChainIdentifier,
+    ):
+        if isinstance(self.order_distributor, OrderToChainSplitter):
+            self.order_distributor.add_order_split_to_process_chain(
+                process_chain_identifier=process_chain_identifier,
+                splitter=split_factor_float,
+            )
+        else:
+            raise Exception(
+                "Split factor is only implemented for OrderToChainSplitter. The sink : "
+                + str(self.name)
+                + " uses an order distributor of type: "
+                + str(type(self.order_distributor))
+            )
+
     def check_if_sink_has_orders(self):
         """Checks if the sink has orders which indicates
         an ill defined simulation.
         """
-        if self.order_collection.order_data_frame.empty:
-            raise MisconfigurationError(
-                "Sink: "
-                + self.name
-                + " has no orders in its dictionary. A sink required at least one order."
-            )
+        has_orders = not self.order_collection.order_data_frame.empty
+        if not has_orders and isinstance(self.order_distributor, ParallelOrderAggregator):
+            has_orders = len(self.order_distributor.list_of_storage_entries) > 0
+        if not has_orders and self.order_distributor.dict_of_splitted_order:
+            has_orders = True
+        if not has_orders:
+            raise MisconfigurationError("Sink: " + self.name + " has no orders. A sink requires at least one order.")
 
     def plan_production(self) -> UpstreamNewProductionOrder:
         """Creates the next Upstream production order to fulfill the next order.
@@ -137,9 +207,7 @@ class Sink(ProcessNode):
         logger.debug("Plan production has been called in sink: %s", self.name)
         current_production_order = self.order_distributor.get_current_production_order()
 
-        input_stream_state = self.convert_order_to_stream(
-            production_order=current_production_order
-        )
+        input_stream_state = self.convert_order_to_stream(production_order=current_production_order)
 
         self.current_input_stream_state = input_stream_state
         upstream_order = self.create_upstream_new_production_operation(
@@ -149,9 +217,7 @@ class Sink(ProcessNode):
 
         return upstream_order
 
-    def convert_order_to_stream(
-        self, production_order: ProductionOrder
-    ) -> ContinuousStreamState | BatchStreamState:
+    def convert_order_to_stream(self, production_order: ProductionOrder) -> ContinuousStreamState | BatchStreamState:
         """Converts an order into stream that can be requested from
         the upstream node.
 
@@ -165,16 +231,10 @@ class Sink(ProcessNode):
         """
         logger.debug("Production order is converted  %s", production_order)
 
-        input_stream = self.stream_handler.get_stream(
-            self.order_distributor.get_current_stream_name()
-        )
-        production_target = (
-            production_order.production_target - production_order.produced_mass
-        )
+        input_stream = self.stream_handler.get_stream(self.order_distributor.get_current_stream_name())
+        production_target = production_order.production_target - production_order.produced_mass
         if production_target < 0:
-            raise Exception(
-                "Production target got miss calculated: " + str(production_target)
-            )
+            raise Exception("Production target got miss calculated: " + str(production_target))
         stream_state: ContinuousStreamState | BatchStreamState
         # calculate start time
         if isinstance(input_stream, ContinuousStream):
@@ -185,17 +245,13 @@ class Sink(ProcessNode):
             )
 
         elif isinstance(input_stream, BatchStream):
-            possible_batch_mass = input_stream.consider_maximum_batch_mass(
-                target_batch_mass=production_target
-            )
+            possible_batch_mass = input_stream.consider_maximum_batch_mass(target_batch_mass=production_target)
             stream_state = input_stream.create_batch_state(
                 end_time=production_order.production_deadline,
                 batch_mass_value=possible_batch_mass,
             )
         if stream_state.start_time == stream_state.end_time:
-            raise Exception(
-                "Created an infinitesimal short input stream in sink: ", self.name
-            )
+            raise Exception("Created an infinitesimal short input stream in sink: ", self.name)
 
         logger.debug(
             "Created stream: %s",
@@ -205,10 +261,8 @@ class Sink(ProcessNode):
 
     def create_storage_entries(
         self,
-        list_of_output_stream_states: (
-            list[ContinuousStreamState | BatchStreamState] | None
-        ) = None,
-    ):
+        list_of_output_stream_states: (list[ContinuousStreamState | BatchStreamState] | None) = None,
+    ) -> list[StorageProductionPlanEntry]:
         """Creates the storage entries based on the output streams provided as an argument.
 
         Args:
@@ -218,22 +272,18 @@ class Sink(ProcessNode):
         if list_of_output_stream_states is None:
             list_of_output_stream_states = []
 
-        # total_input_mass = self.storage.determine_net_mass(
-        #     list_of_input_stream_states=self.input_stream_state_list,
-        #     list_of_output_stream_states=[],
-        # )
-        # self.storage.current_storage_level = total_input_mass
-
-        list_of_storage_entries = self.storage.create_storage_entries_from_start_to_end(
-            last_storage_update_time=self.time_data.global_start_date,
-            list_of_input_stream_states=self.input_stream_state_list,
-            list_of_output_stream_states=list_of_output_stream_states,
+        list_of_storage_entries, _, _ = self.storage.create_storage_entries_from_streams(
+            # last_storage_update_time=self.time_data.global_start_date,
+            input_stream_state_list=self.input_stream_state_list,
+            output_stream_state_list=list_of_output_stream_states,
+            storage_level_at_start=0,
         )
         self.production_plan.add_list_of_storage_entries(
             storage_name=self.name,
             commodity=self.commodity,
             list_of_storage_entries=list_of_storage_entries,
         )
+        return list_of_storage_entries
 
     def process_input_order(
         self,
@@ -254,9 +304,7 @@ class Sink(ProcessNode):
                 new input stream. The UpstreamAdaptionOrder confirms that the adaption request is accepted and the terminate
                 production signals that simulation is terminated for current process chain.
         """
-        logger.debug(
-            "Input order: %s is processes in sink: %s", input_node_operation, self.name
-        )
+        logger.debug("Input order: %s is processes in sink: %s", input_node_operation, self.name)
         if isinstance(
             input_node_operation,
             DownstreamValidationOrder,
@@ -264,20 +312,14 @@ class Sink(ProcessNode):
             self.update_production_order(
                 validated_input_stream_state=self.current_input_stream_state,
             )
-            order_is_fulfilled = (
-                self.order_distributor.check_if_current_order_is_fulfilled()
-            )
+            order_is_fulfilled = self.order_distributor.check_if_current_order_is_fulfilled()
             if order_is_fulfilled:
                 self.order_distributor.update_current_order_number()
 
             self.store_input_streams_to_production_plan()
-            chain_is_satisfied = (
-                self.order_distributor.check_if_process_chain_orders_are_satisfied()
-            )
+            chain_is_satisfied = self.order_distributor.check_if_process_chain_orders_are_satisfied()
             if chain_is_satisfied is True:
-                output_node_operation = TerminateProduction(
-                    next_node_name=None, starting_node_name=self.name
-                )
+                output_node_operation = TerminateProduction(next_node_name=None, starting_node_name=self.name)
 
                 logger.debug("All orders are processed and production is terminated")
             elif chain_is_satisfied is False:
@@ -295,10 +337,7 @@ class Sink(ProcessNode):
 
         else:
             raise Exception(
-                "Unexpected node operation "
-                + str(input_node_operation)
-                + " in process step: "
-                + str(self.name)
+                "Unexpected node operation " + str(input_node_operation) + " in process step: " + str(self.name)
             )
 
         return output_node_operation
@@ -314,12 +353,8 @@ class Sink(ProcessNode):
                 new stream that has been validated.
         """
         logger.debug("Start production order update")
-        input_stream = self.stream_handler.get_stream(
-            stream_name=validated_input_stream_state.name
-        )
-        produced_mass = input_stream.get_produced_amount(
-            state=validated_input_stream_state
-        )
+        input_stream = self.stream_handler.get_stream(stream_name=validated_input_stream_state.name)
+        produced_mass = input_stream.get_produced_amount(state=validated_input_stream_state)
         self.order_distributor.update_production_order(produced_mass=produced_mass)
 
     def store_input_streams_to_production_plan(self):
@@ -331,12 +366,8 @@ class Sink(ProcessNode):
         self.input_stream_state_list.append(stream_state)
         stream = self.stream_handler.get_stream(stream_name=stream_state.name)
 
-        stream_production_plan_entry = stream.create_production_plan_entry(
-            state=stream_state
-        )
-        self.production_plan.stream_state_dict[stream_state.name].append(
-            stream_production_plan_entry
-        )
+        stream_production_plan_entry = stream.create_production_plan_entry(state=stream_state)
+        self.production_plan.stream_state_dict[stream_state.name].append(stream_production_plan_entry)
         self.create_load_profile_entry(stream_entry=stream_production_plan_entry)
         del self.current_input_stream_state
 
@@ -402,24 +433,16 @@ class Sink(ProcessNode):
                 order and branches that have been created to
                 fulfill the order.
         """
-        current_input_branch_identifier = TemporalBranchIdentifier(
-            branch_number=self.temporal_branch_number
-        )
-        current_temporal_branch_data = TemporalBranchData(
-            identifier=current_input_branch_identifier
-        )
+        current_input_branch_identifier = TemporalBranchIdentifier(branch_number=self.temporal_branch_number)
+        current_temporal_branch_data = TemporalBranchData(identifier=current_input_branch_identifier)
         current_stream_name = self.order_distributor.get_current_stream_name()
-        stream_branch_identifier = StreamBranchIdentifier(
-            stream_name=current_stream_name
-        )
+        stream_branch_identifier = StreamBranchIdentifier(stream_name=current_stream_name)
         incomplete_stream_branch_data = IncompleteStreamBranchData(
             identifier=stream_branch_identifier,
             list_of_complete_input_branches=[],
             current_incomplete_input_branch=current_temporal_branch_data,
         )
-        current_output_branch_identifier = OutputBranchIdentifier(
-            branch_number=self.production_branch_number
-        )
+        current_output_branch_identifier = OutputBranchIdentifier(branch_number=self.production_branch_number)
         branch_data = IncompleteOutputBranchData(
             parent_output_identifier=None,
             parent_input_identifier=None,
@@ -440,9 +463,7 @@ class Sink(ProcessNode):
             OutputBranchIdentifier: Identifies that data was created
                 to provide an output stream.
         """
-        production_branch_identifier = OutputBranchIdentifier(
-            branch_number=self.production_branch_number
-        )
+        production_branch_identifier = OutputBranchIdentifier(branch_number=self.production_branch_number)
         self.production_branch_number = self.production_branch_number + 1
         return production_branch_identifier
 
@@ -452,9 +473,7 @@ class Sink(ProcessNode):
         Returns:
             TemporalBranchIdentifier: Identifies an output stream.
         """
-        temporal_branch_identifier = TemporalBranchIdentifier(
-            branch_number=self.temporal_branch_number
-        )
+        temporal_branch_identifier = TemporalBranchIdentifier(branch_number=self.temporal_branch_number)
         self.temporal_branch_number = self.temporal_branch_number + 1
         return temporal_branch_identifier
 
@@ -474,10 +493,7 @@ class Sink(ProcessNode):
 
         """
         if not isinstance(input_stream, (ContinuousStream, BatchStream)):
-            raise Exception(
-                "Expected input stream of type ContinuousStream but got type: "
-                + str(type(input_stream))
-            )
+            raise Exception("Expected input stream of type ContinuousStream but got type: " + str(type(input_stream)))
         self.order_distributor.add_stream_name(
             stream_name=input_stream.name,
             process_chain_identifier=process_chain_identifier,
@@ -491,9 +507,7 @@ class Sink(ProcessNode):
             str: Name of the node upstream of the sink of the currently active
             process chain
         """
-        input_stream = self.stream_handler.get_stream(
-            self.order_distributor.get_current_stream_name()
-        )
+        input_stream = self.stream_handler.get_stream(self.order_distributor.get_current_stream_name())
         upstream_node_name = input_stream.get_upstream_node_name()
         return upstream_node_name
 
@@ -517,27 +531,13 @@ class Sink(ProcessNode):
             stream_entry=stream_entry
         )
 
-    def get_order_from_parent_source(
-        self, order_collection_from_source: OrderCollection
-    ):
-        """Adds the orders from a source to the current sink. Is only
-        used if the sink is part of Storage.
-
-        Args:
-            order_collection_from_source (OrderCollection): Orders
-                that should be added this sink.
-        """
-        self.order_distributor.update_order_collection(
-            new_order_collection=order_collection_from_source
-        )
-
     def initialize_sink(self):
         """Aggregates and splits the orders of this sink."""
-        self.order_distributor.split_production_order_dict()
+        result = self.order_distributor.split_and_finalize()
+        if isinstance(result, (int, float)):
+            self.storage.current_storage_level = result
 
-    def prepare_sink_for_next_chain(
-        self, process_chain_identifier: ProcessChainIdentifier
-    ):
+    def prepare_sink_for_next_chain(self, process_chain_identifier: ProcessChainIdentifier):
         """Sets a new process chain as the active chain to be
         simulated.
 

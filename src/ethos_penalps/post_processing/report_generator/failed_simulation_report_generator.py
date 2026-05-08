@@ -1,12 +1,13 @@
 import os
 import pathlib
 import traceback
+import warnings
 import webbrowser
 
 import datapane
-from reportlab.graphics import renderPM
-from svglib.svglib import svg2rlg
 
+# from reportlab.graphics import renderPM
+# from svglib.svglib import svg2rlg
 from ethos_penalps.process_nodes.process_node import ProcessNode
 from ethos_penalps.process_nodes.process_step import ProcessStep
 from ethos_penalps.stream_handler import StreamHandler
@@ -16,6 +17,7 @@ from ethos_penalps.utilities.debugging_information import (
 )
 from ethos_penalps.utilities.general_functions import ResultPathGenerator
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class FailedRunReportGenerator:
@@ -43,9 +45,7 @@ class FailedRunReportGenerator:
                 report directory. If set to None a folder relative
                 to the main file is created. Defaults to None.
         """
-        self.debugging_information_logger: DebuggingInformationLogger = (
-            debugging_information_logger
-        )
+        self.debugging_information_logger: DebuggingInformationLogger = debugging_information_logger
         self.process_node_dict: dict[str, ProcessNode] = process_node_dict
         self.stream_handler: StreamHandler = stream_handler
         self.group_list: list[datapane.Group] = []
@@ -70,10 +70,8 @@ class FailedRunReportGenerator:
                 self.report_directory = PeNALPSLogger.directory_to_log
             else:
                 result_path_generator = ResultPathGenerator()
-                self.report_directory: str = (
-                    result_path_generator.create_result_folder_relative_to_main_file(
-                        subdirectory_name="report"
-                    )
+                self.report_directory: str = result_path_generator.create_result_folder_relative_to_main_file(
+                    subdirectory_name="report"
                 )
         if hasattr(PeNALPSLogger, "directory_to_log"):
             log_data_frame = PeNALPSLogger.read_log_to_data_frame()
@@ -128,28 +126,37 @@ class FailedRunReportGenerator:
         file_name = "report_of_failed_run"
         if self.report_directory is None:
             result_path_generator = ResultPathGenerator()
-            path_to_main_file = (
-                result_path_generator.create_path_to_file_relative_to_main_file(
-                    file_name=file_name,
-                    subdirectory_name="results",
-                    file_extension=".html",
-                )
+            path_to_main_file = result_path_generator.create_path_to_file_relative_to_main_file(
+                file_name=file_name,
+                subdirectory_name="results",
+                file_extension=".html",
             )
         else:
             path_to_main_file = os.path.join(self.report_directory, file_name + ".html")
 
         if len(self.group_list) > 1:
             view = datapane.Select(*self.group_list)
-
-        else:
+        elif len(self.group_list) == 1:
             view = self.group_list[0]
+        else:
+            empty_page_group = datapane.Group(
+                blocks=[
+                    datapane.HTML(
+                        "No pages have been generated. This is likely due to an Error of ethos.penalps or a misconfiguration of your model."
+                    )
+                ]
+            )
+            view = empty_page_group
+
         # https://github.com/datapane/datapane-docs/tree/v2/reports/blocks#report-types
 
-        datapane.save_report(
-            blocks=view,
-            path=path_to_main_file,
-            open=self.open_report_after_creation,
-            formatting=datapane.Formatting(
-                width=datapane.Width.FULL,
-            ),
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, module="datapane")
+            datapane.save_report(
+                blocks=view,
+                path=path_to_main_file,
+                open=self.open_report_after_creation,
+                formatting=datapane.Formatting(
+                    width=datapane.Width.FULL,
+                ),
+            )

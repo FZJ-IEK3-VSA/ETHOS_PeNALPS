@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from pickletools import read_uint1
+from typing import Literal
 
 import matplotlib
 import matplotlib.dates as mdates
@@ -13,18 +13,17 @@ import proplot
 from matplotlib import cm
 
 from ethos_penalps.data_classes import (
-    LoadProfileMetaData,
-    ProcessStepDataFrameMetaInformation,
-    StorageDataFrameMetaInformation,
+    EmptyLoadProfileMetadata,
     EmptyMetaDataInformation,
+    LoadProfileMetaData,
+    LoadProfileMetaDataFromDisk,
+    LoadProfileMetaDataResampled,
+    ProcessStepDataFrameMetaInformation,
     ProductionOrderMetadata,
+    StorageDataFrameMetaInformation,
 )
 from ethos_penalps.production_plan import ProductionPlan
-from ethos_penalps.stream import (
-    BatchStream,
-    ContinuousStream,
-    StreamDataFrameMetaInformation,
-)
+from ethos_penalps.stream import BatchStream, ContinuousStream, StreamDataFrameMetaInformation, StreamType
 from ethos_penalps.utilities.data_base_interactions import DataBaseInteractions
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.general_functions import ResultPathGenerator, denormalize
@@ -38,8 +37,10 @@ def slice_data_frames(
         StreamDataFrameMetaInformation
         | ProcessStepDataFrameMetaInformation
         | LoadProfileMetaData
+        | LoadProfileMetaDataResampled
         | StorageDataFrameMetaInformation
         | EmptyMetaDataInformation
+        | EmptyLoadProfileMetadata
         | ProductionOrderMetadata
     ],
     start_date: datetime.datetime,
@@ -48,46 +49,159 @@ def slice_data_frames(
     StreamDataFrameMetaInformation
     | ProcessStepDataFrameMetaInformation
     | LoadProfileMetaData
+    | LoadProfileMetaDataResampled
     | StorageDataFrameMetaInformation
     | EmptyMetaDataInformation
+    | EmptyLoadProfileMetadata
     | ProductionOrderMetadata
 ]:
     new_list_of_meta_data_frames = []
     for meta_information in list_of_meta_data_objects:
         if not isinstance(meta_information, StorageDataFrameMetaInformation):
             if isinstance(meta_information, EmptyMetaDataInformation):
-                logger.debug(
-                    "The data data frame supplied to the data gantt chart generator is empty"
-                )
+                logger.debug("The data data frame supplied to the data gantt chart generator is empty")
             elif meta_information.data_frame.empty:
-                logger.debug(
-                    "The data data frame supplied to the data gantt chart generator is empty"
-                )
+                logger.debug("The data data frame supplied to the data gantt chart generator is empty")
 
         if isinstance(
             meta_information,
             StreamDataFrameMetaInformation
             | ProcessStepDataFrameMetaInformation
             | LoadProfileMetaData
+            | LoadProfileMetaDataResampled
+            | LoadProfileMetaDataFromDisk
             | StorageDataFrameMetaInformation,
         ):
             stream_data_frame = meta_information.data_frame
             meta_information.first_start_time = start_date
             meta_information.last_end_time = end_date
-            sliced_data_frame = stream_data_frame.loc[
-                stream_data_frame["end_time"] >= start_date
-            ]
-            sliced_data_frame = sliced_data_frame.loc[
-                stream_data_frame["start_time"] <= end_date
-            ]
-            meta_information.data_frame = sliced_data_frame
-            meta_information.first_start_time = sliced_data_frame["start_time"].min()
-            meta_information.last_end_time = sliced_data_frame["end_time"].max()
-            new_list_of_meta_data_frames.append(meta_information)
+            sliced_data_frame = stream_data_frame.loc[stream_data_frame["end_time"] >= start_date]
+            sliced_data_frame = sliced_data_frame.loc[stream_data_frame["start_time"] <= end_date]
+            sliced_data_frame
+            first_start_time = sliced_data_frame["start_time"].min()
+            last_end_time = sliced_data_frame["end_time"].max()
+
+            new_meta_information: (
+                StreamDataFrameMetaInformation
+                | ProcessStepDataFrameMetaInformation
+                | LoadProfileMetaData
+                | LoadProfileMetaDataFromDisk
+                | LoadProfileMetaDataResampled
+                | StorageDataFrameMetaInformation
+                | ProductionOrderMetadata
+            )
+            if isinstance(meta_information, StreamDataFrameMetaInformation):
+                new_meta_information = StreamDataFrameMetaInformation(
+                    data_frame=sliced_data_frame,
+                    stream_name=meta_information.stream_name,
+                    first_start_time=first_start_time,
+                    last_end_time=last_end_time,
+                    stream_type=meta_information.stream_type,
+                    mass_unit=meta_information.mass_unit,
+                    commodity=meta_information.commodity,
+                    name_to_display=meta_information.name_to_display,
+                    plot_string=meta_information.plot_string,
+                )
+            elif isinstance(meta_information, ProcessStepDataFrameMetaInformation):
+                new_meta_information = ProcessStepDataFrameMetaInformation(
+                    data_frame=sliced_data_frame,
+                    process_step_name=meta_information.process_step_name,
+                    first_start_time=first_start_time,
+                    last_end_time=last_end_time,
+                    list_of_process_state_names=meta_information.list_of_process_state_names,
+                    plot_string=meta_information.plot_string,
+                )
+            elif isinstance(meta_information, LoadProfileMetaData):
+                new_meta_information = LoadProfileMetaData(
+                    name=meta_information.name,
+                    object_type=meta_information.object_type,
+                    list_of_load_profiles=meta_information.list_of_load_profiles,
+                    load_type=meta_information.load_type,
+                    energy_unit=meta_information.energy_unit,
+                    minimum_power=meta_information.minimum_power,
+                    maximum_power=meta_information.maximum_power,
+                    power_unit=meta_information.power_unit,
+                    total_energy=meta_information.total_energy,
+                    maximum_energy=meta_information.maximum_energy,
+                    data_frame=sliced_data_frame,
+                    first_start_time=first_start_time,
+                    last_end_time=last_end_time,
+                    plot_string=meta_information.plot_string,
+                    minimum_power_display=meta_information.minimum_power_display,
+                )
+            elif isinstance(meta_information, LoadProfileMetaDataResampled):
+                new_meta_information = LoadProfileMetaDataResampled(
+                    name=meta_information.name,
+                    object_type=meta_information.object_type,
+                    list_of_load_profiles=meta_information.list_of_load_profiles,
+                    load_type=meta_information.load_type,
+                    energy_unit=meta_information.energy_unit,
+                    minimum_power=meta_information.minimum_power,
+                    maximum_power=meta_information.maximum_power,
+                    power_unit=meta_information.power_unit,
+                    total_energy=meta_information.total_energy,
+                    data_frame=sliced_data_frame,
+                    first_start_time=first_start_time,
+                    last_end_time=last_end_time,
+                    time_step=meta_information.time_step,
+                    resample_frequency=meta_information.resample_frequency,
+                    plot_string=meta_information.plot_string,
+                    minimum_power_display=meta_information.minimum_power_display,
+                )
+            elif isinstance(meta_information, LoadProfileMetaDataFromDisk):
+                new_meta_information = LoadProfileMetaDataFromDisk(
+                    name=meta_information.name,
+                    object_type=meta_information.object_type,
+                    load_type=meta_information.load_type,
+                    energy_unit=meta_information.energy_unit,
+                    minimum_power=meta_information.minimum_power,
+                    maximum_power=meta_information.maximum_power,
+                    power_unit=meta_information.power_unit,
+                    total_energy=meta_information.total_energy,
+                    maximum_energy=meta_information.maximum_energy,
+                    data_frame=sliced_data_frame,
+                    first_start_time=first_start_time,
+                    last_end_time=last_end_time,
+                    plot_string=meta_information.plot_string,
+                )
+            elif isinstance(meta_information, StorageDataFrameMetaInformation):
+                new_meta_information = StorageDataFrameMetaInformation(
+                    data_frame=sliced_data_frame,
+                    process_step_name=meta_information.process_step_name,
+                    commodity=meta_information.commodity,
+                    first_start_time=first_start_time,
+                    last_end_time=last_end_time,
+                    mass_unit=meta_information.mass_unit,
+                    plot_string=meta_information.plot_string,
+                )
+
+            new_list_of_meta_data_frames.append(new_meta_information)
+
         elif isinstance(meta_information, ProductionOrderMetadata):
-            # TODO: Slice Order
-            new_list_of_meta_data_frames.append(meta_information)
-        elif isinstance(meta_information, EmptyMetaDataInformation):
+            sliced_deadlines = [
+                (deadline, mass)
+                for deadline, mass in zip(
+                    meta_information.list_of_unique_deadlines,
+                    meta_information.list_of_aggregated_production_order,
+                )
+                if start_date <= deadline <= end_date
+            ]
+            if sliced_deadlines:
+                deadlines, masses = zip(*sliced_deadlines)
+                sliced_order = ProductionOrderMetadata(
+                    order_name=meta_information.order_name,
+                    data_frame=meta_information.data_frame,
+                    list_of_aggregated_production_order=list(masses),
+                    list_of_unique_deadlines=list(deadlines),
+                    commodity=meta_information.commodity,
+                    total_order_mass=meta_information.total_order_mass,
+                    earliest_deadline=min(deadlines),
+                    latest_deadline=max(deadlines),
+                )
+                new_list_of_meta_data_frames.append(sliced_order)
+            else:
+                new_list_of_meta_data_frames.append(meta_information)
+        elif isinstance(meta_information, (EmptyMetaDataInformation, EmptyLoadProfileMetadata)):
             pass
         else:
             raise Exception("Unexpected datatype")
@@ -193,12 +307,8 @@ def create_stream_gantt_charts(
             subplot_number=subplot_number,
         )
 
-        min_start_date_current_data_frame = (
-            stream_data_frame_meta_information.first_start_time
-        )
-        max_end_date_current_data_frame = (
-            stream_data_frame_meta_information.last_end_time
-        )
+        min_start_date_current_data_frame = stream_data_frame_meta_information.first_start_time
+        max_end_date_current_data_frame = stream_data_frame_meta_information.last_end_time
         if subplot_number == 0:
             global_start_date = min_start_date_current_data_frame
             global_end_date = max_end_date_current_data_frame
@@ -212,21 +322,14 @@ def create_stream_gantt_charts(
         subplot_number = subplot_number + 1
 
     axs.format(xlim=(global_start_date, global_end_date))
-    axs.format(
-        suptitle="Streamchart from the "
-        + str(global_start_date)
-        + " until "
-        + str(global_end_date)
-    )
+    axs.format(suptitle="Streamchart from the " + str(global_start_date) + " until " + str(global_end_date))
     # Save figure to path
     if output_file_path == None:
         result_path_generator = ResultPathGenerator()
-        output_file_path = (
-            result_path_generator.create_path_to_file_relative_to_main_file(
-                file_name="stream_gantt_chart",
-                subdirectory_name="results",
-                file_extension=".eps",
-            )
+        output_file_path = result_path_generator.create_path_to_file_relative_to_main_file(
+            file_name="stream_gantt_chart",
+            subdirectory_name="results",
+            file_extension=".eps",
         )
     plt.savefig(output_file_path, format="eps")
     # Show figure
@@ -248,12 +351,12 @@ def create_stream_subplot(
     colour_column_name: str = "Colour",
     cmap_name: str = "Greens",
     number_of_colorbar_ticks: float = 4,
+    label_language: Literal["german", "english"] = "english",
 ):
     stream_data_frame = stream_data_frame_meta_information.data_frame
     # Calculate time difference for each stream
     stream_data_frame["Time difference"] = (
-        stream_data_frame[end_time_column_name]
-        - stream_data_frame[start_time_column_name]
+        stream_data_frame[end_time_column_name] - stream_data_frame[start_time_column_name]
     )
     # Create column with touple (start_time : datetime.datetime, time_difference : datetime:timedelta)
     stream_data_frame["barh tuple"] = list(
@@ -306,16 +409,18 @@ def create_stream_subplot(
     # Create list of values which are represented by the colour
     denormalized_tick_values = []
     for tick_value in normalized_tick_values:
-        denormalized_tick_values.append(
-            str(round(denormalize(tick_value, min_value, max_value), 1))
-        )
+        denormalized_tick_values.append(str(round(denormalize(tick_value, min_value, max_value), 1)))
 
-    if stream_data_frame_meta_information.stream_type == "BatchStream":
-        colorbar_label = "Mass per batch in: " + str(
-            stream_data_frame_meta_information.mass_unit
-        )
-    if stream_data_frame_meta_information.stream_type == "ContinuousStream":
-        colorbar_label = "Mass in: " + str(stream_data_frame_meta_information.mass_unit)
+    if stream_data_frame_meta_information.stream_type == StreamType.BATCH.value:
+        if label_language == "english":
+            colorbar_label = "Mass per batch in " + str(stream_data_frame_meta_information.mass_unit)
+        elif label_language == "german":
+            colorbar_label = "Masse pro Charge " + str(stream_data_frame_meta_information.mass_unit)
+    if stream_data_frame_meta_information.stream_type == StreamType.CONTINUOUS.value:
+        if label_language == "english":
+            colorbar_label = "Mass stream " + str(stream_data_frame_meta_information.mass_unit) + r"\h"
+        elif label_language == "german":
+            colorbar_label = "Massenstrom " + str(stream_data_frame_meta_information.mass_unit) + r"\h"
     # plot colourbar
     current_ax.colorbar(
         cmap,
@@ -324,8 +429,11 @@ def create_stream_subplot(
         locator=proplot.Locator("fixed", np.linspace(0, 1, number_of_colorbar_ticks)),
         ticklabels=denormalized_tick_values,
         label=colorbar_label,
-        width=0.1,
+        width=0.05,
     )
-    current_ax.set_title(
-        "Stream: " + stream_data_frame_meta_information.name_to_display
-    )
+    if stream_data_frame_meta_information.plot_string is None:
+        title_string = "Stream: " + stream_data_frame_meta_information.name_to_display
+    else:
+        title_string = stream_data_frame_meta_information.plot_string
+
+    current_ax.set_title(title_string)

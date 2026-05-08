@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import json
 import numbers
@@ -12,38 +13,68 @@ import numpy as np
 import pandas
 
 import __main__
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
-def get_all_rows_with_minimum_index_from_array(
-    input_array: list[list],
-) -> np.ndarray:
-    if isinstance(input_array, list):
-        input_array = np.array(input_array)
-    elif isinstance(input_array, np.ndarray):
-        pass
-    else:
-        raise Exception("Unexpected input datatype: " + str(type(input_array)))
-    if input_array.size == 0:
-        return input_array
-    else:
-        output_array = np.where(np.array(input_array) == min(input_array[:, 0]))
-        return input_array[output_array[0]]
+def datetime_to_seconds(dt: datetime.datetime) -> float:
+    """Convert a naive datetime to UTC seconds without DST adjustment.
+
+    Uses ``calendar.timegm`` which treats the input as UTC, avoiding
+    the local-timezone DST issues of ``datetime.timestamp()``.
+    """
+    return calendar.timegm(dt.timetuple()) + dt.microsecond / 1e6
 
 
-def get_all_rows_with_maximum_index_from_array(
-    input_array: list[list],
-) -> np.ndarray:
-    if isinstance(input_array, list):
-        input_array = np.array(input_array)
-    elif isinstance(input_array, np.ndarray):
-        pass
-    else:
-        raise Exception("Unexpected input datatype: " + str(type(input_array)))
-    if input_array.size == 0:
-        return input_array
-    else:
-        output_array = np.where(np.array(input_array) == max(input_array[:, 0]))
-        return input_array[output_array[0]]
+def seconds_to_datetime(seconds: float) -> datetime.datetime:
+    """Convert UTC seconds back to a naive datetime without DST adjustment.
+
+    Converts via ``datetime.fromtimestamp`` with an explicit UTC timezone
+    and then strips the tzinfo to return a naive datetime, matching the
+    conversion done by ``datetime_to_seconds``.
+    """
+    return datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc).replace(tzinfo=None)
+
+
+def dataframe_from_dataclasses(entries: list) -> pandas.DataFrame:
+    """Create a pandas DataFrame from a list of dataclass instances
+    without using dataclasses.asdict() which deep-copies every field value.
+    """
+    if not entries:
+        return pandas.DataFrame()
+    field_names = [f.name for f in fields(entries[0])]
+    return pandas.DataFrame({name: [getattr(e, name) for e in entries] for name in field_names})
+
+
+# def get_all_rows_with_minimum_index_from_array(
+#     input_array: list[list],
+# ) -> np.ndarray:
+#     if isinstance(input_array, list):
+#         input_array = np.array(input_array)
+#     elif isinstance(input_array, np.ndarray):
+#         pass
+#     else:
+#         raise Exception("Unexpected input datatype: " + str(type(input_array)))
+#     if input_array.size == 0:
+#         return input_array
+#     else:
+#         output_array = np.where(np.array(input_array) == min(input_array[:, 0]))
+#         return input_array[output_array[0]]
+
+
+# def get_all_rows_with_maximum_index_from_array(
+#     input_array: list[list],
+# ) -> np.ndarray:
+#     if isinstance(input_array, list):
+#         input_array = np.array(input_array)
+#     elif isinstance(input_array, np.ndarray):
+#         pass
+#     else:
+#         raise Exception("Unexpected input datatype: " + str(type(input_array)))
+#     if input_array.size == 0:
+#         return input_array
+#     else:
+#         output_array = np.where(np.array(input_array) == max(input_array[:, 0]))
+#         return input_array[output_array[0]]
 
 
 def format_timedelta(td: datetime.timedelta) -> str:
@@ -89,9 +120,7 @@ class ResultPathGenerator:
             os.makedirs(results_directory)
 
         if add_time_stamp_to_filename:
-            date_appendix = datetime.datetime.now().strftime(
-                ResultPathGenerator.time_stamp_format
-            )
+            date_appendix = datetime.datetime.now().strftime(ResultPathGenerator.time_stamp_format)
             file_name = file_name + date_appendix
         file_name_and_extension = file_name + file_extension
 
@@ -117,33 +146,23 @@ class ResultPathGenerator:
 
         return results_directory
 
-    def create_subdirectory_relative_to_parent(
-        self, parent_directory_path: str, new_directory_name: str
-    ) -> str:
-        path_to_new_subdirectory = os.path.join(
-            parent_directory_path, new_directory_name
-        )
+    def create_subdirectory_relative_to_parent(self, parent_directory_path: str, new_directory_name: str) -> str:
+        path_to_new_subdirectory = os.path.join(parent_directory_path, new_directory_name)
         Path(path_to_new_subdirectory).mkdir(parents=True, exist_ok=True)
         return path_to_new_subdirectory
 
 
-def denormalize(
-    value: numbers.Number, minimum_value: numbers.Number, maximum_value: numbers.Number
-):
+def denormalize(value: numbers_alias, minimum_value: numbers_alias, maximum_value: numbers_alias):
     denormalized_value = value * (maximum_value - minimum_value) + minimum_value
     return denormalized_value
 
 
-def check_if_date_1_is_before_date_2(
-    date_1: datetime.datetime, date_2: datetime.datetime
-) -> bool:
+def check_if_date_1_is_before_date_2(date_1: datetime.datetime, date_2: datetime.datetime) -> bool:
     start_is_before_end = date_1 < date_2
     return start_is_before_end
 
 
-def check_if_date_1_is_before_or_at_date_2(
-    date_1: datetime.datetime, date_2: datetime.datetime
-) -> bool:
+def check_if_date_1_is_before_or_at_date_2(date_1: datetime.datetime, date_2: datetime.datetime) -> bool:
     start_is_before_end = date_1 <= date_2
     return start_is_before_end
 
@@ -164,15 +183,7 @@ def convert_date_time_to_string(td: datetime.timedelta):
 
     # Format (as per above answers) and return the result string.
 
-    output_string = (
-        str(int(days))
-        + "_"
-        + str(int(hours))
-        + "_"
-        + str(int(mins))
-        + "_"
-        + str(int(secs))
-    )
+    output_string = str(int(days)) + "_" + str(int(hours)) + "_" + str(int(mins)) + "_" + str(int(secs))
     return output_string
 
 
@@ -219,34 +230,54 @@ def create_dataclass_from_pandas_series(data: pandas.Series, factory: Any) -> An
 # https://stackoverflow.com/questions/8906926/formatting-timedelta-objects
 
 
-class ExtendedEncoder(json.JSONEncoder):
-    def default(self, obj):
-        """Selects an encoder for custom objects
+# class ExtendedEncoder(json.JSONEncoder):
+#     def default(self, obj):
+#         """Selects an encoder for custom objects
 
-        :param obj: _description_
-        :type obj: _type_
-        :return: _description_
-        :rtype: _type_
-        """
-        name = type(obj).__name__
-        try:
-            encoder = getattr(self, f"encode_{name}")
-        except AttributeError:
-            super().default(obj)
-        else:
-            encoded = encoder(obj)
-            encoded["__extended_json_type__"] = name
-            return encoded
+#         :param obj: _description_
+#         :type obj: _type_
+#         :return: _description_
+#         :rtype: _type_
+#         """
+#         name = type(obj).__name__
+#         try:
+#             encoder = getattr(self, f"encode_{name}")
+#         except AttributeError:
+#             super().default(obj)
+#         else:
+#             encoded = encoder(obj)
+#             encoded["__extended_json_type__"] = name
+#             return encoded
 
 
-if __name__ == "__main__":
-    # start = datetime.datetime(year=2022, month=1, day=1)
-    # end = datetime.datetime(year=2023, month=1, day=1)
-    # a = check_if_date_1_is_before_date_2(date_1=start, date_2=end)
-    # print(a)
-    # b = check_if_date_1_is_before_date_2(date_1=end, date_2=start)
-    # print(b)
-    import datetime
+def time_mod(
+    time: datetime.datetime,
+    delta: datetime.timedelta,
+    epoch: None | datetime.datetime = None,
+) -> datetime.timedelta:
+    if epoch is None:
+        epoch = datetime.datetime(1970, 1, 1, tzinfo=time.tzinfo)
+    return (time - epoch) % delta
 
-    a = convert_date_time_to_string(td=datetime.timedelta(minutes=30))
-    print(a)
+
+def time_round(
+    time: datetime.datetime,
+    delta: datetime.timedelta,
+    epoch: None | datetime.datetime = None,
+) -> datetime.datetime:
+    mod = time_mod(time, delta, epoch)
+    if mod < delta / 2:
+        return time - mod
+    return time + (delta - mod)
+
+
+def time_floor(time: datetime.datetime, mod: datetime.timedelta) -> datetime.datetime:
+
+    return time - mod
+
+
+def time_ceil(time: datetime.datetime, delta: datetime.timedelta, mod: datetime.timedelta) -> datetime.datetime:
+
+    if mod:
+        return time + (delta - mod)
+    return time

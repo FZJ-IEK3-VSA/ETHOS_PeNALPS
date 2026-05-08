@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from pickletools import read_uint1
+from typing import Literal
 
 import matplotlib
 import matplotlib.dates as mdates
@@ -104,22 +104,15 @@ def create_process_state_gantt_charts(
         subplot_number = subplot_number + 1
 
     axs.format(xlim=(global_start_date, global_end_date))
-    axs.format(
-        suptitle="Process state chart from the "
-        + str(global_start_date)
-        + " until "
-        + str(global_end_date)
-    )
+    axs.format(suptitle="Process state chart from the " + str(global_start_date) + " until " + str(global_end_date))
 
     # Save figure to path
     if output_file_path is None:
         result_path_generator = ResultPathGenerator()
-        output_file_path = (
-            result_path_generator.create_path_to_file_relative_to_main_file(
-                file_name="stream_gantt_chart",
-                subdirectory_name="results",
-                file_extension=".eps",
-            )
+        output_file_path = result_path_generator.create_path_to_file_relative_to_main_file(
+            file_name="stream_gantt_chart",
+            subdirectory_name="results",
+            file_extension=".eps",
         )
     plt.savefig(output_file_path, format="eps")
     # Show figure
@@ -135,17 +128,16 @@ def create_process_state_subplot(
     cmap_name="Set1",
     block_type: str = "process_state_name",
     bar_lower_y_height: float = 0,
-    bar_width: float = 1,
+    bar_width: float = 0.1,
     end_time_column_name: str = "end_time",
+    label_language: Literal["german", "english"] = "english",
 ):
     data_frame = process_state_meta_data.data_frame
 
     # subplot_number = subplot_number + 1
 
     # Calculate time difference for each stream
-    data_frame["Time difference"] = (
-        data_frame[end_time_column_name] - data_frame[start_time_column_name]
-    )
+    data_frame["Time difference"] = data_frame[end_time_column_name] - data_frame[start_time_column_name]
     # Create column with touple (start_time : datetime.datetime, time_difference : datetime:timedelta)
     data_frame["barh tuple"] = list(
         zip(
@@ -171,9 +163,7 @@ def create_process_state_subplot(
     process_state_names = process_state_meta_data.list_of_process_state_names
     for process_state_name in process_state_names:
         # get all data frame entries of the object to be plotted
-        temporary_process_step_data_frame = data_frame[
-            data_frame[block_type].isin([process_state_name])
-        ]
+        temporary_process_step_data_frame = data_frame[data_frame[block_type].isin([process_state_name])]
 
         # Plot bars
         current_ax.broken_barh(
@@ -184,8 +174,18 @@ def create_process_state_subplot(
         )
         color_iterator = color_iterator + 1
 
-    current_ax.legend(loc="b", label="Process States")
+    if label_language == "english":
+        legend_label = "Process States"
+    elif label_language == "german":
+        legend_label = "Prozesszustände"
+
+    current_ax.legend(loc="b", label=legend_label)
+
+    if process_state_meta_data.plot_string is None:
+        title_string = "Process step: " + process_step_name
+    else:
+        title_string = process_state_meta_data.plot_string
 
     # Set subplot title to object name and increment subplot number
-    current_ax.set_title("Process step: " + process_step_name)
+    current_ax.set_title(title_string)
     subplot_number = subplot_number + 1

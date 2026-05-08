@@ -10,7 +10,7 @@ from ethos_penalps.data_classes import (
     ProcessStepProductionPlanEntry,
     StateConnector,
 )
-from ethos_penalps.load_profile_calculator import (
+from ethos_penalps.energy.load_profile_calculator import (
     LoadType,
     ProcessStateEnergyLoadData,
     ProcessStateEnergyLoadDataBasedOnStreamMass,
@@ -36,12 +36,13 @@ from ethos_penalps.stream import (
     ContinuousStream,
     ContinuousStreamProductionPlanEntry,
     ContinuousStreamState,
-    ProcessStepProductionPlanEntryWithInputStreamState,
+    ProcessStepProductionPlanEntryWithMass,
 )
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
 from ethos_penalps.utilities.exceptions_and_warnings import UnexpectedDataType
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -101,7 +102,7 @@ class ProcessState(ABC):
         )
         logger.debug(
             "The following ProcessStepProductionPlanEntry has been created: %s",
-            str(entry),
+            entry,
         )
         return entry
 
@@ -132,18 +133,11 @@ class ProcessState(ABC):
                 load_type=load_type,
                 stream_name=stream.name,
             )
-            self.add_process_state_energy_data(
-                process_state_energy_data=new_energy_data
-            )
+            self.add_process_state_energy_data(process_state_energy_data=new_energy_data)
         else:
-            raise Exception(
-                "Expected a stream of type BatchStream or ContinuousStream but got: "
-                + str(stream)
-            )
+            raise Exception("Expected a stream of type BatchStream or ContinuousStream but got: " + str(stream))
 
-    def add_process_state_energy_data(
-        self, process_state_energy_data: ProcessStateEnergyLoadData
-    ):
+    def add_process_state_energy_data(self, process_state_energy_data: ProcessStateEnergyLoadData):
         """Adds the ProcessStateEnergyLoadData to the collection of energy data.
 
         Args:
@@ -202,10 +196,8 @@ class OutputStreamProvidingState(ProcessState, ABC):
         """
         if self.maximum_stream_mass is None:
             feasible_output_stream_state = output_stream_state
-        elif isinstance(self.maximum_stream_mass, numbers.Number):
-            output_stream = self.process_step_data.stream_handler.get_stream(
-                stream_name=output_stream_state.name
-            )
+        elif isinstance(self.maximum_stream_mass, numbers_alias):
+            output_stream = self.process_step_data.stream_handler.get_stream(stream_name=output_stream_state.name)
 
             produced_mass = output_stream.get_produced_amount(state=output_stream_state)
             if produced_mass <= self.maximum_stream_mass:
@@ -223,21 +215,16 @@ class OutputStreamProvidingState(ProcessState, ABC):
                     #     total_transported_mass=self.maximum_stream_mass,
                     #     operation_rate=output_stream_state.current_operation_rate,
                     # )
-                    feasible_output_stream_state = (
-                        output_stream.create_stream_state_for_commodity_amount(
-                            commodity_amount=self.maximum_stream_mass,
-                            end_time=output_stream_state.end_time,
-                        )
+                    feasible_output_stream_state = output_stream.create_stream_state_for_commodity_amount(
+                        commodity_amount=self.maximum_stream_mass,
+                        end_time=output_stream_state.end_time,
                     )
 
                 else:
                     raise Exception("Unexpected stream datatype: " + str(output_stream))
 
         else:
-            raise Exception(
-                "Unexpected data type in self.maximum_stream_mass: "
-                + str(self.maximum_stream_mass)
-            )
+            raise Exception("Unexpected data type in self.maximum_stream_mass: " + str(self.maximum_stream_mass))
         return feasible_output_stream_state
 
     @abstractmethod
@@ -283,26 +270,16 @@ class InputStreamProvidingState(ProcessState, ABC):
         next_stream_end_time_from_previous_streams = (
             self.process_step_data.main_mass_balance.determine_next_stream_end_time_from_previous_input_streams()
         )
-        last_process_state_switch_time = (
-            self.process_step_data.time_data.get_last_process_state_switch_time()
-        )
-        next_stream_end_time = min(
-            next_stream_end_time_from_previous_streams, last_process_state_switch_time
-        )
-        self.process_step_data.time_data.set_next_stream_end_time(
-            next_stream_end_time=next_stream_end_time
-        )
+        last_process_state_switch_time = self.process_step_data.time_data.get_last_process_state_switch_time()
+        next_stream_end_time = min(next_stream_end_time_from_previous_streams, last_process_state_switch_time)
+        self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
         )
         if isinstance(input_stream, ContinuousStream):
-            required_input_stream_state = (
-                self.process_step_data.main_mass_balance.set_continuous_input_stream_according_to_output_stream_with_storage()
-            )
+            required_input_stream_state = self.process_step_data.main_mass_balance.set_input_continuous_stream_according_to_output_stream_with_storage()
         elif isinstance(input_stream, BatchStream):
-            required_input_stream_state = (
-                self.process_step_data.main_mass_balance.set_batch_input_stream_according_to_output_stream_with_storage()
-            )
+            required_input_stream_state = self.process_step_data.main_mass_balance.set_batch_input_stream_according_to_output_stream_with_storage()
         self.process_step_data.state_data_container.add_input_stream_to_validated_data(
             new_input_stream_state=required_input_stream_state
         )
@@ -373,9 +350,7 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
         """Creates the storage entries from the input stream states, output stream
         state and the storage level.
         """
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_pre_or_post_production_state()
         if isinstance(state_data, ValidatedPostProductionStateData):
             self.process_step_data.main_mass_balance.storage.create_all_storage_production_plan_entry(
                 exclude_output_times_before_input_end_time=True,
@@ -400,32 +375,19 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
         next_stream_end_time_from_previous_streams = (
             self.process_step_data.main_mass_balance.determine_next_stream_end_time_from_previous_input_streams()
         )
-        last_process_state_switch_time = (
-            self.process_step_data.time_data.get_last_process_state_switch_time()
-        )
-        next_stream_end_time = min(
-            next_stream_end_time_from_previous_streams, last_process_state_switch_time
-        )
-        self.process_step_data.time_data.set_next_stream_end_time(
-            next_stream_end_time=next_stream_end_time
-        )
+        last_process_state_switch_time = self.process_step_data.time_data.get_last_process_state_switch_time()
+        next_stream_end_time = min(next_stream_end_time_from_previous_streams, last_process_state_switch_time)
+        self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
         )
         if isinstance(input_stream, ContinuousStream):
-            raise Exception(
-                "Stream of wrong type is connected to the process step: "
-                + self.process_step_name
-            )
+            raise Exception("Stream of wrong type is connected to the process step: " + self.process_step_name)
         if isinstance(input_stream, BatchStream):
-            input_stream: BatchStream = (
-                self.process_step_data.stream_handler.get_stream(
-                    stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
-                )
+            input_stream: BatchStream = self.process_step_data.stream_handler.get_stream(
+                stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
             )
-            next_stream_end_time = (
-                self.process_step_data.time_data.get_next_stream_end_time()
-            )
+            next_stream_end_time = self.process_step_data.time_data.get_next_stream_end_time()
             batch_max_value = input_stream.static_data.maximum_batch_mass_value
             if batch_max_value is None:
                 raise Exception(
@@ -467,26 +429,17 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
         )
 
         if isinstance(input_stream, ContinuousStream):
-            raise Exception(
-                "Stream of wrong type is connected to the process step: "
-                + self.process_step_name
-            )
+            raise Exception("Stream of wrong type is connected to the process step: " + self.process_step_name)
 
         if isinstance(input_stream, BatchStream):
             next_stream_end_time = (
                 self.process_step_data.main_mass_balance.determine_required_batch_end_time_to_fulfill_storage()
             )
-            self.process_step_data.time_data.set_next_stream_end_time(
-                next_stream_end_time=next_stream_end_time
+            self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
+            input_stream: BatchStream = self.process_step_data.stream_handler.get_stream(
+                stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
             )
-            input_stream: BatchStream = (
-                self.process_step_data.stream_handler.get_stream(
-                    stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
-                )
-            )
-            next_stream_end_time = (
-                self.process_step_data.time_data.get_next_stream_end_time()
-            )
+            next_stream_end_time = self.process_step_data.time_data.get_next_stream_end_time()
             batch_max_value = input_stream.static_data.maximum_batch_mass_value
             if batch_max_value is None:
                 raise Exception(
@@ -523,9 +476,7 @@ class FullBatchInputStreamProvidingState(InputStreamProvidingState):
         return production_branch_if_fulfilled
 
 
-class InputAndOutputStreamProvidingState(
-    InputStreamProvidingState, OutputStreamProvidingState, ABC
-):
+class InputAndOutputStreamProvidingState(InputStreamProvidingState, OutputStreamProvidingState, ABC):
     """This is the abstract class for states with combined input and
     output states. These states model the parallel operation of input
     and output streams.
@@ -556,7 +507,7 @@ class IntermediateState(ProcessState, ABC):
         )
 
 
-class IntermediateStateBasedOnEnergy(IntermediateState):
+class IntermediateStateBasedOnStreamMass(IntermediateState):
     """This state models a phase of continuous energy demand between the input, output,
     idle state or another intermediate state.
 
@@ -565,32 +516,62 @@ class IntermediateStateBasedOnEnergy(IntermediateState):
     def _create_process_step_production_plan_entry(
         self,
         process_state_state: ProcessStateData,
-        input_stream_state: (
-            BatchStreamProductionPlanEntry | ContinuousStreamProductionPlanEntry
-        ),
+        input_stream_state: (BatchStreamProductionPlanEntry | ContinuousStreamProductionPlanEntry),
     ) -> ProcessStepProductionPlanEntry:
         if isinstance(input_stream_state, BatchStreamProductionPlanEntry):
-            total_stream_mass = input_stream_state.batch_mass_value
+            total_stream_mass = input_stream_state.total_mass
         elif isinstance(input_stream_state, ContinuousStreamProductionPlanEntry):
             total_stream_mass = input_stream_state.total_mass
-        entry = ProcessStepProductionPlanEntryWithInputStreamState(
+        entry = ProcessStepProductionPlanEntryWithMass(
             process_step_name=self.process_step_name,
             process_state_name=self.process_state_name,
             start_time=process_state_state.start_time,
             end_time=process_state_state.end_time,
             duration=str(process_state_state.end_time - process_state_state.start_time),
             process_state_type=str(type(self)),
-            stream_start_time=input_stream_state.start_time,
-            stream_end_time=input_stream_state.end_time,
-            total_stream_mass=total_stream_mass,
+            # stream_start_time=input_stream_state.start_time,
+            # stream_end_time=input_stream_state.end_time,
+            relevant_mass=total_stream_mass,
         )
         logger.debug(entry)
         return entry
 
 
-class ProcessStateParallelContinuousInputWithStorage(
-    InputAndOutputStreamProvidingState
-):
+class IntermediateStateBasedOnStorage(IntermediateState):
+    """This state models a phase of continuous energy demand between the input, output,
+    idle state or another intermediate state.
+
+    """
+
+    def _create_process_step_production_plan_entry(
+        self,
+        process_state_state: ProcessStateData,
+    ) -> ProcessStepProductionPlanEntry:
+
+        output_stream_state = self.process_step_data.state_data_container.state_data.current_output_stream_state
+        if isinstance(output_stream_state, ContinuousStreamState):
+            relevant_mass = output_stream_state.total_mass
+        elif isinstance(output_stream_state, BatchStreamState):
+            relevant_mass = output_stream_state.batch_mass_value
+        else:
+            raise Exception("Expected output_stream_state but got: ", type(output_stream_state))
+
+        entry = ProcessStepProductionPlanEntryWithMass(
+            process_step_name=self.process_step_name,
+            process_state_name=self.process_state_name,
+            start_time=process_state_state.start_time,
+            end_time=process_state_state.end_time,
+            duration=str(process_state_state.end_time - process_state_state.start_time),
+            process_state_type=str(type(self)),
+            # stream_start_time=input_stream_state.start_time,
+            # stream_end_time=input_stream_state.end_time,
+            relevant_mass=relevant_mass,
+        )
+        logger.debug(entry)
+        return entry
+
+
+class ProcessStateParallelContinuousInputWithStorage(InputAndOutputStreamProvidingState):
     """This state models the parallel activity of an input and output stream state."""
 
     def __init__(
@@ -643,52 +624,26 @@ class ProcessStateParallelContinuousInputWithStorage(
             ContinuousStreamState | BatchStreamState: The input stream state that is tries
                 to provide the mass for the output stream.
         """
-        state_data = (
-            self.process_step_data.state_data_container.get_pre_production_state_data()
-        )
+        state_data = self.process_step_data.state_data_container.get_pre_production_state_data()
         output_stream_state = state_data.current_output_stream_state
-        output_stream = self.process_step_data.stream_handler.get_stream(
-            stream_name=output_stream_state.name
-        )
+        output_stream = self.process_step_data.stream_handler.get_stream(stream_name=output_stream_state.name)
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
         )
-        full_output_mass = output_stream.get_produced_amount(state=output_stream_state)
-        last_process_state_switch_time = (
-            self.process_step_data.time_data.get_last_process_state_switch_time()
-        )
+        last_process_state_switch_time = self.process_step_data.time_data.get_last_process_state_switch_time()
 
-        if isinstance(output_stream, ContinuousStream) and isinstance(
-            input_stream, ContinuousStream
-        ):
+        if isinstance(output_stream, ContinuousStream) and isinstance(input_stream, ContinuousStream):
             self.process_step_data.time_data.set_next_stream_end_time(
                 next_stream_end_time=last_process_state_switch_time
             )
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_continuous_operation_rate_for_parallel_input_and_output_stream_with_storage()
-            )
+            input_stream_state = self.process_step_data.main_mass_balance.set_input_continuous_stream_parallel_to_output_continuous_stream_with_storage()
 
-        elif isinstance(input_stream, BatchStream) and isinstance(
-            output_stream, ContinuousStream
-        ):
+        elif isinstance(input_stream, BatchStream) and isinstance(output_stream, ContinuousStream):
             next_stream_end_time = (
                 self.process_step_data.main_mass_balance.determine_required_batch_end_time_to_fulfill_storage()
             )
-            self.process_step_data.time_data.set_next_stream_end_time(
-                next_stream_end_time=next_stream_end_time
-            )
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_batch_stream_for_parallel_input_and_output_with_storage()
-            )
-        elif isinstance(input_stream, ContinuousStream) and isinstance(
-            output_stream, BatchStream
-        ):
-            self.process_step_data.time_data.set_next_stream_end_time(
-                next_stream_end_time=last_process_state_switch_time
-            )
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_continuous_input_stream_according_to_output_stream_with_storage()
-            )
+            self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
+            input_stream_state = self.process_step_data.main_mass_balance.set_input_batch_stream_parallel_to_continuous_output_stream_with_storage()
         else:
             raise Exception("Case not implemented yet")
 
@@ -707,43 +662,27 @@ class ProcessStateParallelContinuousInputWithStorage(
             ContinuousStreamState | BatchStreamState: The new input stream state that
                 is requested from the upstream node.
         """
-        state_data = (
-            self.process_step_data.state_data_container.get_validated_production_state_data()
-        )
+        state_data = self.process_step_data.state_data_container.get_validated_production_state_data()
         output_stream_state = state_data.current_output_stream_state
-        output_stream = self.process_step_data.stream_handler.get_stream(
-            stream_name=output_stream_state.name
-        )
+        output_stream = self.process_step_data.stream_handler.get_stream(stream_name=output_stream_state.name)
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
         )
-        full_output_mass = output_stream.get_produced_amount(state=output_stream_state)
-        last_process_state_switch_time = (
-            self.process_step_data.time_data.get_last_process_state_switch_time()
-        )
 
-        if isinstance(output_stream, ContinuousStream) and isinstance(
-            input_stream, ContinuousStream
-        ):
+        last_process_state_switch_time = self.process_step_data.time_data.get_last_process_state_switch_time()
+
+        if isinstance(output_stream, ContinuousStream) and isinstance(input_stream, ContinuousStream):
             self.process_step_data.time_data.set_next_stream_end_time(
                 next_stream_end_time=last_process_state_switch_time
             )
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_continuous_operation_rate_for_parallel_input_and_output_stream_with_storage()
-            )
+            input_stream_state = self.process_step_data.main_mass_balance.set_input_continuous_stream_parallel_to_output_continuous_stream_with_storage()
 
-        elif isinstance(input_stream, BatchStream) and isinstance(
-            output_stream, ContinuousStream
-        ):
+        elif isinstance(input_stream, BatchStream) and isinstance(output_stream, ContinuousStream):
             next_stream_end_time = (
                 self.process_step_data.main_mass_balance.determine_required_batch_end_time_to_fulfill_storage()
             )
-            self.process_step_data.time_data.set_next_stream_end_time(
-                next_stream_end_time=next_stream_end_time
-            )
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_batch_stream_for_parallel_input_and_output_with_storage()
-            )
+            self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
+            input_stream_state = self.process_step_data.main_mass_balance.set_input_batch_stream_parallel_to_continuous_output_stream_with_storage()
         else:
             raise Exception("Case not implemented yet")
 
@@ -902,12 +841,8 @@ class ContinuousInputStreamRequestingStateWithStorage(InputStreamProvidingState)
             ContinuousStreamState: New input stream state that is requested from the upstream node.
         """
         # Determine end time of the input stream
-        next_stream_end_time = (
-            self.process_step_data.time_data.get_next_process_state_switch_time()
-        )
-        self.process_step_data.time_data.set_next_stream_end_time(
-            next_stream_end_time=next_stream_end_time
-        )
+        next_stream_end_time = self.process_step_data.time_data.get_next_process_state_switch_time()
+        self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
 
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
@@ -915,13 +850,9 @@ class ContinuousInputStreamRequestingStateWithStorage(InputStreamProvidingState)
         # Check if correct stream is connected to the state
         if isinstance(input_stream, ContinuousStream):
             # Create stream state based on the output stream state and determined end time
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_continuous_input_stream_according_to_output_stream_with_storage()
-            )
+            input_stream_state = self.process_step_data.main_mass_balance.set_input_continuous_stream_according_to_output_stream_with_storage()
         else:
-            raise Exception(
-                "Wrong stream is connected to this state: " + self.process_state_name
-            )
+            raise Exception("Wrong stream is connected to this state: " + self.process_state_name)
         # Add stream to process step data
         self.process_step_data.state_data_container.add_first_input_stream_state(
             first_input_stream_state=input_stream_state
@@ -950,25 +881,17 @@ class BatchInputStreamRequestingStateWithStorage(InputStreamProvidingState):
             BatchStreamState: New input stream state that is requested from the upstream node.
         """
         # Determine end time of the input stream
-        next_stream_end_time = (
-            self.process_step_data.time_data.get_next_process_state_switch_time()
-        )
-        self.process_step_data.time_data.set_next_stream_end_time(
-            next_stream_end_time=next_stream_end_time
-        )
+        next_stream_end_time = self.process_step_data.time_data.get_next_process_state_switch_time()
+        self.process_step_data.time_data.set_next_stream_end_time(next_stream_end_time=next_stream_end_time)
         # Check if correct stream is connected to the state
         input_stream = self.process_step_data.stream_handler.get_stream(
             stream_name=self.process_step_data.main_mass_balance.main_input_stream_name
         )
         if isinstance(input_stream, BatchStream):
             # Create stream state based on the output stream state and determined end time
-            input_stream_state = (
-                self.process_step_data.main_mass_balance.set_batch_input_stream_according_to_output_stream_with_storage()
-            )
+            input_stream_state = self.process_step_data.main_mass_balance.set_batch_input_stream_according_to_output_stream_with_storage()
         else:
-            raise Exception(
-                "Wrong stream is connected to this state: " + self.process_state_name
-            )
+            raise Exception("Wrong stream is connected to this state: " + self.process_state_name)
         # Add stream to process step data
         self.process_step_data.state_data_container.add_first_input_stream_state(
             first_input_stream_state=input_stream_state
@@ -987,9 +910,7 @@ class BatchInputStreamRequestingStateWithStorage(InputStreamProvidingState):
         )
 
 
-class BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
-    BatchInputStreamRequestingStateWithStorage
-):
+class BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(BatchInputStreamRequestingStateWithStorage):
     def _create_process_step_production_plan_entry(
         self,
         process_state_state: ProcessStateData,
@@ -1005,9 +926,8 @@ class BatchInputStreamRequestingStateWithStorageEnergyBasedOnStream(
         Returns:
             ProcessStepProductionPlanEntry: Final simulation result entry.
         """
-        self.process_state_energy_data_dict
 
-        entry = ProcessStepProductionPlanEntryWithInputStreamState(
+        entry = ProcessStepProductionPlanEntryWithMass(
             process_step_name=self.process_step_name,
             process_state_name=self.process_state_name,
             start_time=process_state_state.start_time,
@@ -1047,10 +967,7 @@ class ProcessStateIdle(ProcessState):
 
     def __str__(self) -> str:
         return (
-            "Idle process state: "
-            + str(self.process_state_name)
-            + " of process step : "
-            + str(self.process_step_name)
+            "Idle process state: " + str(self.process_state_name) + " of process step : " + str(self.process_step_name)
         )
 
 
@@ -1068,9 +985,7 @@ class ProcessStateSwitchHandler:
                 methods to alter the state.
         """
         self.process_step_data: ProcessStepData = process_step_data
-        self.process_state_switch_dictionary: dict[
-            StateConnector, ProcessStateSwitch
-        ] = {}
+        self.process_state_switch_dictionary: dict[StateConnector, ProcessStateSwitch] = {}
 
     def add_process_state_switch(self, process_state_switch: ProcessStateSwitch):
         """Adds a ProcessStateSwitch instance that defines the switch condition between two states.
@@ -1089,9 +1004,7 @@ class ProcessStateSwitchHandler:
                 + " is already in process state switch dictionary of :"
                 + str(self.process_step_data.process_step_name)
             )
-        self.process_state_switch_dictionary[process_state_switch.state_connector] = (
-            process_state_switch
-        )
+        self.process_state_switch_dictionary[process_state_switch.state_connector] = process_state_switch
 
     def create_process_state_switch_at_next_discrete_event(
         self, start_process_state: ProcessState, end_process_state: ProcessState

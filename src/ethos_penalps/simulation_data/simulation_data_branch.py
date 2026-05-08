@@ -16,7 +16,7 @@ from ethos_penalps.utilities.exceptions_and_warnings import (
     IllogicalFunctionCall,
     UnexpectedDataType,
 )
-from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 # Input Branch data classes
@@ -40,17 +40,11 @@ class StreamBranchData:
     """
 
     identifier: StreamBranchIdentifier
-    list_of_complete_input_branches: list[CompleteTemporalBranchData] = field(
-        default_factory=list
-    )
+    list_of_complete_input_branches: list[CompleteTemporalBranchData] = field(default_factory=list)
 
-    def complete_input_branch_data(
-        self, incomplete_input_branch_data: TemporalBranchData
-    ):
+    def complete_input_branch_data(self, incomplete_input_branch_data: TemporalBranchData):
         self.list_of_complete_input_branches.append(
-            CompleteTemporalBranchData(
-                identifier=incomplete_input_branch_data.identifier
-            )
+            CompleteTemporalBranchData(identifier=incomplete_input_branch_data.identifier)
         )
 
     def get_incomplete_input_branch_data(self):
@@ -77,9 +71,7 @@ class IncompleteStreamBranchData(StreamBranchData):
     current_incomplete_input_branch: TemporalBranchData
 
     def create_complete_input_branch_data(self) -> CompleteTemporalBranchData:
-        return CompleteTemporalBranchData(
-            identifier=self.current_incomplete_input_branch
-        )
+        return CompleteTemporalBranchData(identifier=self.current_incomplete_input_branch.identifier)
 
     def get_incomplete_input_branch_data(self) -> TemporalBranchData:
         return self.current_incomplete_input_branch
@@ -96,9 +88,7 @@ class CompleteStreamBranchData(StreamBranchData):
     def __init__(self, stream_branch_data: StreamBranchData) -> None:
         super().__init__(
             identifier=stream_branch_data.identifier,
-            list_of_complete_input_branches=list(
-                stream_branch_data.list_of_complete_input_branches
-            ),
+            list_of_complete_input_branches=list(stream_branch_data.list_of_complete_input_branches),
         )
         self.identifier: StreamBranchIdentifier = stream_branch_data.identifier
 
@@ -109,9 +99,7 @@ class CompleteStreamBranchData(StreamBranchData):
         return CompleteStreamBranchData(
             stream_branch_data=StreamBranchData(
                 identifier=self.identifier,
-                list_of_complete_input_branches=list(
-                    self.list_of_complete_input_branches
-                ),
+                list_of_complete_input_branches=list(self.list_of_complete_input_branches),
             )
         )
 
@@ -127,21 +115,26 @@ class OutputBranchData:
     identifier: OutputBranchIdentifier
     parent_output_identifier: OutputBranchIdentifier
     parent_input_identifier: TemporalBranchIdentifier
-    dict_of_complete_stream_branch: dict[str, StreamBranchData] = field(
-        default_factory=dict
-    )
+    dict_of_complete_stream_branch: dict[str, StreamBranchData] = field(default_factory=dict)
     production_branch_production_plan: OutputBranchProductionPlan
 
     # list_of_complete_input_branches: list[CompleteInputBranchData] = field(
     #     default_factory=list
     # )
     def create_copy(self):
+        pp = self.production_branch_production_plan
         return OutputBranchData(
             identifier=self.identifier,
             parent_output_identifier=self.parent_output_identifier,
             parent_input_identifier=self.parent_input_identifier,
             dict_of_complete_stream_branch=dict(self.dict_of_complete_stream_branch),
-            production_branch_production_plan=self.production_branch_production_plan.create_self_copy(),
+            production_branch_production_plan=OutputBranchProductionPlan(
+                process_step_states_dict={k: list(v) for k, v in pp.process_step_states_dict.items()},
+                stream_state_dict={k: list(v) for k, v in pp.stream_state_dict.items()},
+                storage_state_dict={
+                    ps: {c: list(sl) for c, sl in cd.items()} for ps, cd in pp.storage_state_dict.items()
+                },
+            ),
         )
 
 
@@ -152,13 +145,20 @@ class IncompleteOutputBranchData(OutputBranchData):
 
     # current_input_branch: InputBranchData
     def create_copy(self):
+        pp = self.production_branch_production_plan
         return IncompleteOutputBranchData(
             identifier=self.identifier,
             current_stream_branch=self.current_stream_branch.create_copy(),
             parent_input_identifier=self.parent_input_identifier,
             parent_output_identifier=self.parent_output_identifier,
             dict_of_complete_stream_branch=dict(self.dict_of_complete_stream_branch),
-            production_branch_production_plan=self.production_branch_production_plan.create_self_copy(),
+            production_branch_production_plan=OutputBranchProductionPlan(
+                process_step_states_dict={k: list(v) for k, v in pp.process_step_states_dict.items()},
+                stream_state_dict={k: list(v) for k, v in pp.stream_state_dict.items()},
+                storage_state_dict={
+                    ps: {c: list(sl) for c, sl in cd.items()} for ps, cd in pp.storage_state_dict.items()
+                },
+            ),
         )
 
 
@@ -173,15 +173,14 @@ class CompleteOutputBranchData(OutputBranchData):
             identifier=output_branch_data.identifier,
             parent_output_identifier=output_branch_data.parent_output_identifier,
             parent_input_identifier=output_branch_data.parent_input_identifier,
-            dict_of_complete_stream_branch=dict(
-                output_branch_data.dict_of_complete_stream_branch
-            ),
+            dict_of_complete_stream_branch=dict(output_branch_data.dict_of_complete_stream_branch),
             production_branch_production_plan=output_branch_data.production_branch_production_plan,
         )
         self.start_time: datetime.datetime = start_time
         self.end_time: datetime.datetime = end_time
 
     def create_copy(self):
+        pp = self.production_branch_production_plan
         return CompleteOutputBranchData(
             start_time=self.start_time,
             end_time=self.end_time,
@@ -189,9 +188,13 @@ class CompleteOutputBranchData(OutputBranchData):
                 identifier=self.identifier,
                 parent_input_identifier=self.parent_input_identifier,
                 parent_output_identifier=self.parent_output_identifier,
-                dict_of_complete_stream_branch=dict(
-                    self.dict_of_complete_stream_branch
+                dict_of_complete_stream_branch=dict(self.dict_of_complete_stream_branch),
+                production_branch_production_plan=OutputBranchProductionPlan(
+                    process_step_states_dict={k: list(v) for k, v in pp.process_step_states_dict.items()},
+                    stream_state_dict={k: list(v) for k, v in pp.stream_state_dict.items()},
+                    storage_state_dict={
+                        ps: {c: list(sl) for c, sl in cd.items()} for ps, cd in pp.storage_state_dict.items()
+                    },
                 ),
-                production_branch_production_plan=self.production_branch_production_plan.create_self_copy(),
             ),
         )

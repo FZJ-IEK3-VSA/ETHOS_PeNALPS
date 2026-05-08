@@ -1,35 +1,44 @@
-name: ethos_penalps
+name: ethos_penalps_env
+
+channels:
+  - conda-forge
 
 dependencies:
-  - conda-forge::python >=3.10
-  - conda-forge::pandas
-  - conda-forge::jupyter-book
-  - conda-forge::sphinx-autoapi
-  - conda-forge::matplotlib
-  - conda-forge::graphviz
-  - conda-forge::python-graphviz
-  - conda-forge::numpy >1.23.5
-  - conda-forge::sqlalchemy < 2.0
-  - conda-forge::plotly
-  - conda-forge::networkx
-  - conda-forge::openpyxl
-  - conda-forge::xlsxwriter
-  - conda-forge::prospector
-  - conda-forge::pytest
-  - conda-forge::pip >=21.3
-  - conda-forge::black
-  - conda-forge::pint
-  - conda-forge::proplot
-  - conda-forge::datapane
-  - conda-forge::svglib
-  - conda-forge::cloudpickle
-  - conda-forge::seaborn
-  - conda-forge::workalendar
-  - conda-forge::datetimerange
-  - conda-forge::tectonic
-  - conda-forge::typeguard
-  - conda-forge::dataclasses-json
-  - conda-forge::jsonpickle
-  - conda-forge::pdf2image
-  - conda-forge::pytest>7.0 
-  - conda-forge::pytest-xdist
+  - python >=3.10,<=3.10.20
+  - cloudpickle <=3.1.2
+  - dataclasses-json <=0.6.7
+  - datapane <=0.16.7
+  - datetimerange <2.3  # 2.3+ added astimezone() in validate_time_inversion which breaks tz-naive pandas Timestamps
+  - graphviz <=13.1.2
+  - jsonpickle <=4.1.1
+  - matplotlib <=3.4.3
+  - networkx <=3.2.1
+  - numpy >1.23.0,<=1.26.4
+  - openpyxl <=3.1.5
+  - pandas >=1.4.0,<=1.5.3
+  - pdf2image <=1.17.0
+  - pint <=0.24.4
+  - pip >=21.3,<=25.3
+  - plotly <=5.24.1
+  - proplot <=0.9.7
+  - python-graphviz <=0.21
+  - setuptools <81  # proplot needs pkg_resources, which setuptools 81+ removed
+  - seaborn <=0.13.2
+  - sqlalchemy <2.0
+  - strenum <=0.4.15
+  - svglib <=1.5.1
+  - typeguard <=4.5.1
+  - workalendar <=17.0.0
+  - xlsxwriter <=3.2.9
+  - tectonic <=0.15.0
+  # Development / testing
+  - pandas-stubs <=2.3.3.260113
+  - pytest >7.0,<=9.0.3
+  - pytest-xdist <=3.8.0
+  - types-datetimerange <=2.0.0.6
+  - ruff <=0.15.12
+  - nbval <=0.11.0
+  - nbconvert <=7.17.1
+  # Documentation
+  - jupyter-book >=1.0,<2
+  - sphinx-autoapi <=3.8.0

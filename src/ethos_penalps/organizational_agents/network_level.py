@@ -1,13 +1,15 @@
 import uuid
 from dataclasses import dataclass
+from typing import Literal
 
 from ethos_penalps.data_classes import (
     Commodity,
     OrderCollection,
+    OrderProcessingType,
     ProcessChainIdentifier,
     get_new_uuid,
 )
-from ethos_penalps.load_profile_calculator import LoadProfileHandlerSimulation
+from ethos_penalps.energy.load_profile_calculator import LoadProfileHandlerSimulation
 from ethos_penalps.organizational_agents.process_chain import ProcessChain
 from ethos_penalps.process_nodes.process_chain_storage import ProcessChainStorage
 from ethos_penalps.process_nodes.process_step import ProcessNode
@@ -16,6 +18,7 @@ from ethos_penalps.process_nodes.source import Source
 from ethos_penalps.production_plan import ProductionPlan
 from ethos_penalps.stream_handler import StreamHandler
 from ethos_penalps.time_data import TimeData
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 
 class NetworkLevel:
@@ -35,6 +38,7 @@ class NetworkLevel:
         self.production_plan: ProductionPlan = production_plan
         self.load_profile_handler: LoadProfileHandlerSimulation = load_profile_handler
         self.main_source: Source | ProcessChainStorage
+        self.list_of_secondary_sources: list[Source | ProcessChainStorage] = []
         self.main_sink: Sink | ProcessChainStorage
         self.node_dictionary: dict[str, ProcessNode] = {}
         self.list_of_process_chains: list[ProcessChain] = []
@@ -64,8 +68,35 @@ class NetworkLevel:
         self.main_source = source
         return source
 
+    def create_secondary_source(self, name: str, commodity: Commodity) -> Source:
+        """Creates a source that marks the start point of the material flow in
+        the NetworkLevel.
+
+        Args:
+            name (str): Name of the source. Is used as key for identification
+                and is displayed in some figures. Must be unique.
+            commodity (Commodity): The commodity that is distributed by the sink.
+
+        Returns:
+            Source: Object that marks the start point of the material flow in
+                the NetworkLevel.
+        """
+        source = Source(
+            name=name,
+            commodity=commodity,
+            stream_handler=self.stream_handler,
+            time_data=self.time_data,
+            production_plan=self.production_plan,
+        )
+        self.list_of_secondary_sources.append(source)
+        return source
+
     def create_main_sink(
-        self, name: str, commodity: Commodity, order_collection: OrderCollection
+        self,
+        name: str,
+        commodity: Commodity,
+        order_collection: OrderCollection,
+        order_processing_type: OrderProcessingType = OrderProcessingType.AGGREGATE_AND_DISTRIBUTE,
     ) -> Sink:
         """Creates a sink that marks the target of the material flow in the NetWorkLevel.
 
@@ -90,12 +121,16 @@ class NetworkLevel:
                 global_start_date=self.time_data.global_start_date,
                 global_end_date=self.time_data.global_end_date,
             ),
+            order_processing_type=order_processing_type,
         )
         self.main_sink = sink
         return sink
 
     def create_process_chain_storage_as_source(
-        self, name: str, commodity: Commodity
+        self,
+        name: str,
+        commodity: Commodity,
+        order_processing_type: OrderProcessingType = OrderProcessingType.AGGREGATE_AND_DISTRIBUTE,
     ) -> ProcessChainStorage:
         """Creates a ProcessChainStorage and sets it as a Source in
         this NetworkLevel. The Source determines start start point
@@ -110,6 +145,7 @@ class NetworkLevel:
             ProcessChainStorage: Object that determines start start point
                 of the material flow in the NetworkLevel
         """
+
         process_chain_storage = ProcessChainStorage(
             name=name,
             commodity=commodity,
@@ -118,15 +154,16 @@ class NetworkLevel:
             time_data=TimeData(
                 global_start_date=self.time_data.global_start_date,
                 global_end_date=self.time_data.global_end_date,
+                start_time_valid=self.time_data.start_time_valid,
+                end_time_valid=self.time_data.end_time_valid,
             ),
+            order_processing_type=order_processing_type,
         )
         self.main_source = process_chain_storage
 
         return process_chain_storage
 
-    def add_process_chain_storage_as_sink(
-        self, process_chain_storage: ProcessChainStorage
-    ):
+    def add_process_chain_storage_as_sink(self, process_chain_storage: ProcessChainStorage):
         """Adds the ProcessChainStorage instance as a replacement for a sink.
         Marks the target of the material flow in the NetWorkLevel.
 
@@ -142,7 +179,10 @@ class NetworkLevel:
             time_data=TimeData(
                 global_start_date=process_chain_storage.time_data.global_start_date,
                 global_end_date=process_chain_storage.time_data.global_end_date,
+                start_time_valid=process_chain_storage.time_data.start_time_valid,
+                end_time_valid=process_chain_storage.time_data.end_time_valid,
             ),
+            order_processing_type=process_chain_storage.aggregate_orders,
         )
         self.main_sink = process_chain_storage
 
@@ -175,22 +215,13 @@ class NetworkLevel:
         self.list_of_process_chains.append(process_chain)
         return process_chain
 
-    def get_order_from_previous_sources(self):
-        """Converts the streams from the downstream
-        source to orders for the sink of this
-        NetworkLevel.
-        """
-        self.main_sink.get_order_from_parent_source()
-
     def combine_stream_handler_from_chains(self):
         """Combines the streams of the StreamHandler of each
         ProcessChain in a single StreamHandler of the
         NetworkLevel.
         """
         for process_chain in self.list_of_process_chains:
-            self.stream_handler.stream_dict.update(
-                process_chain.stream_handler.stream_dict
-            )
+            self.stream_handler.stream_dict.update(process_chain.stream_handler.stream_dict)
 
     def combine_node_dict(self):
         """Combines the node dictionaries of the process chains in

@@ -1,0 +1,9 @@
+{
+  "start": "2023-01-01T00:00:00",
+  "end": "2023-01-01T00:30:00",
+  "n_entries": 15,
+  "max_energy": 1000.0,
+  "seed": 1042,
+  "resample_frequency": "7.5min",
+  "expected_total_energy": 8434.015447967808
+}

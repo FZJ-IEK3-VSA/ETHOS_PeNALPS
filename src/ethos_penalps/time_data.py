@@ -1,6 +1,9 @@
 import datetime
+import numbers
 
+from ethos_penalps.utilities.general_functions import datetime_to_seconds
 from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
+from ethos_penalps.utilities.type_aliases import numbers_alias
 
 logger = PeNALPSLogger.get_logger_without_handler()
 
@@ -16,19 +19,37 @@ class TimeData:
         self,
         global_start_date: datetime.datetime = datetime.datetime(2021, 1, 1),
         global_end_date: datetime.datetime = datetime.datetime(2022, 1, 1),
+        start_time_valid: datetime.datetime | None = None,
+        end_time_valid: datetime.datetime | None = None,
     ) -> None:
         """
         Args:
             global_start_date (datetime.datetime, optional): _description_. Defaults to datetime.datetime(2021, 1, 1).
             global_end_date (datetime.datetime, optional): The global end date . Defaults to datetime.datetime(2022, 1, 1).
+            start_time_valid (datetime.datetime | None, optional): Start time for valid output range,
+                used to cut startup behaviour from storage entries. Defaults to None.
+            end_time_valid (datetime.datetime | None, optional): End time for valid output range,
+                used to cut shutdown behaviour from storage entries. Defaults to None.
         """
         self.global_start_date: datetime.datetime = global_start_date
         self.global_end_date: datetime.datetime = global_end_date
+        self.start_time_valid: datetime.datetime | None = start_time_valid
+        self.end_time_valid: datetime.datetime | None = end_time_valid
         self.last_idle_time: datetime.datetime = global_end_date
         self.last_process_state_switch_time: datetime.datetime = global_end_date
         self.next_process_state_switch_time: datetime.datetime = global_end_date
         self.next_stream_end_time: datetime.datetime
         self.storage_last_update_time: datetime.datetime = global_end_date
+
+    def __post_init__(self):
+
+        self.global_start_date_seconds: numbers_alias = datetime_to_seconds(self.global_start_date)
+        self.global_end_date_seconds: numbers_alias = datetime_to_seconds(self.global_end_date)
+        self.last_idle_time_seconds: numbers_alias = datetime_to_seconds(self.global_end_date)
+        self.last_process_state_switch_time_seconds: numbers_alias = datetime_to_seconds(self.global_end_date)
+        self.next_process_state_switch_time_seconds: numbers_alias = datetime_to_seconds(self.global_end_date)
+        self.next_stream_end_time_seconds: numbers_alias
+        self.storage_last_update_time_seconds: numbers_alias = datetime_to_seconds(self.global_end_date)
 
     def set_current_process_time(self, current_process_time: datetime.datetime):
         """Sets the current process time of a process step.
@@ -71,9 +92,7 @@ class TimeData:
             raise Exception("Next discrete event time is after last idle time")
         self.last_idle_time = self.next_process_state_switch_time
 
-    def set_next_process_state_switch_time(
-        self, next_discrete_event_time: datetime.datetime
-    ):
+    def set_next_process_state_switch_time(self, next_discrete_event_time: datetime.datetime):
         if not isinstance(next_discrete_event_time, datetime.datetime):
             raise Exception(
                 "Instead of datetime.datetime datatype, the datatype: "
@@ -144,6 +163,8 @@ class TimeData:
         self_copy = TimeData(
             global_start_date=self.global_start_date,
             global_end_date=self.global_end_date,
+            start_time_valid=self.start_time_valid,
+            end_time_valid=self.end_time_valid,
         )
         self_copy.last_idle_time = self.last_idle_time
         self_copy.last_process_state_switch_time = self.last_process_state_switch_time
