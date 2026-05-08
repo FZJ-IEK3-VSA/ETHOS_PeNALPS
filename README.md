@@ -1,6 +1,6 @@
-| Name | Version | Platforms | Daily Tests |
+| Name | Version | Platforms | Tests |
 |---|---|---|---|
-|[![Conda Recipe](https://img.shields.io/badge/recipe-ethos_penalps-green.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Version](https://img.shields.io/conda/vn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps) |![example workflow](https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS/actions/workflows/daily_tests.yml/badge.svg)
+|[![Conda Recipe](https://img.shields.io/badge/recipe-ethos_penalps-green.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Version](https://img.shields.io/conda/vn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps)|[![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/ethos_penalps.svg)](https://anaconda.org/conda-forge/ethos_penalps) |[![Tests](https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS/actions/workflows/test_push.yml/badge.svg?branch=main)](https://github.com/FZJ-IEK3-VSA/ETHOS_PeNALPS/actions/workflows/test_push.yml)
 
 <a href="https://www.fz-juelich.de/en/ice/ice-2"><img src="https://github.com/FZJ-IEK3-VSA/README_assets/blob/main/JSA-Header.svg?raw=True" alt="Logo für Forschungszentrum Juelich - Juelich System Analysis" width="300px"></a> 
 # ETHOS.PeNALPS

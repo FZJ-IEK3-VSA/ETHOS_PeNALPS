@@ -1,3 +1,5 @@
+name: Test manual dependency version
+
 on:
   workflow_dispatch:
     inputs:
