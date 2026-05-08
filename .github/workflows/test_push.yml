@@ -19,7 +19,5 @@ jobs:
     with:
       runner_tag: ${{ matrix.runner_tag }}
       requirements_file_name: environment.yml
-      ipynb_example_folder: "examples"
       multiprocessing_pytest_string: "-n auto"
-      multiprocessing_example_string: "-n auto"
 

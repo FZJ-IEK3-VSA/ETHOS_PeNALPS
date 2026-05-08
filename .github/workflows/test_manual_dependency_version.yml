@@ -68,10 +68,8 @@ jobs:
     with:
       runner_tag: ${{ inputs.runner_tag }}
       requirements_file_name: ${{ matrix.requirements_file_name }}
-      ipynb_example_folder: "examples"
       library_name: ${{ matrix.library_name }}
       library_version: ${{ matrix.library_version }}
       dependency_position_env_file: ${{ matrix.dependency_position_env_file }}
       multiprocessing_pytest_string: "-n auto"
-      multiprocessing_example_string: "-n auto"
       additional_conda_channel: ${{ inputs.additional_conda_channel }}
