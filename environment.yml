@@ -22,7 +22,7 @@ dependencies:
   - plotly
   - proplot
   - python-graphviz
-  - setuptools  # required by proplot for pkg_resources
+  - setuptools <81  # proplot needs pkg_resources, which setuptools 81+ removed
   - seaborn
   - sqlalchemy <2.0
   - strenum
