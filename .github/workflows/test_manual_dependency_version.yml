@@ -40,7 +40,7 @@ jobs:
     uses: FZJ-IEK3-VSA/.github/.github/workflows/extract_versions.yml@v1
     with:
       libraries: ${{ inputs.library }}
-      env_file: requirements.yml
+      env_file: environment.yml
 
   # Query conda-forge for all versions of the library within the given bounds
   # and produce a matrix ready for run_conda_forge_test.yml.
@@ -52,7 +52,7 @@ jobs:
       min_version: ${{ inputs.min_version }}
       max_version: ${{ inputs.max_version }}
       dependency_position_env_file: ${{ needs.extract-position.outputs.dependency_position }}
-      requirements_file_name: requirements_dev.yml
+      requirements_file_name: environment.yml
       conda_channel: ${{ inputs.additional_conda_channel || 'conda-forge' }}
 
   TestManualVersions:
