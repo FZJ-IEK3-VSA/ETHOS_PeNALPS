@@ -20,4 +20,10 @@ Depiction of the main components and workflow of ETHOS.PeNALPS
 
 There is [a tutorial](ethos_penalps_tutorial/0_overview.md) which guides the user through the installation, implementation of first models and the interpretation of some results. The supported production network topologies and load profiles models are explained [here](ethos_penalps_articles/model_topology.md). Contributions are welcome, please see [the contributions guide](ethos_penalps_articles/contribution_guide.md) for further information or contact me directly j.belina@fz-juelich.de.
 
+```{admonition} Citation
+:class: important
+
+If you use or refer to ETHOS.PeNALPS in your work, please cite {cite}`Belina.2024`. See the [Citation](ethos_penalps_articles/citation.md) page for the full reference and BibTeX entry.
+```
+
 
