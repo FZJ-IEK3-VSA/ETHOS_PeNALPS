@@ -9,6 +9,40 @@ from ethos_penalps.utilities.logger_ethos_penalps import PeNALPSLogger
 logger = PeNALPSLogger.get_logger_without_handler()
 
 
+def _format_load_profile_tick(value: float) -> str:
+    if value == 0:
+        return "0"
+    abs_v = abs(value)
+    if abs_v >= 100:
+        return f"{value:.0f}"
+    if abs_v >= 10:
+        return f"{value:.1f}"
+    if abs_v >= 1:
+        return f"{value:.2f}"
+    return f"{value:.3f}"
+
+
+def _resolve_load_profile_yticks(
+    data_min: float, data_max: float
+) -> tuple[list[float], list[str]]:
+    """Min/max ticks at 3 sig figs; collapse to a single midpoint tick when the
+    data is essentially flat (range < 5% of magnitude) or labels coincide after
+    rounding -- in both cases the two ticks would visually overlap on the short
+    load-profile subplots."""
+    if data_min == data_max:
+        return [data_min], [_format_load_profile_tick(data_min)]
+    reference = max(abs(data_min), abs(data_max))
+    if reference > 0 and (data_max - data_min) / reference < 0.05:
+        midpoint = 0.5 * (data_min + data_max)
+        return [midpoint], [_format_load_profile_tick(midpoint)]
+    label_min = _format_load_profile_tick(data_min)
+    label_max = _format_load_profile_tick(data_max)
+    if label_min == label_max:
+        midpoint = 0.5 * (data_min + data_max)
+        return [midpoint], [_format_load_profile_tick(midpoint)]
+    return [data_min, data_max], [label_min, label_max]
+
+
 def create_line_subplot(
     current_axes,
     load_profile_data_frame_meta_information: (LoadProfileMetaData | LoadProfileMetaDataResampled),
@@ -58,13 +92,14 @@ def create_line_subplot(
     data_max = load_profile_data_frame_meta_information.maximum_power
     # Pin yticks to the data extents so the expanded ymin/ymax don't crowd the
     # short subplot with extra auto-ticks (e.g. 17.5/20/22.5 around a constant 20).
-    yticks = [data_min] if data_min == data_max else [data_min, data_max]
+    yticks, yticklabels = _resolve_load_profile_yticks(data_min, data_max)
     current_axes.format(
         ylabel=str(load_profile_data_frame_meta_information.power_unit),
         # ylabel="MW",
         ymin=ymin,
         ymax=ymax,
         yticks=yticks,
+        yticklabels=yticklabels,
         ytickminor=False,
         xtickminor=False,
         grid=False,
