@@ -7,6 +7,11 @@
 
 ETHOS.PeNALPS (Petri Net Agent based Load Profile Simulator) is a Python library for the simulation of load profiles of industrial manufacturing processes. It is part of [ETHOS (Energy Transformation Pathway Optimization Suite)](https://go.fzj.de/ethos_suite). Load profiles are energy demand time series. Processes that can be simulated using ETHOS.PeNALPS include, for example, steel, paper, and industrial food production. One or multiple product orders are passed to the model which starts the simulation and eventually creates the desired load profiles.
 
+**If you use or refer to ETHOS.PeNALPS in your work, please cite our paper:**
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06358/status.svg)](https://doi.org/10.21105/joss.06358)
+
+> Belina, J., Pflugradt, N., & Stolten, D. (2024). ETHOS.PeNALPS: A Tool for the Load Profile Simulation of Industrial Processes Based on a Material Flow Simulation. *Journal of Open Source Software*, 9(95), 6358. https://doi.org/10.21105/joss.06358
+
 # Working Principle
 
 The figure below shows the main conceptual objects of ETHOS.PeNALPS which are:
@@ -109,3 +114,13 @@ Our work focuses on independent, interdisciplinary research in energy, the bioec
 
 ## Code of Conduct
 Please respect our [code of conduct](https://github.com/FZJ-IEK3-VSA/README_assets/blob/main/CODE_CONDUCT.md).
+
+## Citation
+
+If you use or refer to ETHOS.PeNALPS in your research, please cite the following publication:
+
+> Belina, J., Pflugradt, N., & Stolten, D. (2024). ETHOS.PeNALPS: A Tool for the Load Profile Simulation of Industrial Processes Based on a Material Flow Simulation. *Journal of Open Source Software*, 9(95), 6358. https://doi.org/10.21105/joss.06358
+
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06358/status.svg)](https://doi.org/10.21105/joss.06358)
+
+A `CITATION.cff` file is included in this repository for automated citation support (used by GitHub, Zenodo, and Zotero).
